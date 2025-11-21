@@ -1,6 +1,6 @@
 # FTP Troubleshooter Tool
 
-**Version:** 1.0.0  
+**Version:** 1.0.1  
 **Copyright:** 2025 Superior Networks LLC  
 **Author:** Dwain Henderson Jr.
 
@@ -165,6 +165,11 @@ This tool is proprietary software developed for internal use by Superior Network
 ---
 
 ## Change Log
+
+### Version 1.0.1 (2025-11-21)
+- Fixed syntax error in error handling block (line 133)
+- Improved error message formatting for better readability
+- Updated variable reference handling in catch block
 
 ### Version 1.0.0 (2025-11-21)
 - Initial release
