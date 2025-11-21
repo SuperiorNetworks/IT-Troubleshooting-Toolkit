@@ -1,0 +1,19 @@
+# PowerShell
+*.ps1~
+*.psd1~
+
+# Logs
+*.log
+
+# Credentials (just in case)
+*credentials*
+*password*
+*secret*
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Backup files
+*.bak
+*.backup
