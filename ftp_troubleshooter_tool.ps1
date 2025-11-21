@@ -4,7 +4,7 @@ FTP Troubleshooter Tool - Interactive file uploader for Superior Network's off-s
 
 .DESCRIPTION
 Name: ftp_troubleshooter_tool.ps1
-Version: 1.0.0
+Version: 1.0.1
 Purpose: Manual FTP file upload tool used when the Image Manager fails to transfer files.
          This is a troubleshooting utility for transferring files to Superior Network's 
          off-site FTP server when the primary image manager consistently has issues 
@@ -37,6 +37,7 @@ Dependencies:
 
 Change Log:
 2025-11-21 v1.0.0 - Initial release (Dwain Henderson Jr)
+2025-11-21 v1.0.1 - Fixed syntax error in error handling block (Dwain Henderson Jr)
 
 .NOTES
 Author: Dwain Henderson Jr.
@@ -130,7 +131,7 @@ function Upload-FileToFTP {
         Write-Host "$filename upload complete.`n"
     }
     catch {
-        Write-Error "Error uploading $filePath: $_"
+        Write-Error "Error uploading ${filePath}: $($_.Exception.Message)"
     }
     finally {
         # Ensure streams are closed even if an error occurs
