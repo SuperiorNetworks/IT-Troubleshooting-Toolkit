@@ -1,6 +1,6 @@
 # FTP Troubleshooter Tool
 
-**Version:** 1.3.0  
+**Version:** 1.4.0  
 **Copyright:** 2025
 
 ## Overview
@@ -45,7 +45,7 @@ PowerShell.exe -ExecutionPolicy Bypass -File "$env:TEMP\launch_menu.ps1"
 ```
 
 The launcher menu provides:
-- **Option 1**: Download and install latest version to `C:\sndayton\ftpfix`
+- **Option 1**: Download and install latest version to `C:\ITTools\FTPFIX`
 - **Option 2**: Run the FTP troubleshooter tool
 - **Option 3**: Start StorageCraft ImageManager service
 - **Option 4**: Stop StorageCraft ImageManager service
@@ -58,24 +58,24 @@ Download, extract, and run in one command:
 
 ```powershell
 # Create directory, download, extract, and run
-$installPath = "C:\sndayton\ftpfix"; New-Item -ItemType Directory -Path $installPath -Force | Out-Null; Invoke-WebRequest -Uri "https://github.com/SuperiorNetworks/Ftp-Troubleshooter-Tool/archive/refs/heads/master.zip" -OutFile "$env:TEMP\ftp-tool.zip"; Expand-Archive -Path "$env:TEMP\ftp-tool.zip" -DestinationPath "$env:TEMP\ftp-extract" -Force; Copy-Item -Path "$env:TEMP\ftp-extract\Ftp-Troubleshooter-Tool-master\*" -Destination $installPath -Recurse -Force; PowerShell.exe -ExecutionPolicy Bypass -File "$installPath\ftp_troubleshooter_tool.ps1"
+$installPath = "C:\ITTools\FTPFIX"; New-Item -ItemType Directory -Path $installPath -Force | Out-Null; Invoke-WebRequest -Uri "https://github.com/SuperiorNetworks/Ftp-Troubleshooter-Tool/archive/refs/heads/master.zip" -OutFile "$env:TEMP\ftp-tool.zip"; Expand-Archive -Path "$env:TEMP\ftp-tool.zip" -DestinationPath "$env:TEMP\ftp-extract" -Force; Copy-Item -Path "$env:TEMP\ftp-extract\Ftp-Troubleshooter-Tool-master\*" -Destination $installPath -Recurse -Force; PowerShell.exe -ExecutionPolicy Bypass -File "$installPath\ftp_troubleshooter_tool.ps1"
 ```
 
 ### Option 3: Manual Installation
 
 1. Download the repository as a ZIP file from GitHub
-2. Extract to `C:\sndayton\ftpfix` (or your preferred location)
+2. Extract to `C:\ITTools\FTPFIX` (or your preferred location)
 3. Run `ftp_troubleshooter_tool.ps1`
 
 ## Installation
 
 ### Automated Installation via PowerShell
 
-To download and install to the default location (`C:\sndayton\ftpfix`):
+To download and install to the default location (`C:\ITTools\FTPFIX`):
 
 ```powershell
 # Create installation directory
-$installPath = "C:\sndayton\ftpfix"
+$installPath = "C:\ITTools\FTPFIX"
 New-Item -ItemType Directory -Path $installPath -Force
 
 # Download latest version
@@ -96,7 +96,7 @@ Write-Host "Installation complete! Files are in: $installPath"
 ### Manual Installation
 
 1. Download the `ftp_troubleshooter_tool.ps1` file from this repository
-2. Save it to a convenient location (e.g., `C:\sndayton\ftpfix` or your Desktop)
+2. Save it to a convenient location (e.g., `C:\ITTools\FTPFIX` or your Desktop)
 3. No additional installation required—the script is self-contained
 
 ## Setup
@@ -139,7 +139,7 @@ Replace `ftp.sndayton.com` with your preferred FTP server address. This default 
 1. Open PowerShell (no admin rights needed)
 2. Navigate to the script directory:
    ```powershell
-   cd C:\sndayton\ftpfix
+   cd C:\ITTools\FTPFIX
    ```
 3. Execute the script:
    ```powershell
@@ -151,7 +151,7 @@ Replace `ftp.sndayton.com` with your preferred FTP server address. This default 
 Run directly without changing directories:
 
 ```powershell
-PowerShell.exe -ExecutionPolicy Bypass -File "C:\sndayton\ftpfix\ftp_troubleshooter_tool.ps1"
+PowerShell.exe -ExecutionPolicy Bypass -File "C:\ITTools\FTPFIX\ftp_troubleshooter_tool.ps1"
 ```
 
 ### Method 4: Using the Interactive Launcher
@@ -159,7 +159,7 @@ PowerShell.exe -ExecutionPolicy Bypass -File "C:\sndayton\ftpfix\ftp_troubleshoo
 If you installed using the launcher menu, run:
 
 ```powershell
-PowerShell.exe -ExecutionPolicy Bypass -File "C:\sndayton\ftpfix\launch_menu.ps1"
+PowerShell.exe -ExecutionPolicy Bypass -File "C:\ITTools\FTPFIX\launch_menu.ps1"
 ```
 
 ### Interactive Workflow
@@ -212,7 +212,7 @@ The interactive launcher menu (options 3-6) provides a user-friendly interface f
 1. Run the launcher as Administrator:
    ```powershell
    # Right-click PowerShell and select "Run as Administrator", then:
-   PowerShell.exe -ExecutionPolicy Bypass -File "C:\sndayton\ftpfix\launch_menu.ps1"
+   PowerShell.exe -ExecutionPolicy Bypass -File "C:\ITTools\FTPFIX\launch_menu.ps1"
    ```
 
 2. Select from the menu:
@@ -307,6 +307,10 @@ This software is provided as-is without warranty of any kind.
 
 ## Change Log
 
+### Version 1.4.0 (2025-11-21)
+- Updated installation path from C:\\sndayton\\ftpfix to C:\\ITTools\\FTPFIX
+- Updated all documentation and scripts with new path
+
 ### Version 1.3.0 (2025-11-21)
 - Added StorageCraft ImageManager service management to launcher menu
 - Added options to start, stop, and restart ImageManager service
@@ -320,7 +324,7 @@ This software is provided as-is without warranty of any kind.
 - Added Quick Start section with multiple installation options
 - Added one-line install and run command
 - Updated documentation with PowerShell commands for download, unzip, and run
-- Standardized installation path to C:\\sndayton\\ftpfix
+- Standardized installation path to C:\\ITTools\\FTPFIX
 
 ### Version 1.1.0 (2025-11-21)
 - Sanitized for public release

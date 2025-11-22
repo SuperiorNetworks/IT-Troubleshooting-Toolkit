@@ -4,7 +4,7 @@ FTP Troubleshooter Tool - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 1.1.0
+Version: 1.2.0
 Purpose: Interactive menu for downloading/installing and running the FTP Troubleshooter Tool,
          plus managing the StorageCraft ImageManager service
 Path: /scripts/launch_menu.ps1
@@ -12,7 +12,7 @@ Copyright: 2025
 
 Key Features:
 - Download and install latest version from GitHub
-- Automatic extraction to C:\sndayton\ftpfix
+- Automatic extraction to C:\ITTools\FTPFIX
 - Run the FTP troubleshooter tool
 - Start, stop, and restart StorageCraft ImageManager service
 - User-friendly menu interface
@@ -34,6 +34,7 @@ Dependencies:
 Change Log:
 2025-11-21 v1.0.0 - Initial release
 2025-11-21 v1.1.0 - Added StorageCraft ImageManager service management options
+2025-11-21 v1.2.0 - Updated installation path to C:\ITTools\FTPFIX
 
 .NOTES
 This launcher provides an easy way to install, run, and manage the FTP Troubleshooter Tool
@@ -43,7 +44,7 @@ and StorageCraft ImageManager service.
 # Configuration
 $repoOwner = "SuperiorNetworks"
 $repoName = "Ftp-Troubleshooter-Tool"
-$installPath = "C:\sndayton\ftpfix"
+$installPath = "C:\ITTools\FTPFIX"
 $scriptName = "ftp_troubleshooter_tool.ps1"
 $serviceName = "StorageCraft ImageManager"
 
