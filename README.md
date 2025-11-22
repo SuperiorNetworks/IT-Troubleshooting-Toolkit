@@ -1,6 +1,6 @@
 # FTP Troubleshooter Tool
 
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Copyright:** 2025
 
 ## Overview
@@ -30,10 +30,69 @@ This tool serves as a reliable manual file transfer solution when automated syst
 - **Network**: Access to the target FTP server
 - **Permissions**: Ability to execute PowerShell scripts (see Setup section)
 
+## Quick Start
+
+### Option 1: Interactive Launcher Menu (Recommended)
+
+Download and run the interactive launcher:
+
+```powershell
+# Download the launcher
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/SuperiorNetworks/Ftp-Troubleshooter-Tool/master/launch_menu.ps1" -OutFile "$env:TEMP\launch_menu.ps1"
+
+# Run the launcher
+PowerShell.exe -ExecutionPolicy Bypass -File "$env:TEMP\launch_menu.ps1"
+```
+
+The launcher menu provides:
+- **Option 1**: Download and install latest version to `C:\sndayton\ftpfix`
+- **Option 2**: Run the FTP troubleshooter tool
+
+### Option 2: One-Line Install and Run
+
+Download, extract, and run in one command:
+
+```powershell
+# Create directory, download, extract, and run
+$installPath = "C:\sndayton\ftpfix"; New-Item -ItemType Directory -Path $installPath -Force | Out-Null; Invoke-WebRequest -Uri "https://github.com/SuperiorNetworks/Ftp-Troubleshooter-Tool/archive/refs/heads/master.zip" -OutFile "$env:TEMP\ftp-tool.zip"; Expand-Archive -Path "$env:TEMP\ftp-tool.zip" -DestinationPath "$env:TEMP\ftp-extract" -Force; Copy-Item -Path "$env:TEMP\ftp-extract\Ftp-Troubleshooter-Tool-master\*" -Destination $installPath -Recurse -Force; PowerShell.exe -ExecutionPolicy Bypass -File "$installPath\ftp_troubleshooter_tool.ps1"
+```
+
+### Option 3: Manual Installation
+
+1. Download the repository as a ZIP file from GitHub
+2. Extract to `C:\sndayton\ftpfix` (or your preferred location)
+3. Run `ftp_troubleshooter_tool.ps1`
+
 ## Installation
 
+### Automated Installation via PowerShell
+
+To download and install to the default location (`C:\sndayton\ftpfix`):
+
+```powershell
+# Create installation directory
+$installPath = "C:\sndayton\ftpfix"
+New-Item -ItemType Directory -Path $installPath -Force
+
+# Download latest version
+$zipUrl = "https://github.com/SuperiorNetworks/Ftp-Troubleshooter-Tool/archive/refs/heads/master.zip"
+$zipFile = "$env:TEMP\ftp-troubleshooter.zip"
+Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile
+
+# Extract files
+$extractPath = "$env:TEMP\ftp-troubleshooter-extract"
+Expand-Archive -Path $zipFile -DestinationPath $extractPath -Force
+
+# Copy to installation directory
+Copy-Item -Path "$extractPath\Ftp-Troubleshooter-Tool-master\*" -Destination $installPath -Recurse -Force
+
+Write-Host "Installation complete! Files are in: $installPath"
+```
+
+### Manual Installation
+
 1. Download the `ftp_troubleshooter_tool.ps1` file from this repository
-2. Save it to a convenient location (e.g., `C:\Scripts\` or your Desktop)
+2. Save it to a convenient location (e.g., `C:\sndayton\ftpfix` or your Desktop)
 3. No additional installation required—the script is self-contained
 
 ## Setup
@@ -76,19 +135,27 @@ Replace `ftp.sndayton.com` with your preferred FTP server address. This default 
 1. Open PowerShell (no admin rights needed)
 2. Navigate to the script directory:
    ```powershell
-   cd C:\Scripts
+   cd C:\sndayton\ftpfix
    ```
 3. Execute the script:
    ```powershell
    .\ftp_troubleshooter_tool.ps1
    ```
 
-### Method 3: Bypass Execution Policy (One-Time)
+### Method 3: Direct Run from Installation Path
 
-If you encounter execution policy errors:
+Run directly without changing directories:
 
 ```powershell
-PowerShell.exe -ExecutionPolicy Bypass -File .\ftp_troubleshooter_tool.ps1
+PowerShell.exe -ExecutionPolicy Bypass -File "C:\sndayton\ftpfix\ftp_troubleshooter_tool.ps1"
+```
+
+### Method 4: Using the Interactive Launcher
+
+If you installed using the launcher menu, run:
+
+```powershell
+PowerShell.exe -ExecutionPolicy Bypass -File "C:\sndayton\ftpfix\launch_menu.ps1"
 ```
 
 ### Interactive Workflow
@@ -173,6 +240,13 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 1.2.0 (2025-11-21)
+- Added interactive launcher menu script (launch_menu.ps1)
+- Added Quick Start section with multiple installation options
+- Added one-line install and run command
+- Updated documentation with PowerShell commands for download, unzip, and run
+- Standardized installation path to C:\sndayton\ftpfix
 
 ### Version 1.1.0 (2025-11-21)
 - Sanitized for public release
