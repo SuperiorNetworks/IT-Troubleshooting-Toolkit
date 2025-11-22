@@ -1,20 +1,18 @@
 <#
 .SYNOPSIS
-FTP Troubleshooter Tool - Interactive file uploader for Superior Network's off-site FTP server
+FTP Troubleshooter Tool - Interactive file uploader with GUI file picker
 
 .DESCRIPTION
 Name: ftp_troubleshooter_tool.ps1
-Version: 1.0.1
-Purpose: Manual FTP file upload tool used when the Image Manager fails to transfer files.
-         This is a troubleshooting utility for transferring files to Superior Network's 
-         off-site FTP server when the primary image manager consistently has issues 
-         transferring particular files.
+Version: 1.1.0
+Purpose: Manual FTP file upload utility with interactive GUI file picker and progress tracking.
+         Useful as a backup solution when automated transfer systems experience issues.
 Path: /scripts/ftp_troubleshooter_tool.ps1
-Copyright: 2025 Superior Networks LLC
+Copyright: 2025
 
 Key Features:
 - Interactive GUI file picker for selecting multiple files
-- Hard-coded default FTP server with option to override
+- Configurable default FTP server with option to override
 - Secure credential prompting
 - Progress bar for upload tracking
 - Robust error handling and resource management
@@ -36,14 +34,12 @@ Dependencies:
 - Network access to FTP server
 
 Change Log:
-2025-11-21 v1.0.0 - Initial release (Dwain Henderson Jr)
-2025-11-21 v1.0.1 - Fixed syntax error in error handling block (Dwain Henderson Jr)
+2025-11-21 v1.0.0 - Initial release
+2025-11-21 v1.0.1 - Fixed syntax error in error handling block
+2025-11-21 v1.1.0 - Sanitized for public release, removed PII
 
 .NOTES
-Author: Dwain Henderson Jr.
-Company: Superior Networks LLC
-Address: 703 Jefferson St. Dayton Ohio, 45342
-Phone: (937) 985-2480
+This is a general-purpose FTP upload utility that can be customized for any FTP server.
 #>
 
 Add-Type -AssemblyName System.Windows.Forms
@@ -142,7 +138,7 @@ function Upload-FileToFTP {
 
 # --- Main script logic ---
 Write-Host "=== FTP Troubleshooter Tool ===" -ForegroundColor Cyan
-Write-Host "Superior Networks LLC - Image Manager Failover Utility`n" -ForegroundColor Cyan
+Write-Host "Interactive FTP Upload Utility`n" -ForegroundColor Cyan
 
 Write-Host "Use the dialog to select one or more files for FTP transfer."
 $selectedFiles = Select-Files
