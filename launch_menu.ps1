@@ -4,7 +4,7 @@ FTP Troubleshooter Tool - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 1.2.0
+Version: 1.3.0
 Purpose: Interactive menu for downloading/installing and running the FTP Troubleshooter Tool,
          plus managing the StorageCraft ImageManager service
 Path: /scripts/launch_menu.ps1
@@ -35,6 +35,7 @@ Change Log:
 2025-11-21 v1.0.0 - Initial release
 2025-11-21 v1.1.0 - Added StorageCraft ImageManager service management options
 2025-11-21 v1.2.0 - Updated installation path to C:\ITTools\FTPFIX
+2025-11-21 v1.3.0 - Fixed file overwrite during installation; always show menu first
 
 .NOTES
 This launcher provides an easy way to install, run, and manage the FTP Troubleshooter Tool
@@ -116,11 +117,24 @@ function Download-And-Install {
         
         Expand-Archive -Path $zipFile -DestinationPath $extractPath -Force
 
-        # Copy files from extracted folder to installation path
+        # Copy files from extracted folder to installation path (overwrite existing)
         $sourceFolder = Join-Path $extractPath "$repoName-master"
         Write-Host "Installing to $installPath..." -ForegroundColor Yellow
+        Write-Host "Overwriting existing files if present..." -ForegroundColor Yellow
         
-        Get-ChildItem -Path $sourceFolder | Copy-Item -Destination $installPath -Recurse -Force
+        # Copy each item individually with force to ensure overwrite
+        Get-ChildItem -Path $sourceFolder -File | ForEach-Object {
+            Copy-Item -Path $_.FullName -Destination $installPath -Force
+        }
+        
+        # Copy directories recursively with force
+        Get-ChildItem -Path $sourceFolder -Directory | ForEach-Object {
+            $destDir = Join-Path $installPath $_.Name
+            if (Test-Path $destDir) {
+                Remove-Item -Path $destDir -Recurse -Force
+            }
+            Copy-Item -Path $_.FullName -Destination $installPath -Recurse -Force
+        }
 
         # Cleanup
         Remove-Item -Path $zipFile -Force

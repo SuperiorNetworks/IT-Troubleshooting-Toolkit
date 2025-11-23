@@ -1,6 +1,6 @@
 # FTP Troubleshooter Tool
 
-**Version:** 1.4.0  
+**Version:** 1.5.0  
 **Copyright:** 2025
 
 ## Overview
@@ -306,6 +306,11 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 1.5.0 (2025-11-21)
+- Fixed file overwrite behavior during installation
+- Installation now properly overwrites existing files
+- Launcher menu always displays first (no auto-run)
 
 ### Version 1.4.0 (2025-11-21)
 - Updated installation path from C:\\sndayton\\ftpfix to C:\\ITTools\\FTPFIX
