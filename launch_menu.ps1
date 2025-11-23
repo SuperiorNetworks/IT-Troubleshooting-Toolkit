@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 1.4.0
+Version: 1.5.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -12,7 +12,7 @@ Copyright: 2025
 
 Key Features:
 - Self-updating toolkit installation from GitHub
-- Automatic extraction to C:\ITTools\FTPFIX with file overwrite
+- Automatic extraction to C:\ITTools\Scripts with file overwrite
 - FTP Troubleshooter Tool access (manual file uploads)
 - StorageCraft ImageManager service management (start/stop/restart/status)
 - User-friendly color-coded menu interface
@@ -36,9 +36,10 @@ Dependencies:
 Change Log:
 2025-11-21 v1.0.0 - Initial release
 2025-11-21 v1.1.0 - Added StorageCraft ImageManager service management options
-2025-11-21 v1.2.0 - Updated installation path to C:\ITTools\FTPFIX
+2025-11-21 v1.2.0 - Updated installation path to C:\ITTools\Scripts
 2025-11-21 v1.3.0 - Fixed file overwrite during installation; always show menu first
 2025-11-21 v1.4.0 - Rebranded as IT Troubleshooting Toolkit Launcher
+2025-11-21 v1.5.0 - Updated installation path to C:\ITTools\Scripts
 
 .NOTES
 This launcher provides centralized access to multiple IT troubleshooting tools and utilities.
@@ -48,7 +49,7 @@ Designed for IT professionals and MSPs to streamline common troubleshooting task
 # Configuration
 $repoOwner = "SuperiorNetworks"
 $repoName = "Ftp-Troubleshooter-Tool"
-$installPath = "C:\ITTools\FTPFIX"
+$installPath = "C:\ITTools\Scripts"
 $scriptName = "ftp_troubleshooter_tool.ps1"
 $serviceName = "StorageCraft ImageManager"
 

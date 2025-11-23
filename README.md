@@ -1,6 +1,6 @@
 # IT Troubleshooting Toolkit Launcher
 
-**Version:** 1.6.0  
+**Version:** 1.7.0  
 **Copyright:** 2025
 
 ## Overview
@@ -75,7 +75,7 @@ PowerShell.exe -ExecutionPolicy Bypass -File "$env:TEMP\launch_menu.ps1"
 **The launcher menu provides access to:**
 
 **Toolkit Management:**
-- **Option 1**: Download and install latest toolkit version to `C:\ITTools\FTPFIX`
+- **Option 1**: Download and install latest toolkit version to `C:\ITTools\Scripts`
 
 **Troubleshooting Tools:**
 - **Option 2**: FTP Troubleshooter Tool (manual file upload)
@@ -92,24 +92,24 @@ Download, install, and launch the toolkit menu in one command:
 
 ```powershell
 # Create directory, download, extract, and launch menu
-$installPath = "C:\ITTools\FTPFIX"; New-Item -ItemType Directory -Path $installPath -Force | Out-Null; Invoke-WebRequest -Uri "https://github.com/SuperiorNetworks/Ftp-Troubleshooter-Tool/archive/refs/heads/master.zip" -OutFile "$env:TEMP\ftp-tool.zip"; Expand-Archive -Path "$env:TEMP\ftp-tool.zip" -DestinationPath "$env:TEMP\ftp-extract" -Force; Copy-Item -Path "$env:TEMP\ftp-extract\Ftp-Troubleshooter-Tool-master\*" -Destination $installPath -Recurse -Force; PowerShell.exe -ExecutionPolicy Bypass -File "$installPath\launch_menu.ps1"
+$installPath = "C:\ITTools\Scripts"; New-Item -ItemType Directory -Path $installPath -Force | Out-Null; Invoke-WebRequest -Uri "https://github.com/SuperiorNetworks/Ftp-Troubleshooter-Tool/archive/refs/heads/master.zip" -OutFile "$env:TEMP\ftp-tool.zip"; Expand-Archive -Path "$env:TEMP\ftp-tool.zip" -DestinationPath "$env:TEMP\ftp-extract" -Force; Copy-Item -Path "$env:TEMP\ftp-extract\Ftp-Troubleshooter-Tool-master\*" -Destination $installPath -Recurse -Force; PowerShell.exe -ExecutionPolicy Bypass -File "$installPath\launch_menu.ps1"
 ```
 
 ### Option 3: Manual Installation
 
 1. Download the repository as a ZIP file from GitHub
-2. Extract to `C:\ITTools\FTPFIX` (or your preferred location)
+2. Extract to `C:\ITTools\Scripts` (or your preferred location)
 3. Run `launch_menu.ps1` to access the toolkit menu
 
 ## Installation
 
 ### Automated Installation via PowerShell
 
-To download and install to the default location (`C:\ITTools\FTPFIX`):
+To download and install to the default location (`C:\ITTools\Scripts`):
 
 ```powershell
 # Create installation directory
-$installPath = "C:\ITTools\FTPFIX"
+$installPath = "C:\ITTools\Scripts"
 New-Item -ItemType Directory -Path $installPath -Force
 
 # Download latest version
@@ -130,7 +130,7 @@ Write-Host "Installation complete! Files are in: $installPath"
 ### Manual Installation
 
 1. Download the `ftp_troubleshooter_tool.ps1` file from this repository
-2. Save it to a convenient location (e.g., `C:\ITTools\FTPFIX` or your Desktop)
+2. Save it to a convenient location (e.g., `C:\ITTools\Scripts` or your Desktop)
 3. No additional installation required—the script is self-contained
 
 ## Setup
@@ -174,7 +174,7 @@ Replace `ftp.sndayton.com` with your preferred FTP server address. This default 
 1. Open PowerShell (no admin rights needed for most options)
 2. Navigate to the toolkit directory:
    ```powershell
-   cd C:\ITTools\FTPFIX
+   cd C:\ITTools\Scripts
    ```
 3. Launch the toolkit menu:
    ```powershell
@@ -186,7 +186,7 @@ Replace `ftp.sndayton.com` with your preferred FTP server address. This default 
 Launch the toolkit menu directly without changing directories:
 
 ```powershell
-PowerShell.exe -ExecutionPolicy Bypass -File "C:\ITTools\FTPFIX\launch_menu.ps1"
+PowerShell.exe -ExecutionPolicy Bypass -File "C:\ITTools\Scripts\launch_menu.ps1"
 ```
 
 ### Method 4: Launch as Administrator (For Service Management)
@@ -195,7 +195,7 @@ To access service management options, run as Administrator:
 
 ```powershell
 # Right-click PowerShell and select "Run as Administrator", then:
-PowerShell.exe -ExecutionPolicy Bypass -File "C:\ITTools\FTPFIX\launch_menu.ps1"
+PowerShell.exe -ExecutionPolicy Bypass -File "C:\ITTools\Scripts\launch_menu.ps1"
 ```
 
 ### Toolkit Menu Workflow
@@ -258,7 +258,7 @@ The interactive launcher menu (options 3-6) provides a user-friendly interface f
 1. Run the launcher as Administrator:
    ```powershell
    # Right-click PowerShell and select "Run as Administrator", then:
-   PowerShell.exe -ExecutionPolicy Bypass -File "C:\ITTools\FTPFIX\launch_menu.ps1"
+   PowerShell.exe -ExecutionPolicy Bypass -File "C:\ITTools\Scripts\launch_menu.ps1"
    ```
 
 2. Select from the menu:
@@ -354,6 +354,11 @@ This software is provided as-is without warranty of any kind.
 
 ## Change Log
 
+### Version 1.7.0 (2025-11-21)
+- Updated installation path to C:\\ITTools\\Scripts for better organization
+- Removed all references to old FTPFIX path
+- Updated toolkit structure documentation
+
 ### Version 1.6.0 (2025-11-21)
 - Rebranded as IT Troubleshooting Toolkit Launcher
 - Updated documentation to emphasize toolkit launcher concept
@@ -367,7 +372,7 @@ This software is provided as-is without warranty of any kind.
 - Launcher menu always displays first (no auto-run)
 
 ### Version 1.4.0 (2025-11-21)
-- Updated installation path from C:\\sndayton\\ftpfix to C:\\ITTools\\FTPFIX
+- Updated installation path from C:\\sndayton\\ftpfix to C:\\ITTools\\Scripts
 - Updated all documentation and scripts with new path
 
 ### Version 1.3.0 (2025-11-21)
@@ -383,7 +388,7 @@ This software is provided as-is without warranty of any kind.
 - Added Quick Start section with multiple installation options
 - Added one-line install and run command
 - Updated documentation with PowerShell commands for download, unzip, and run
-- Standardized installation path to C:\\ITTools\\FTPFIX
+- Standardized installation path to C:\\ITTools\\Scripts
 
 ### Version 1.1.0 (2025-11-21)
 - Sanitized for public release
