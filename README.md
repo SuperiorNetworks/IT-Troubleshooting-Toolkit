@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 1.8.0  
+**Version:** 1.9.0  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -357,9 +357,15 @@ This software is provided as-is without warranty of any kind.
 
 ## Change Log
 
+### Version 1.9.0 (2025-11-22)
+- Fixed PowerShell encoding issues with ASCII art branding
+- Simplified header to use standard ASCII characters for compatibility
+- Maintained Superior Networks branding with clean, professional layout
+- Resolved parser errors in Windows PowerShell
+
 ### Version 1.8.0 (2025-11-22)
 - Integrated Superior Networks branding and logo
-- Added branded ASCII art header to launcher menu
+- Added branded header to launcher menu
 - Updated color scheme to match company branding (Cyan/White)
 - Added logo to repository and README
 
