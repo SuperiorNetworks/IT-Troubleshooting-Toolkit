@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.0.0  
+**Version:** 2.1.0  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -14,7 +14,7 @@ The IT Troubleshooting Toolkit Launcher is a comprehensive PowerShell-based menu
 
 The launcher provides access to the following tools:
 
-### 1. FTP Troubleshooter Tool
+### 1. Manual FTP Tool
 Interactive file uploader with GUI file picker for manual FTP transfers. Ideal for backup operations when automated systems fail.
 
 **Features:**
@@ -369,6 +369,12 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.1.0 (2025-11-22)
+- Reorganized menu structure for better tool grouping
+- Created "StorageCraft Troubleshooter" section combining FTP and ImageManager tools
+- Renamed "Run FTP Troubleshooter Tool" to "Manual FTP Tool"
+- Improved menu clarity and logical organization
 
 ### Version 2.0.0 (2025-11-22)
 - **Major Update**: Renamed repository to IT-Troubleshooting-Toolkit

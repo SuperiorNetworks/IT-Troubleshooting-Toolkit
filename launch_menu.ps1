@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 2.0.0
+Version: 2.1.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -44,6 +44,7 @@ Change Log:
 2025-11-22 v1.6.0 - Integrated Superior Networks branding and color scheme
 2025-11-22 v1.7.0 - Fixed encoding issues with ASCII art branding
 2025-11-22 v2.0.0 - Added MassGrave PowerShell Utilities integration; Renamed repo to IT-Troubleshooting-Toolkit
+2025-11-22 v2.1.0 - Reorganized menu: Grouped StorageCraft tools under 'StorageCraft Troubleshooter'; Renamed FTP tool to 'Manual FTP Tool'
 
 .NOTES
 This launcher provides centralized access to multiple IT troubleshooting tools and utilities.
@@ -70,14 +71,14 @@ function Show-Menu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "               IT Troubleshooting Toolkit - v2.0.0                " -ForegroundColor Cyan
+    Write-Host "               IT Troubleshooting Toolkit - v2.1.0                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Toolkit Management:" -ForegroundColor White
     Write-Host "    1. Download and Install Latest Version" -ForegroundColor Green
-    Write-Host "    2. Run FTP Troubleshooter Tool" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "  StorageCraft ImageManager Service:" -ForegroundColor White
+    Write-Host "  StorageCraft Troubleshooter:" -ForegroundColor White
+    Write-Host "    2. Manual FTP Tool" -ForegroundColor Yellow
     Write-Host "    3. Start ImageManager Service" -ForegroundColor Green
     Write-Host "    4. Stop ImageManager Service" -ForegroundColor Red
     Write-Host "    5. Restart ImageManager Service" -ForegroundColor Yellow
@@ -172,7 +173,7 @@ function Download-And-Install {
 }
 
 function Run-Troubleshooter {
-    Write-Host "`n=== Launching FTP Troubleshooter Tool ===" -ForegroundColor Cyan
+    Write-Host "`n=== Launching Manual FTP Tool ===" -ForegroundColor Cyan
     
     $scriptPath = Join-Path $installPath $scriptName
     
@@ -185,7 +186,7 @@ function Run-Troubleshooter {
         
     }
     else {
-        Write-Host "`nError: FTP Troubleshooter Tool not found!" -ForegroundColor Red
+        Write-Host "`nError: Manual FTP Tool not found!" -ForegroundColor Red
         Write-Host "Expected location: $scriptPath" -ForegroundColor Yellow
         Write-Host "`nPlease use Option 1 to download and install first." -ForegroundColor Yellow
         Write-Host "`nPress any key to return to menu..."
