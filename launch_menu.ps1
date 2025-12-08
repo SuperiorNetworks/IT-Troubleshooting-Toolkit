@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 2.5.1
+Version: 2.5.2
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -50,6 +50,7 @@ Change Log:
 2025-12-08 v2.4.0 - Added version detection with update notifications and embedded release notes display
 2025-12-08 v2.5.0 - Added comprehensive master audit logging system; Removed persistent ImageManager status display
 2025-12-08 v2.5.1 - Added debug logging to changelog extraction for troubleshooting
+2025-12-08 v2.5.2 - Enhanced debug logging to show extraction folder contents
 
 .RELEASE_NOTES
 v2.5.0:
@@ -171,7 +172,7 @@ function Show-Menu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "               IT Troubleshooting Toolkit - v2.5.1                " -ForegroundColor Cyan
+    Write-Host "               IT Troubleshooting Toolkit - v2.5.2                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Toolkit Management:" -ForegroundColor White
@@ -376,6 +377,19 @@ function Download-And-Install {
             
             # Get changelog from the newly downloaded README.md
             $newReadmePath = Join-Path $sourceFolder "README.md"
+            
+            # Debug: Show paths and check file existence
+            Write-Host "  [DEBUG] sourceFolder: $sourceFolder" -ForegroundColor Yellow
+            Write-Host "  [DEBUG] newReadmePath: $newReadmePath" -ForegroundColor Yellow
+            Write-Host "  [DEBUG] README exists: $(Test-Path $newReadmePath)" -ForegroundColor Yellow
+            
+            if (Test-Path $sourceFolder) {
+                Write-Host "  [DEBUG] Source folder contents:" -ForegroundColor Yellow
+                Get-ChildItem $sourceFolder | Select-Object -First 10 | ForEach-Object {
+                    Write-Host "  [DEBUG]   - $($_.Name)" -ForegroundColor Yellow
+                }
+            }
+            
             $changelog = Get-ChangelogFromReadme -version $newVersion.ToString() -readmePath $newReadmePath
             
             if ($changelog.Count -gt 0) {
@@ -516,7 +530,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.5.1"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.5.2"
 
 # Main menu loop
 do {

@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.5.1  
+**Version:** 2.5.2  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,13 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.5.2 (2025-12-08)
+- **Enhanced Debug Logging**: Added extraction folder contents listing
+  - Shows sourceFolder path during installation
+  - Lists all files in extraction directory
+  - Verifies README.md existence before reading
+  - Helps diagnose path construction issues
 
 ### Version 2.5.1 (2025-12-08)
 - **Debug Enhancement**: Added comprehensive debug logging to changelog extraction
