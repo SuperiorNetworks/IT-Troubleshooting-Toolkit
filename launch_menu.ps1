@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 2.5.0
+Version: 2.5.1
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -49,6 +49,7 @@ Change Log:
 2025-11-22 v2.3.0 - Enhanced Manual FTP Tool with retry logic, resume support, and logging; Added log viewer
 2025-12-08 v2.4.0 - Added version detection with update notifications and embedded release notes display
 2025-12-08 v2.5.0 - Added comprehensive master audit logging system; Removed persistent ImageManager status display
+2025-12-08 v2.5.1 - Added debug logging to changelog extraction for troubleshooting
 
 .RELEASE_NOTES
 v2.5.0:
@@ -170,7 +171,7 @@ function Show-Menu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "               IT Troubleshooting Toolkit - v2.5.0                " -ForegroundColor Cyan
+    Write-Host "               IT Troubleshooting Toolkit - v2.5.1                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Toolkit Management:" -ForegroundColor White
@@ -515,7 +516,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.5.0"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.5.1"
 
 # Main menu loop
 do {

@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.5.0  
+**Version:** 2.5.1  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,14 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.5.1 (2025-12-08)
+- **Debug Enhancement**: Added comprehensive debug logging to changelog extraction
+  - Shows detailed debug messages when changelog fails to display
+  - Helps troubleshoot README.md path issues
+  - Displays pattern matching diagnostics
+  - Identifies file read errors
+- Internal testing version to diagnose changelog display issues
 
 ### Version 2.5.0 (2025-12-08)
 - **Master Audit Logging System**: Comprehensive logging for troubleshooting and support
