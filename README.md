@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.5.5  
+**Version:** 2.6.0  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,25 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.6.0 (2025-12-08)
+- **Fixed Changelog Display**: Changelog now displays properly after updates
+  - Changed to read README.md from installed location (C:\ITTools\Scripts\README.md) instead of temp extraction folder
+  - Eliminates path issues with temp directory changes
+  - Simpler, more reliable approach
+  - Works regardless of temp folder location
+- **Improved File Organization**: All toolkit files now in C:\ITTools
+  - Installation: C:\ITTools\Scripts
+  - Logs: C:\ITTools\Scripts\Logs
+  - Temp files: C:\ITTools\Temp
+- **Code Cleanup**: Removed all debug logging code
+  - Cleaner, production-ready code
+  - Faster execution
+  - Better user experience
+- **Enhanced Changelog Formatting**: Color-coded changelog display
+  - Main features in green
+  - Sub-bullets in gray
+  - Professional presentation
 
 ### Version 2.5.5 (2025-12-08)
 - **Enhanced Debug Output**: Added complete extraction folder tree view

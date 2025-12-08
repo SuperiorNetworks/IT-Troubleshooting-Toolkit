@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 2.5.5
+Version: 2.6.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -54,6 +54,7 @@ Change Log:
 2025-12-08 v2.5.3 - Testing version for changelog extraction diagnosis
 2025-12-08 v2.5.4 - Changed temp directory to C:\ITTools\Temp; Added README search fallback
 2025-12-08 v2.5.5 - Added complete extraction folder tree debug output
+2025-12-08 v2.6.0 - Fixed changelog display; Simplified README path logic; Removed debug code
 
 .RELEASE_NOTES
 v2.5.0:
@@ -175,7 +176,7 @@ function Show-Menu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "               IT Troubleshooting Toolkit - v2.5.5                " -ForegroundColor Cyan
+    Write-Host "               IT Troubleshooting Toolkit - v2.6.0                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Toolkit Management:" -ForegroundColor White
@@ -220,7 +221,6 @@ function Get-ChangelogFromReadme {
     $readme = if ($readmePath) { $readmePath } else { Join-Path $installPath "README.md" }
     
     if (-not (Test-Path $readme)) {
-        Write-Host "  [DEBUG] README not found at: $readme" -ForegroundColor Yellow
         return @()
     }
     
@@ -235,38 +235,20 @@ function Get-ChangelogFromReadme {
             $changelogText = $matches[1].Trim()
             
             if ($changelogText.Length -eq 0) {
-                Write-Host "  [DEBUG] Changelog text is empty for version $version" -ForegroundColor Yellow
                 return @()
             }
             
             # Split into lines and filter for bullet points and sub-bullets
             $lines = $changelogText -split "`n" | Where-Object { $_.Trim() -ne "" }
             
-            if ($lines.Count -eq 0) {
-                Write-Host "  [DEBUG] No lines found after splitting changelog" -ForegroundColor Yellow
-                return @()
-            }
-            
             return $lines
-        }
-        else {
-            Write-Host "  [DEBUG] Pattern did not match for version $version" -ForegroundColor Yellow
-            Write-Host "  [DEBUG] Pattern used: $pattern" -ForegroundColor Yellow
-            
-            # Check if version header exists at all
-            if ($content -match "### Version $version") {
-                Write-Host "  [DEBUG] Version header found but full pattern failed" -ForegroundColor Yellow
-            }
-            else {
-                Write-Host "  [DEBUG] Version header not found in README" -ForegroundColor Yellow
-            }
-            return @()
         }
     }
     catch {
-        Write-Host "  [DEBUG] Error reading README: $_" -ForegroundColor Red
         return @()
     }
+    
+    return @()
 }
 
 function Download-And-Install {
@@ -385,62 +367,9 @@ function Download-And-Install {
             Write-Host "  What's New in v$newVersion`:" -ForegroundColor Cyan
             Write-Host "" 
             
-            # Get changelog from the newly downloaded README.md
-            $newReadmePath = Join-Path $sourceFolder "README.md"
-            
-            # Debug: Show paths and check file existence
-            Write-Host "  [DEBUG] sourceFolder: $sourceFolder" -ForegroundColor Yellow
-            Write-Host "  [DEBUG] newReadmePath: $newReadmePath" -ForegroundColor Yellow
-            Write-Host "  [DEBUG] README exists: $(Test-Path $newReadmePath)" -ForegroundColor Yellow
-            
-            if (Test-Path $sourceFolder) {
-                Write-Host "  [DEBUG] Source folder contents:" -ForegroundColor Yellow
-                $folderContents = Get-ChildItem $sourceFolder -ErrorAction SilentlyContinue
-                if ($folderContents) {
-                    $folderContents | ForEach-Object {
-                        Write-Host "  [DEBUG]   - $($_.Name)" -ForegroundColor Yellow
-                    }
-                    Write-Host "  [DEBUG] Total items: $($folderContents.Count)" -ForegroundColor Yellow
-                }
-                else {
-                    Write-Host "  [DEBUG]   (folder is empty or inaccessible)" -ForegroundColor Red
-                }
-            }
-            else {
-                Write-Host "  [DEBUG] Source folder does not exist!" -ForegroundColor Red
-            }
-            
-            # Show complete extraction folder tree
-            Write-Host "  [DEBUG] Complete extraction folder tree:" -ForegroundColor Yellow
-            if (Test-Path $extractPath) {
-                Get-ChildItem -Path $extractPath -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
-                    $relativePath = $_.FullName.Substring($extractPath.Length)
-                    if ($_.PSIsContainer) {
-                        Write-Host "  [DEBUG]   [DIR] $relativePath" -ForegroundColor Cyan
-                    }
-                    else {
-                        Write-Host "  [DEBUG]   [FILE] $relativePath" -ForegroundColor Yellow
-                    }
-                }
-            }
-            else {
-                Write-Host "  [DEBUG] Extract path does not exist: $extractPath" -ForegroundColor Red
-            }
-            
-            # If README not found in expected location, search for it
-            if (-not (Test-Path $newReadmePath)) {
-                Write-Host "  [DEBUG] README not in expected location, searching..." -ForegroundColor Yellow
-                $foundReadme = Get-ChildItem -Path $extractPath -Filter "README.md" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($foundReadme) {
-                    $newReadmePath = $foundReadme.FullName
-                    Write-Host "  [DEBUG] Found README at: $newReadmePath" -ForegroundColor Green
-                }
-                else {
-                    Write-Host "  [DEBUG] README.md not found anywhere in extraction folder" -ForegroundColor Red
-                }
-            }
-            
-            $changelog = Get-ChangelogFromReadme -version $newVersion.ToString() -readmePath $newReadmePath
+            # Get changelog from the newly installed README.md (after files are copied)
+            $installedReadmePath = Join-Path $installPath "README.md"
+            $changelog = Get-ChangelogFromReadme -version $newVersion.ToString() -readmePath $installedReadmePath
             
             if ($changelog.Count -gt 0) {
                 foreach ($line in $changelog) {
@@ -580,7 +509,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.5.5"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.6.0"
 
 # Main menu loop
 do {
