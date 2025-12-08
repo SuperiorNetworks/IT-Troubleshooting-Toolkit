@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 2.6.1
+Version: 2.7.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -56,6 +56,7 @@ Change Log:
 2025-12-08 v2.5.5 - Added complete extraction folder tree debug output
 2025-12-08 v2.6.0 - Fixed changelog display; Simplified README path logic; Removed debug code
 2025-12-08 v2.6.1 - Testing version to verify changelog display works correctly
+2025-12-08 v2.7.0 - Implemented proper self-update mechanism with batch file staging
 
 .RELEASE_NOTES
 v2.5.0:
@@ -177,7 +178,7 @@ function Show-Menu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "               IT Troubleshooting Toolkit - v2.6.1                " -ForegroundColor Cyan
+    Write-Host "               IT Troubleshooting Toolkit - v2.7.0                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Toolkit Management:" -ForegroundColor White
@@ -309,27 +310,93 @@ function Download-And-Install {
             }
         }
 
-        # Copy files from extracted folder to installation path (overwrite existing)
-        Write-Host "Installing to $installPath..." -ForegroundColor Yellow
-        Write-Host "Overwriting existing files if present..." -ForegroundColor Yellow
-        
-        # Copy each item individually with force to ensure overwrite
-        Get-ChildItem -Path $sourceFolder -File | ForEach-Object {
-            Copy-Item -Path $_.FullName -Destination $installPath -Force
-        }
-        
-        # Copy directories recursively with force
-        Get-ChildItem -Path $sourceFolder -Directory | ForEach-Object {
-            $destDir = Join-Path $installPath $_.Name
-            if (Test-Path $destDir) {
-                Remove-Item -Path $destDir -Recurse -Force
+        # For updates, use staged approach with batch file to avoid file locking issues
+        if ($newVersion -gt $currentVersion) {
+            Write-Host "Staging update files..." -ForegroundColor Yellow
+            
+            # Create staging directory
+            $stagingPath = Join-Path $tempDir "staged"
+            if (Test-Path $stagingPath) {
+                Remove-Item -Path $stagingPath -Recurse -Force
             }
-            Copy-Item -Path $_.FullName -Destination $installPath -Recurse -Force
-        }
+            New-Item -ItemType Directory -Path $stagingPath -Force | Out-Null
+            
+            # Copy files to staging
+            Copy-Item -Path "$sourceFolder\*" -Destination $stagingPath -Recurse -Force
+            
+            # Create update batch file
+            $batchFile = Join-Path $tempDir "update.bat"
+            $batchContent = @"
+@echo off
+echo.
+echo ================================================================
+echo                    Applying Update
+echo ================================================================
+echo.
+echo Please wait while the update is applied...
+echo.
 
-        # Cleanup
-        Remove-Item -Path $zipFile -Force
-        Remove-Item -Path $extractPath -Recurse -Force
+:: Wait for PowerShell to fully exit
+timeout /t 2 /nobreak >nul
+
+:: Copy staged files to installation directory
+echo Copying updated files...
+xcopy /E /I /Y /Q "$stagingPath\*" "$installPath\"
+
+:: Cleanup
+echo Cleaning up temporary files...
+rd /s /q "$stagingPath" 2>nul
+rd /s /q "$extractPath" 2>nul
+del /q "$zipFile" 2>nul
+
+:: Restart the launcher
+echo.
+echo Update complete! Restarting toolkit...
+echo.
+timeout /t 2 /nobreak >nul
+
+cd /d "$installPath"
+powershell.exe -ExecutionPolicy Bypass -File "$installPath\launch_menu.ps1"
+
+:: Self-delete the batch file
+del "%~f0"
+"@
+            Set-Content -Path $batchFile -Value $batchContent -Force
+            
+            Write-Host "Update staged successfully." -ForegroundColor Green
+            Write-Host ""
+            Write-Host "The toolkit will now restart to apply the update..." -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "Press any key to continue..."
+            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+            
+            # Launch batch file and exit PowerShell
+            Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$batchFile`"" -WindowStyle Normal
+            exit
+        }
+        else {
+            # For new installs or same version, direct copy is fine
+            Write-Host "Installing to $installPath..." -ForegroundColor Yellow
+            Write-Host "Overwriting existing files if present..." -ForegroundColor Yellow
+            
+            # Copy each item individually with force to ensure overwrite
+            Get-ChildItem -Path $sourceFolder -File | ForEach-Object {
+                Copy-Item -Path $_.FullName -Destination $installPath -Force
+            }
+            
+            # Copy directories recursively with force
+            Get-ChildItem -Path $sourceFolder -Directory | ForEach-Object {
+                $destDir = Join-Path $installPath $_.Name
+                if (Test-Path $destDir) {
+                    Remove-Item -Path $destDir -Recurse -Force
+                }
+                Copy-Item -Path $_.FullName -Destination $installPath -Recurse -Force
+            }
+
+            # Cleanup
+            Remove-Item -Path $zipFile -Force
+            Remove-Item -Path $extractPath -Recurse -Force
+        }
 
         # Display results
         Write-Host ""
@@ -510,7 +577,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.6.1"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.7.0"
 
 # Main menu loop
 do {

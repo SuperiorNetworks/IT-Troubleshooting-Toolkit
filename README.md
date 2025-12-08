@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.6.1  
+**Version:** 2.7.0  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,25 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.7.0 (2025-12-08)
+- **Proper Self-Update Mechanism**: Fixed file replacement during updates
+  - Implements staged update with batch file
+  - Avoids Windows file locking issues
+  - PowerShell exits, batch file copies new files, then restarts toolkit
+  - Industry-standard approach for self-updating applications
+- **Automatic Restart**: Toolkit automatically restarts after update
+  - No manual intervention needed
+  - Seamless update experience
+  - Shows "Applying Update" progress screen
+- **Update Flow**:
+  1. Downloads new version to temp
+  2. Stages files in temporary location
+  3. Creates update batch script
+  4. Exits PowerShell (releases file locks)
+  5. Batch script copies staged files
+  6. Batch script restarts toolkit with new version
+  7. Self-cleans batch file
 
 ### Version 2.6.1 (2025-12-08)
 - **Testing Version**: Verify changelog display functionality
