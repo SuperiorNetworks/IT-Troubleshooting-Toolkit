@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.5.4  
+**Version:** 2.5.5  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,13 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.5.5 (2025-12-08)
+- **Enhanced Debug Output**: Added complete extraction folder tree view
+  - Shows all directories and files in extraction folder
+  - Displays full recursive file listing
+  - Helps identify if README.md is missing from GitHub ZIP
+  - Shows total item count in source folder
 
 ### Version 2.5.4 (2025-12-08)
 - **Improved File Management**: Changed temp directory from C:\WINDOWS\TEMP to C:\ITTools\Temp

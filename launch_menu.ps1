@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 2.5.4
+Version: 2.5.5
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -53,6 +53,7 @@ Change Log:
 2025-12-08 v2.5.2 - Enhanced debug logging to show extraction folder contents
 2025-12-08 v2.5.3 - Testing version for changelog extraction diagnosis
 2025-12-08 v2.5.4 - Changed temp directory to C:\ITTools\Temp; Added README search fallback
+2025-12-08 v2.5.5 - Added complete extraction folder tree debug output
 
 .RELEASE_NOTES
 v2.5.0:
@@ -174,7 +175,7 @@ function Show-Menu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "               IT Troubleshooting Toolkit - v2.5.4                " -ForegroundColor Cyan
+    Write-Host "               IT Troubleshooting Toolkit - v2.5.5                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Toolkit Management:" -ForegroundColor White
@@ -396,9 +397,10 @@ function Download-And-Install {
                 Write-Host "  [DEBUG] Source folder contents:" -ForegroundColor Yellow
                 $folderContents = Get-ChildItem $sourceFolder -ErrorAction SilentlyContinue
                 if ($folderContents) {
-                    $folderContents | Select-Object -First 15 | ForEach-Object {
+                    $folderContents | ForEach-Object {
                         Write-Host "  [DEBUG]   - $($_.Name)" -ForegroundColor Yellow
                     }
+                    Write-Host "  [DEBUG] Total items: $($folderContents.Count)" -ForegroundColor Yellow
                 }
                 else {
                     Write-Host "  [DEBUG]   (folder is empty or inaccessible)" -ForegroundColor Red
@@ -406,6 +408,23 @@ function Download-And-Install {
             }
             else {
                 Write-Host "  [DEBUG] Source folder does not exist!" -ForegroundColor Red
+            }
+            
+            # Show complete extraction folder tree
+            Write-Host "  [DEBUG] Complete extraction folder tree:" -ForegroundColor Yellow
+            if (Test-Path $extractPath) {
+                Get-ChildItem -Path $extractPath -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
+                    $relativePath = $_.FullName.Substring($extractPath.Length)
+                    if ($_.PSIsContainer) {
+                        Write-Host "  [DEBUG]   [DIR] $relativePath" -ForegroundColor Cyan
+                    }
+                    else {
+                        Write-Host "  [DEBUG]   [FILE] $relativePath" -ForegroundColor Yellow
+                    }
+                }
+            }
+            else {
+                Write-Host "  [DEBUG] Extract path does not exist: $extractPath" -ForegroundColor Red
             }
             
             # If README not found in expected location, search for it
@@ -561,7 +580,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.5.4"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.5.5"
 
 # Main menu loop
 do {
