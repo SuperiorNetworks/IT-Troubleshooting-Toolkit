@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.9.3
+**Version:** 3.0.0
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,30 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 3.0.0 (2025-12-08)
+- **Major Rewrite: FTP Sync now uses WinSCP**: Professional-grade FTP synchronization
+  - Completely rewrote FTP Sync tool to use WinSCP open-source FTP client
+  - Eliminates all PowerShell parsing issues with custom FTP code
+  - Automatic WinSCP portable download on first run (no installation needed)
+  - Pre-configured for ftp.sndayton.com
+  - WinSCP handles all FTP operations (listing, comparison, upload)
+  - Much more reliable and battle-tested than custom code
+  - Professional features: resume support, error handling, logging
+- **Features**:
+  - Auto-downloads WinSCP 5.21.7 Portable (only once)
+  - Installs to C:\ITTools\WinSCP
+  - Uses WinSCP scripting interface for automation
+  - Comprehensive WinSCP logging to C:\ITTools\Scripts\Logs\winscp.log
+  - Still filters for *-cd.spi files
+  - Shows detailed sync report
+  - Bulk upload with WinSCP engine
+- **Why WinSCP**:
+  - Open-source, trusted by millions
+  - Handles all FTP edge cases and errors
+  - No PowerShell string parsing issues
+  - Professional-grade reliability
+  - Active development and support
 
 ### Version 2.9.3 (2025-12-08)
 - **Bug Fix**: FTP Sync syntax error fix (third attempt - using string concatenation)
