@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.6.0  
+**Version:** 2.6.1  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,13 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.6.1 (2025-12-08)
+- **Testing Version**: Verify changelog display functionality
+  - Same features as v2.6.0
+  - Allows testing update from v2.6.0 → v2.6.1
+  - Confirms changelog extraction and display works correctly
+  - User can verify color-coded formatting
 
 ### Version 2.6.0 (2025-12-08)
 - **Fixed Changelog Display**: Changelog now displays properly after updates
