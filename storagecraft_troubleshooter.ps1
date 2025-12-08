@@ -4,7 +4,7 @@ StorageCraft Troubleshooter - Submenu for StorageCraft backup tools
 
 .DESCRIPTION
 Name: storagecraft_troubleshooter.ps1
-Version: 1.0.0
+Version: 1.1.0
 Purpose: Centralized submenu for StorageCraft backup troubleshooting tools.
          Provides access to Manual FTP Tool and ImageManager service management.
 Path: /scripts/storagecraft_troubleshooter.ps1
@@ -33,6 +33,7 @@ Dependencies:
 
 Change Log:
 2025-11-22 v1.0.0 - Initial release - Extracted from main launcher as separate submenu
+2025-11-22 v1.1.0 - Added FTP upload log viewer function
 
 .NOTES
 This submenu provides focused access to StorageCraft backup troubleshooting tools.
@@ -68,6 +69,9 @@ function Show-StorageCraftMenu {
     Write-Host "    3. Stop ImageManager Service" -ForegroundColor Red
     Write-Host "    4. Restart ImageManager Service" -ForegroundColor Yellow
     Write-Host "    5. Check ImageManager Service Status" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  Logs and Diagnostics:" -ForegroundColor White
+    Write-Host "    6. View FTP Upload Logs" -ForegroundColor Magenta
     Write-Host ""
     Write-Host "    B. Back to Main Menu" -ForegroundColor Gray
     Write-Host ""
@@ -234,10 +238,63 @@ function Get-ImageManagerServiceStatus {
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
 
+function View-FTPUploadLogs {
+    Write-Host "`n=== FTP Upload Logs ===" -ForegroundColor Cyan
+    Write-Host ""
+    
+    $logFile = "C:\ITTools\Scripts\Logs\ftp_upload_log.txt"
+    
+    if (-not (Test-Path $logFile)) {
+        Write-Host "No log file found." -ForegroundColor Yellow
+        Write-Host "Log file location: $logFile" -ForegroundColor Gray
+        Write-Host "`nThe log file will be created after the first FTP upload." -ForegroundColor Gray
+    }
+    else {
+        $logInfo = Get-Item $logFile
+        $logSizeKB = [math]::Round($logInfo.Length / 1KB, 2)
+        
+        Write-Host "Log File: $logFile" -ForegroundColor Gray
+        Write-Host "Size: $logSizeKB KB | Last Modified: $($logInfo.LastWriteTime)" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "Showing last 100 lines:" -ForegroundColor White
+        Write-Host "─────────────────────────────────────────────────────────────────" -ForegroundColor Gray
+        Write-Host ""
+        
+        try {
+            $logContent = Get-Content $logFile -Tail 100
+            
+            foreach ($line in $logContent) {
+                # Color-code log entries based on level
+                if ($line -match "\[ERROR\]") {
+                    Write-Host $line -ForegroundColor Red
+                }
+                elseif ($line -match "\[WARN\]") {
+                    Write-Host $line -ForegroundColor Yellow
+                }
+                elseif ($line -match "\[SUCCESS\]") {
+                    Write-Host $line -ForegroundColor Green
+                }
+                else {
+                    Write-Host $line -ForegroundColor White
+                }
+            }
+        }
+        catch {
+            Write-Host "Error reading log file: $_" -ForegroundColor Red
+        }
+        
+        Write-Host ""
+        Write-Host "─────────────────────────────────────────────────────────────────" -ForegroundColor Gray
+    }
+    
+    Write-Host "`nPress any key to return to menu..."
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}
+
 # Main menu loop
 do {
     Show-StorageCraftMenu
-    Write-Host "  Select an option (1-5 or B): " -NoNewline -ForegroundColor White
+    Write-Host "  Select an option (1-6 or B): " -NoNewline -ForegroundColor White
     $choice = Read-Host
     
     switch ($choice.ToUpper()) {
@@ -255,6 +312,9 @@ do {
         }
         '5' {
             Get-ImageManagerServiceStatus
+        }
+        '6' {
+            View-FTPUploadLogs
         }
         'B' {
             Write-Host "`nReturning to main menu..." -ForegroundColor Cyan

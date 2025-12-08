@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.2.0  
+**Version:** 2.3.0  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,19 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.3.0 (2025-11-22)
+- **Major Enhancement**: Manual FTP Tool v2.0.0 with enterprise-grade reliability
+  - Added persistent connection with auto-retry (10 attempts)
+  - Implemented resume support for interrupted uploads
+  - Added 60-second timeout detection
+  - Enhanced status reporting with real-time connection monitoring
+  - Comprehensive logging to `C:\ITTools\Scripts\Logs\ftp_upload_log.txt`
+  - Exponential backoff between retry attempts
+  - Speed and time remaining estimates
+  - Automatic skip of failed files with detailed summary report
+- Added FTP Upload Log Viewer to StorageCraft Troubleshooter menu (Option 6)
+- Enhanced error handling and recovery for large file transfers
 
 ### Version 2.2.0 (2025-11-22)
 - **Major Update**: Created separate StorageCraft Troubleshooter script with dedicated submenu
