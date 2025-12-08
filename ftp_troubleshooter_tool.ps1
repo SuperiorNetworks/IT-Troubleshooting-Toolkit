@@ -4,7 +4,7 @@ Manual FTP Tool - Enhanced interactive file uploader with retry logic and resume
 
 .DESCRIPTION
 Name: ftp_troubleshooter_tool.ps1
-Version: 2.0.0
+Version: 2.0.1
 Purpose: Manual FTP file upload utility with persistent connections, auto-retry, resume support,
          and detailed status reporting. Designed as a robust backup solution when automated 
          transfer systems experience issues.
@@ -46,6 +46,7 @@ Change Log:
 2025-11-21 v1.1.0 - Sanitized for public release, removed PII
 2025-11-22 v2.0.0 - Major enhancement: Added retry logic (10 attempts), resume support, 60s timeout,
                     detailed status reporting, connection monitoring, and comprehensive logging
+2025-12-08 v2.0.1 - Fixed crash issue: Added pause before exit on errors so messages are visible
 
 .NOTES
 This tool provides enterprise-grade reliability for FTP uploads with automatic recovery
@@ -99,7 +100,11 @@ function Select-Files {
         return $dialog.FileNames
     }
     else {
+        Write-Host "" 
+        Write-Host "WARNING: No files selected. Exiting." -ForegroundColor Red
         Write-Log "No files selected. Exiting." "WARN"
+        Write-Host "`nPress any key to exit..." -ForegroundColor Gray
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
         exit 1
     }
 }
@@ -116,7 +121,11 @@ function Prompt-For-FtpDetails {
 
     $ftpUser = Read-Host "Enter FTP username"
     if ([string]::IsNullOrWhiteSpace($ftpUser)) {
+        Write-Host ""
+        Write-Host "ERROR: FTP username cannot be empty." -ForegroundColor Red
         Write-Log "FTP username cannot be empty." "ERROR"
+        Write-Host "`nPress any key to exit..." -ForegroundColor Gray
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
         exit 1
     }
 
@@ -291,7 +300,7 @@ function Upload-FileToFTP-WithRetry {
 # --- Main script logic ---
 Write-Host ""
 Write-Host "=================================================================" -ForegroundColor Cyan
-Write-Host "              Manual FTP Tool - Enhanced v2.0.0                 " -ForegroundColor White
+Write-Host "              Manual FTP Tool - Enhanced v2.0.1                 " -ForegroundColor White
 Write-Host "=================================================================" -ForegroundColor Cyan
 Write-Host ""
 

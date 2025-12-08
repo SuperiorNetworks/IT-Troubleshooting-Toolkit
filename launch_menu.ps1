@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 2.3.0
+Version: 2.4.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -47,6 +47,26 @@ Change Log:
 2025-11-22 v2.1.0 - Reorganized menu: Grouped StorageCraft tools under 'StorageCraft Troubleshooter'; Renamed FTP tool to 'Manual FTP Tool'
 2025-11-22 v2.2.0 - Created separate StorageCraft Troubleshooter script with submenu; Simplified main launcher
 2025-11-22 v2.3.0 - Enhanced Manual FTP Tool with retry logic, resume support, and logging; Added log viewer
+2025-12-08 v2.4.0 - Added version detection with update notifications and embedded release notes display
+
+.RELEASE_NOTES
+v2.4.0:
+- Added version detection and update notifications
+- Display release notes when downloading/updating
+- Show whether toolkit is new install, update, or already current
+
+v2.3.0:
+- Enhanced Manual FTP Tool with retry logic and resume support
+- Added FTP upload log viewer in StorageCraft submenu
+- Fixed version number displays across all menus
+
+v2.2.0:
+- Created separate StorageCraft Troubleshooter script with submenu
+- Simplified main launcher menu structure
+
+v2.0.0:
+- Added MassGrave PowerShell Utilities integration
+- Renamed repository to IT-Troubleshooting-Toolkit
 
 .NOTES
 This launcher provides centralized access to multiple IT troubleshooting tools and utilities.
@@ -104,8 +124,63 @@ function Show-Menu {
     Write-Host ""
 }
 
+function Get-CurrentVersion {
+    $launcherPath = Join-Path $installPath "launch_menu.ps1"
+    
+    if (Test-Path $launcherPath) {
+        try {
+            $content = Get-Content $launcherPath -Raw
+            if ($content -match 'Version:\s*(\d+\.\d+\.\d+)') {
+                return [version]$matches[1]
+            }
+        }
+        catch {
+            return $null
+        }
+    }
+    return $null
+}
+
+function Get-ReleaseNotes {
+    param([string]$version)
+    
+    $launcherPath = Join-Path $installPath "launch_menu.ps1"
+    
+    if (Test-Path $launcherPath) {
+        try {
+            $content = Get-Content $launcherPath -Raw
+            
+            # Extract release notes section
+            if ($content -match '\.RELEASE_NOTES\s*(.*?)\s*\.NOTES') {
+                $releaseNotesSection = $matches[1]
+                
+                # Extract notes for specific version
+                if ($releaseNotesSection -match "v$version`:\s*(.*?)(?=\s*v\d+\.\d+\.\d+`:|$)") {
+                    $notes = $matches[1].Trim()
+                    return $notes -split "`n" | Where-Object { $_ -match '^\s*-' } | ForEach-Object { $_.Trim() }
+                }
+            }
+        }
+        catch {
+            return @()
+        }
+    }
+    return @()
+}
+
 function Download-And-Install {
-    Write-Host "`n=== Downloading Latest Version ===" -ForegroundColor Cyan
+    Write-Host "`n=== Checking for Updates ===" -ForegroundColor Cyan
+    
+    # Get current version if installed
+    $currentVersion = Get-CurrentVersion
+    $isNewInstall = $null -eq $currentVersion
+    
+    if ($isNewInstall) {
+        Write-Host "No existing installation found." -ForegroundColor Yellow
+    }
+    else {
+        Write-Host "Current version: $currentVersion" -ForegroundColor Cyan
+    }
     
     try {
         # Create installation directory if it doesn't exist
@@ -131,8 +206,19 @@ function Download-And-Install {
         
         Expand-Archive -Path $zipFile -DestinationPath $extractPath -Force
 
-        # Copy files from extracted folder to installation path (overwrite existing)
+        # Get new version from downloaded files
         $sourceFolder = Join-Path $extractPath "$repoName-master"
+        $newLauncherPath = Join-Path $sourceFolder "launch_menu.ps1"
+        $newVersion = $null
+        
+        if (Test-Path $newLauncherPath) {
+            $content = Get-Content $newLauncherPath -Raw
+            if ($content -match 'Version:\s*(\d+\.\d+\.\d+)') {
+                $newVersion = [version]$matches[1]
+            }
+        }
+
+        # Copy files from extracted folder to installation path (overwrite existing)
         Write-Host "Installing to $installPath..." -ForegroundColor Yellow
         Write-Host "Overwriting existing files if present..." -ForegroundColor Yellow
         
@@ -154,19 +240,72 @@ function Download-And-Install {
         Remove-Item -Path $zipFile -Force
         Remove-Item -Path $extractPath -Recurse -Force
 
-        Write-Host "`nInstallation complete!" -ForegroundColor Green
-        Write-Host "Files installed to: $installPath" -ForegroundColor Green
+        # Display results
+        Write-Host ""
+        Write-Host "=================================================================" -ForegroundColor Cyan
+        
+        if ($isNewInstall) {
+            Write-Host "                  Installation Complete                          " -ForegroundColor White
+            Write-Host "=================================================================" -ForegroundColor Cyan
+            Write-Host ""
+            Write-Host "  ✓ Installed IT Troubleshooting Toolkit v$newVersion" -ForegroundColor Green
+        }
+        elseif ($newVersion -gt $currentVersion) {
+            Write-Host "                    Update Complete                              " -ForegroundColor White
+            Write-Host "=================================================================" -ForegroundColor Cyan
+            Write-Host ""
+            Write-Host "  ✓ Updated from v$currentVersion → v$newVersion" -ForegroundColor Green
+        }
+        elseif ($newVersion -eq $currentVersion) {
+            Write-Host "                  Already Up-to-Date                             " -ForegroundColor White
+            Write-Host "=================================================================" -ForegroundColor Cyan
+            Write-Host ""
+            Write-Host "  ✓ You already have the latest version: v$newVersion" -ForegroundColor Green
+            Write-Host ""
+            Write-Host "  No updates available." -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "                  Installation Complete                          " -ForegroundColor White
+            Write-Host "=================================================================" -ForegroundColor Cyan
+            Write-Host ""
+            Write-Host "  ✓ Installed version: v$newVersion" -ForegroundColor Green
+        }
+        
+        # Show release notes if new install or update
+        if ($isNewInstall -or ($newVersion -gt $currentVersion)) {
+            Write-Host ""
+            Write-Host "  What's New in v$newVersion`:" -ForegroundColor Cyan
+            $releaseNotes = Get-ReleaseNotes -version $newVersion.ToString()
+            if ($releaseNotes.Count -gt 0) {
+                foreach ($note in $releaseNotes) {
+                    Write-Host "  $note" -ForegroundColor White
+                }
+            }
+            else {
+                Write-Host "  - Bug fixes and improvements" -ForegroundColor White
+            }
+        }
+        
+        Write-Host ""
+        Write-Host "  Installation Path: $installPath" -ForegroundColor Gray
+        Write-Host ""
         
     }
     catch {
+        Write-Host ""
+        Write-Host "=================================================================" -ForegroundColor Red
+        Write-Host "                    Installation Failed                          " -ForegroundColor White
+        Write-Host "=================================================================" -ForegroundColor Red
+        Write-Host ""
         Write-Error "Failed to download and install: $_"
         Write-Host "`nTroubleshooting tips:" -ForegroundColor Yellow
         Write-Host "- Check your internet connection" -ForegroundColor Yellow
         Write-Host "- Ensure you have write permissions to $installPath" -ForegroundColor Yellow
         Write-Host "- Try running PowerShell as Administrator" -ForegroundColor Yellow
+        Write-Host ""
     }
     
-    Write-Host "`nPress any key to return to menu..."
+    Write-Host "Press any key to return to menu..." -ForegroundColor Gray
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
 
