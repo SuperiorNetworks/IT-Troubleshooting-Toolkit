@@ -4,9 +4,9 @@ StorageCraft Troubleshooter - Submenu for StorageCraft backup tools
 
 .DESCRIPTION
 Name: storagecraft_troubleshooter.ps1
-Version: 1.1.1
+Version: 1.2.0
 Purpose: Centralized submenu for StorageCraft backup troubleshooting tools.
-         Provides access to Manual FTP Tool and ImageManager service management.
+         Provides access to Manual FTP Tool, FTP Sync, and ImageManager service management.
 Path: /scripts/storagecraft_troubleshooter.ps1
 Copyright: 2025
 
@@ -35,6 +35,7 @@ Change Log:
 2025-11-22 v1.0.0 - Initial release - Extracted from main launcher as separate submenu
 2025-11-22 v1.1.0 - Added FTP upload log viewer function
 2025-12-08 v1.1.1 - Fixed version display; Fixed Manual FTP Tool launch to wait for completion
+2025-12-08 v1.2.0 - Added FTP Sync tool for comparing local backups with FTP destination
 
 .NOTES
 This submenu provides focused access to StorageCraft backup troubleshooting tools.
@@ -44,6 +45,7 @@ Designed for IT professionals and MSPs managing StorageCraft backup solutions.
 # Configuration
 $installPath = "C:\ITTools\Scripts"
 $ftpScriptName = "ftp_troubleshooter_tool.ps1"
+$ftpSyncScriptName = "ftp_sync_tool.ps1"
 $serviceName = "StorageCraft ImageManager"
 
 function Test-Administrator {
@@ -59,20 +61,21 @@ function Show-StorageCraftMenu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "              StorageCraft Troubleshooter - v1.1.1                " -ForegroundColor Cyan
+    Write-Host "              StorageCraft Troubleshooter - v1.2.0                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Manual Tools:" -ForegroundColor White
     Write-Host "    1. Manual FTP Tool" -ForegroundColor Yellow
+    Write-Host "    2. FTP Sync" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "  ImageManager Service Management:" -ForegroundColor White
-    Write-Host "    2. Start ImageManager Service" -ForegroundColor Green
-    Write-Host "    3. Stop ImageManager Service" -ForegroundColor Red
-    Write-Host "    4. Restart ImageManager Service" -ForegroundColor Yellow
-    Write-Host "    5. Check ImageManager Service Status" -ForegroundColor Cyan
+    Write-Host "    3. Start ImageManager Service" -ForegroundColor Green
+    Write-Host "    4. Stop ImageManager Service" -ForegroundColor Red
+    Write-Host "    5. Restart ImageManager Service" -ForegroundColor Yellow
+    Write-Host "    6. Check ImageManager Service Status" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Logs and Diagnostics:" -ForegroundColor White
-    Write-Host "    6. View FTP Upload Logs" -ForegroundColor Magenta
+    Write-Host "    7. View FTP Upload Logs" -ForegroundColor Magenta
     Write-Host ""
     Write-Host "    B. Back to Main Menu" -ForegroundColor Gray
     Write-Host ""
@@ -91,6 +94,30 @@ function Show-StorageCraftMenu {
     }
     
     Write-Host ""
+}
+
+function Run-FTPSync {
+    Write-Host "`n=== Launching FTP Sync Tool ===" -ForegroundColor Cyan
+    
+    $scriptPath = Join-Path $installPath $ftpSyncScriptName
+    
+    if (Test-Path $scriptPath) {
+        Write-Host "Starting FTP Sync..." -ForegroundColor Green
+        Write-Host "Script location: $scriptPath" -ForegroundColor Gray
+        Write-Host ""
+        
+        & $scriptPath
+        
+        Write-Host "`nPress any key to return to menu..." -ForegroundColor Gray
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
+    else {
+        Write-Host "`nError: FTP Sync Tool not found!" -ForegroundColor Red
+        Write-Host "Expected location: $scriptPath" -ForegroundColor Yellow
+        Write-Host "`nPlease use the main menu to download and install the toolkit first." -ForegroundColor Yellow
+        Write-Host "`nPress any key to return to menu..."
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
 }
 
 function Run-ManualFTPTool {
@@ -297,7 +324,7 @@ function View-FTPUploadLogs {
 # Main menu loop
 do {
     Show-StorageCraftMenu
-    Write-Host "  Select an option (1-6 or B): " -NoNewline -ForegroundColor White
+    Write-Host "  Select an option (1-7 or B): " -NoNewline -ForegroundColor White
     $choice = Read-Host
     
     switch ($choice.ToUpper()) {
@@ -305,18 +332,21 @@ do {
             Run-ManualFTPTool
         }
         '2' {
-            Start-ImageManagerService
+            Run-FTPSync
         }
         '3' {
-            Stop-ImageManagerService
+            Start-ImageManagerService
         }
         '4' {
-            Restart-ImageManagerService
+            Stop-ImageManagerService
         }
         '5' {
-            Get-ImageManagerServiceStatus
+            Restart-ImageManagerService
         }
         '6' {
+            Get-ImageManagerServiceStatus
+        }
+        '7' {
             View-FTPUploadLogs
         }
         'B' {
@@ -324,7 +354,7 @@ do {
             exit 0
         }
         default {
-            Write-Host "`nInvalid selection. Please choose 1-5 or B." -ForegroundColor Red
+            Write-Host "`nInvalid selection. Please choose 1-7 or B." -ForegroundColor Red
             Start-Sleep -Seconds 2
         }
     }

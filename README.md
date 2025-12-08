@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.7.1  
+**Version:** 2.9.0  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,25 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.9.0 (2025-12-08)
+- **New Feature: FTP Sync Tool**: Compare local backup files with FTP destination
+  - Scans local directory for StorageCraft backup files ending in `-cd.spi`
+  - Connects to FTP server and retrieves file listing
+  - Compares files by name and size to identify sync status
+  - Shows files on source (local) but not on destination (FTP)
+  - Displays detailed report with file names, sizes, and dates
+  - Allows bulk upload of missing files
+  - Export report option for documentation
+  - Comprehensive logging to `ftp_sync_log.txt`
+- **Menu Enhancement**: Added FTP Sync to StorageCraft Troubleshooter submenu
+  - New option #2 under "Manual Tools" section
+  - Renumbered existing menu options for consistency
+  - Updated StorageCraft Troubleshooter to v1.2.0
+- **Use Case**: Identify which backup files need to be uploaded to FTP for replication
+  - Perfect for monitoring backup sync status
+  - Quick identification of missing incremental backups
+  - Streamlines manual backup replication workflows
 
 ### Version 2.7.1 (2025-12-08)
 - **Dynamic Version Display**: Version now reads dynamically from script header
