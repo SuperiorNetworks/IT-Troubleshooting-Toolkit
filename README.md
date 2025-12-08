@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.7.0  
+**Version:** 2.7.1  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,17 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.7.1 (2025-12-08)
+- **Dynamic Version Display**: Version now reads dynamically from script header
+  - No more hardcoded version strings
+  - Menu always shows correct version
+  - Prevents version display mismatches
+  - Automatically updates when script updates
+- **Bug Fix**: Fixed version display showing old version after update
+  - Menu now reflects actual installed version
+  - Reads version from `Version:` field in script header
+  - Single source of truth for version number
 
 ### Version 2.7.0 (2025-12-08)
 - **Proper Self-Update Mechanism**: Fixed file replacement during updates

@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 2.7.0
+Version: 2.7.1
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -57,6 +57,7 @@ Change Log:
 2025-12-08 v2.6.0 - Fixed changelog display; Simplified README path logic; Removed debug code
 2025-12-08 v2.6.1 - Testing version to verify changelog display works correctly
 2025-12-08 v2.7.0 - Implemented proper self-update mechanism with batch file staging
+2025-12-08 v2.7.1 - Fixed version display; Made version dynamic instead of hardcoded
 
 .RELEASE_NOTES
 v2.5.0:
@@ -174,11 +175,21 @@ function Test-Administrator {
 function Show-Menu {
     Clear-Host
     
+    # Get version dynamically from script header
+    $scriptVersion = "Unknown"
+    $scriptPath = $PSCommandPath
+    if (Test-Path $scriptPath) {
+        $content = Get-Content $scriptPath -Raw
+        if ($content -match 'Version:\s*(\d+\.\d+\.\d+)') {
+            $scriptVersion = $matches[1]
+        }
+    }
+    
     # Superior Networks Branding Header
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "               IT Troubleshooting Toolkit - v2.7.0                " -ForegroundColor Cyan
+    Write-Host "               IT Troubleshooting Toolkit - v$scriptVersion                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Toolkit Management:" -ForegroundColor White
@@ -577,7 +588,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.7.0"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.7.1"
 
 # Main menu loop
 do {
