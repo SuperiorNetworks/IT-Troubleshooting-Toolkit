@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.9.1
+**Version:** 2.9.2
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,14 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.9.2 (2025-12-08)
+- **Bug Fix**: Corrected FTP Sync syntax error fix (second attempt)
+  - Previous fix using `${totalGB}` still caused parser errors in PowerShell 5.1
+  - Changed to use format operator: `("{0} files ({1} GB)" -f $count, $totalGB)`
+  - Format operator avoids string interpolation issues entirely
+  - FTP Sync tool now loads correctly without parser errors
+  - More reliable cross-version PowerShell compatibility
 
 ### Version 2.9.1 (2025-12-08)
 - **Bug Fix**: Fixed PowerShell syntax error in FTP Sync tool
