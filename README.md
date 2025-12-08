@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.5.3  
+**Version:** 2.5.4  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,17 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.5.4 (2025-12-08)
+- **Improved File Management**: Changed temp directory from C:\WINDOWS\TEMP to C:\ITTools\Temp
+  - All toolkit files now stay within C:\ITTools directory structure
+  - Temp files: C:\ITTools\Temp
+  - Scripts: C:\ITTools\Scripts
+  - Logs: C:\ITTools\Scripts\Logs
+- **Enhanced README Detection**: Added fallback search for README.md
+  - If not found in expected location, recursively searches extraction folder
+  - More robust changelog extraction
+  - Better error messages showing where files are actually located
 
 ### Version 2.5.3 (2025-12-08)
 - **Testing Version**: Continued diagnosis of changelog extraction

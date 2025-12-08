@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 2.5.3
+Version: 2.5.4
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -52,6 +52,7 @@ Change Log:
 2025-12-08 v2.5.1 - Added debug logging to changelog extraction for troubleshooting
 2025-12-08 v2.5.2 - Enhanced debug logging to show extraction folder contents
 2025-12-08 v2.5.3 - Testing version for changelog extraction diagnosis
+2025-12-08 v2.5.4 - Changed temp directory to C:\ITTools\Temp; Added README search fallback
 
 .RELEASE_NOTES
 v2.5.0:
@@ -173,7 +174,7 @@ function Show-Menu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "               IT Troubleshooting Toolkit - v2.5.3                " -ForegroundColor Cyan
+    Write-Host "               IT Troubleshooting Toolkit - v2.5.4                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Toolkit Management:" -ForegroundColor White
@@ -290,8 +291,15 @@ function Download-And-Install {
 
         # Download the latest release as ZIP
         $zipUrl = "https://github.com/$repoOwner/$repoName/archive/refs/heads/master.zip"
-        $zipFile = Join-Path $env:TEMP "ftp-troubleshooter.zip"
-        $extractPath = Join-Path $env:TEMP "ftp-troubleshooter-extract"
+        $tempDir = Join-Path $installPath "Temp"
+        
+        # Create temp directory if it doesn't exist
+        if (-not (Test-Path $tempDir)) {
+            New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+        }
+        
+        $zipFile = Join-Path $tempDir "ftp-troubleshooter.zip"
+        $extractPath = Join-Path $tempDir "ftp-troubleshooter-extract"
 
         Write-Host "Downloading from GitHub..." -ForegroundColor Yellow
         Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile -UseBasicParsing
@@ -386,8 +394,30 @@ function Download-And-Install {
             
             if (Test-Path $sourceFolder) {
                 Write-Host "  [DEBUG] Source folder contents:" -ForegroundColor Yellow
-                Get-ChildItem $sourceFolder | Select-Object -First 10 | ForEach-Object {
-                    Write-Host "  [DEBUG]   - $($_.Name)" -ForegroundColor Yellow
+                $folderContents = Get-ChildItem $sourceFolder -ErrorAction SilentlyContinue
+                if ($folderContents) {
+                    $folderContents | Select-Object -First 15 | ForEach-Object {
+                        Write-Host "  [DEBUG]   - $($_.Name)" -ForegroundColor Yellow
+                    }
+                }
+                else {
+                    Write-Host "  [DEBUG]   (folder is empty or inaccessible)" -ForegroundColor Red
+                }
+            }
+            else {
+                Write-Host "  [DEBUG] Source folder does not exist!" -ForegroundColor Red
+            }
+            
+            # If README not found in expected location, search for it
+            if (-not (Test-Path $newReadmePath)) {
+                Write-Host "  [DEBUG] README not in expected location, searching..." -ForegroundColor Yellow
+                $foundReadme = Get-ChildItem -Path $extractPath -Filter "README.md" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($foundReadme) {
+                    $newReadmePath = $foundReadme.FullName
+                    Write-Host "  [DEBUG] Found README at: $newReadmePath" -ForegroundColor Green
+                }
+                else {
+                    Write-Host "  [DEBUG] README.md not found anywhere in extraction folder" -ForegroundColor Red
                 }
             }
             
@@ -531,7 +561,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.5.3"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.5.4"
 
 # Main menu loop
 do {
