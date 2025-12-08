@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.9.0
+**Version:** 2.9.1
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,23 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.9.1 (2025-12-08)
+- **Bug Fix**: Fixed PowerShell syntax error in FTP Sync tool
+  - Corrected string interpolation issue on line 291
+  - Changed `($totalGB GB)` to `(${totalGB} GB)` to prevent parser error
+  - FTP Sync tool now loads and runs correctly
+- **New Feature: Toolkit Logs Menu**: Added log viewer submenu to main launcher
+  - New option #2 under "Toolkit Management" section
+  - Opens dedicated submenu for viewing all toolkit logs
+  - Renumbered existing menu options (StorageCraft now #3, MAS now #4)
+- **Log Viewer Features**:
+  - View Master Audit Log in Notepad
+  - View FTP Upload Log in Notepad
+  - View FTP Sync Log in Notepad
+  - Shows log file size and last modified date
+  - Handles missing log files gracefully
+  - Returns to submenu after viewing
 
 ### Version 2.9.0 (2025-12-08)
 - **New Feature: FTP Sync Tool**: Compare local backup files with FTP destination

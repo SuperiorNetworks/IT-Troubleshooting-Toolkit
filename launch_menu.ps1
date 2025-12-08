@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 2.9.0
+Version: 2.9.1
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -196,12 +196,13 @@ function Show-Menu {
     Write-Host ""
     Write-Host "  Toolkit Management:" -ForegroundColor White
     Write-Host "    1. Download and Install Latest Version" -ForegroundColor Green
+    Write-Host "    2. Toolkit Logs" -ForegroundColor Gray
     Write-Host ""
     Write-Host "  Troubleshooting Tools:" -ForegroundColor White
-    Write-Host "    2. StorageCraft Troubleshooter" -ForegroundColor Cyan
+    Write-Host "    3. StorageCraft Troubleshooter" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Windows/Office Activation:" -ForegroundColor White
-    Write-Host "    3. Run MassGrave Activation Scripts (MAS)" -ForegroundColor Magenta
+    Write-Host "    4. Run MassGrave Activation Scripts (MAS)" -ForegroundColor Magenta
     Write-Host ""
     Write-Host "    Q. Quit" -ForegroundColor Red
     Write-Host ""
@@ -536,6 +537,96 @@ function Run-StorageCraftTroubleshooter {
     }
 }
 
+function Show-ToolkitLogs {
+    do {
+        Clear-Host
+        
+        Write-Host ""
+        Write-Host "  =================================================================" -ForegroundColor Cyan
+        Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
+        Write-Host "                      Toolkit Logs Viewer                         " -ForegroundColor Cyan
+        Write-Host "  =================================================================" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "  Available Logs:" -ForegroundColor White
+        Write-Host "    1. View Master Audit Log" -ForegroundColor Green
+        Write-Host "    2. View FTP Upload Log" -ForegroundColor Yellow
+        Write-Host "    3. View FTP Sync Log" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "    B. Back to Main Menu" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "  Log Directory: $logDirectory" -ForegroundColor Gray
+        Write-Host ""
+        
+        Write-Host "  Select an option (1-3 or B): " -NoNewline -ForegroundColor White
+        $choice = Read-Host
+        
+        switch ($choice.ToUpper()) {
+            '1' {
+                Write-AuditLog -action "Toolkit Logs" -details "Opening Master Audit Log"
+                Open-LogInEditor -logPath $auditLogFile -logName "Master Audit Log"
+            }
+            '2' {
+                $ftpLogPath = Join-Path $logDirectory "ftp_upload_log.txt"
+                Write-AuditLog -action "Toolkit Logs" -details "Opening FTP Upload Log"
+                Open-LogInEditor -logPath $ftpLogPath -logName "FTP Upload Log"
+            }
+            '3' {
+                $ftpSyncLogPath = Join-Path $logDirectory "ftp_sync_log.txt"
+                Write-AuditLog -action "Toolkit Logs" -details "Opening FTP Sync Log"
+                Open-LogInEditor -logPath $ftpSyncLogPath -logName "FTP Sync Log"
+            }
+            'B' {
+                Write-Host "`nReturning to main menu..." -ForegroundColor Cyan
+                return
+            }
+            default {
+                Write-Host "`nInvalid selection. Please choose 1-3 or B." -ForegroundColor Red
+                Start-Sleep -Seconds 2
+            }
+        }
+    } while ($true)
+}
+
+function Open-LogInEditor {
+    param (
+        [string]$logPath,
+        [string]$logName
+    )
+    
+    Write-Host ""
+    Write-Host "=== Opening $logName ===" -ForegroundColor Cyan
+    Write-Host ""
+    
+    if (-not (Test-Path $logPath)) {
+        Write-Host "Log file not found: $logPath" -ForegroundColor Yellow
+        Write-Host "The log file will be created when the corresponding tool is used." -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "Press any key to return to logs menu..." -ForegroundColor Gray
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        return
+    }
+    
+    $logInfo = Get-Item $logPath
+    $logSizeKB = [math]::Round($logInfo.Length / 1KB, 2)
+    
+    Write-Host "Log File: $logPath" -ForegroundColor Gray
+    Write-Host "Size: $logSizeKB KB | Last Modified: $($logInfo.LastWriteTime)" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Opening in Notepad..." -ForegroundColor Green
+    
+    try {
+        Start-Process notepad.exe -ArgumentList $logPath
+        Write-Host "Notepad launched successfully." -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Error opening log file: $($_.Exception.Message)" -ForegroundColor Red
+    }
+    
+    Write-Host ""
+    Write-Host "Press any key to return to logs menu..." -ForegroundColor Gray
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}
+
 function Run-MassGraveActivation {
     Write-Host "`n=== MassGrave Activation Scripts (MAS) ===" -ForegroundColor Cyan
     Write-Host ""
@@ -595,7 +686,7 @@ Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Lau
 # Main menu loop
 do {
     Show-Menu
-    Write-Host "  Select an option (1-3 or Q): " -NoNewline -ForegroundColor White
+    Write-Host "  Select an option (1-4 or Q): " -NoNewline -ForegroundColor White
     $choice = Read-Host
     
     switch ($choice.ToUpper()) {
@@ -609,7 +700,16 @@ do {
             }
         }
         '2' {
-            Write-AuditLog -action "Menu Selection" -details "Option 2: StorageCraft Troubleshooter"
+            Write-AuditLog -action "Menu Selection" -details "Option 2: Toolkit Logs"
+            try {
+                Show-ToolkitLogs
+            } catch {
+                Write-AuditLog -action "Toolkit Logs" -level "ERROR" -errorMessage $_.Exception.Message
+                throw
+            }
+        }
+        '3' {
+            Write-AuditLog -action "Menu Selection" -details "Option 3: StorageCraft Troubleshooter"
             try {
                 Run-StorageCraftTroubleshooter
             } catch {
@@ -617,8 +717,8 @@ do {
                 throw
             }
         }
-        '3' {
-            Write-AuditLog -action "Menu Selection" -details "Option 3: Run MassGrave Activation Scripts"
+        '4' {
+            Write-AuditLog -action "Menu Selection" -details "Option 4: Run MassGrave Activation Scripts"
             try {
                 Run-MassGraveActivation
             } catch {
@@ -633,7 +733,7 @@ do {
         }
         default {
             Write-AuditLog -action "Invalid Menu Selection" -level "WARN" -details "User entered: $choice"
-            Write-Host "`nInvalid selection. Please choose 1-3 or Q." -ForegroundColor Red
+            Write-Host "`nInvalid selection. Please choose 1-4 or Q." -ForegroundColor Red
             Start-Sleep -Seconds 2
         }
     }
