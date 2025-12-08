@@ -288,7 +288,8 @@ function Show-SyncReport {
     Write-Host ""
     Write-Host "-----------------------------------------------------------------" -ForegroundColor Gray
     $totalGB = [math]::Round($totalSize / 1GB, 2)
-    Write-Host ("Total: {0} files ({1} GB)" -f $missingFiles.Count, $totalGB) -ForegroundColor Cyan
+    $summaryText = "Total: " + $missingFiles.Count + " files (" + $totalGB + " GB)"
+    Write-Host $summaryText -ForegroundColor Cyan
     Write-Host ""
 }
 

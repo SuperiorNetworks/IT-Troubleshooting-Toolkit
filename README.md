@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.9.2
+**Version:** 2.9.3
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,16 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.9.3 (2025-12-08)
+- **Bug Fix**: FTP Sync syntax error fix (third attempt - using string concatenation)
+  - Format operator still caused parser errors in PowerShell 5.1
+  - Changed to simple string concatenation with intermediate variable
+  - `$summaryText = "Total: " + $count + " files (" + $totalGB + " GB)"`
+  - Then: `Write-Host $summaryText -ForegroundColor Cyan`
+  - This completely avoids all string interpolation and format operator issues
+  - Most reliable approach that works in all PowerShell versions
+  - No complex parsing - just basic string concatenation
 
 ### Version 2.9.2 (2025-12-08)
 - **Bug Fix**: Corrected FTP Sync syntax error fix (second attempt)
