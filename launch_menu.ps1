@@ -214,28 +214,54 @@ function Get-ChangelogFromReadme {
     # Use provided README path or default to installed version
     $readme = if ($readmePath) { $readmePath } else { Join-Path $installPath "README.md" }
     
-    if (Test-Path $readme) {
-        try {
-            $content = Get-Content $readme -Raw
+    if (-not (Test-Path $readme)) {
+        Write-Host "  [DEBUG] README not found at: $readme" -ForegroundColor Yellow
+        return @()
+    }
+    
+    try {
+        $content = Get-Content $readme -Raw -ErrorAction Stop
+        
+        # Extract changelog section for specific version
+        # Pattern: ### Version X.X.X (date) followed by bullet points until next version or section
+        $pattern = "### Version $version \([^)]+\)\s*([\s\S]*?)(?=### Version|## |\z)"
+        
+        if ($content -match $pattern) {
+            $changelogText = $matches[1].Trim()
             
-            # Extract changelog section for specific version
-            # Pattern: ### Version X.X.X (date) followed by bullet points until next version or section
-            $pattern = "### Version $version \([^)]+\)\s*([\s\S]*?)(?=### Version|## |\z)"
-            
-            if ($content -match $pattern) {
-                $changelogText = $matches[1].Trim()
-                
-                # Split into lines and filter for bullet points and sub-bullets
-                $lines = $changelogText -split "`n" | Where-Object { $_.Trim() -ne "" }
-                
-                return $lines
+            if ($changelogText.Length -eq 0) {
+                Write-Host "  [DEBUG] Changelog text is empty for version $version" -ForegroundColor Yellow
+                return @()
             }
+            
+            # Split into lines and filter for bullet points and sub-bullets
+            $lines = $changelogText -split "`n" | Where-Object { $_.Trim() -ne "" }
+            
+            if ($lines.Count -eq 0) {
+                Write-Host "  [DEBUG] No lines found after splitting changelog" -ForegroundColor Yellow
+                return @()
+            }
+            
+            return $lines
         }
-        catch {
+        else {
+            Write-Host "  [DEBUG] Pattern did not match for version $version" -ForegroundColor Yellow
+            Write-Host "  [DEBUG] Pattern used: $pattern" -ForegroundColor Yellow
+            
+            # Check if version header exists at all
+            if ($content -match "### Version $version") {
+                Write-Host "  [DEBUG] Version header found but full pattern failed" -ForegroundColor Yellow
+            }
+            else {
+                Write-Host "  [DEBUG] Version header not found in README" -ForegroundColor Yellow
+            }
             return @()
         }
     }
-    return @()
+    catch {
+        Write-Host "  [DEBUG] Error reading README: $_" -ForegroundColor Red
+        return @()
+    }
 }
 
 function Download-And-Install {
