@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 2.4.0
+Version: 2.5.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -16,7 +16,7 @@ Key Features:
 - FTP Troubleshooter Tool access (manual file uploads)
 - StorageCraft ImageManager service management (start/stop/restart/status)
 - User-friendly color-coded menu interface
-- Real-time service status display
+- Comprehensive master audit logging for troubleshooting
 - Administrator privilege detection
 - Superior Networks branding
 
@@ -48,8 +48,15 @@ Change Log:
 2025-11-22 v2.2.0 - Created separate StorageCraft Troubleshooter script with submenu; Simplified main launcher
 2025-11-22 v2.3.0 - Enhanced Manual FTP Tool with retry logic, resume support, and logging; Added log viewer
 2025-12-08 v2.4.0 - Added version detection with update notifications and embedded release notes display
+2025-12-08 v2.5.0 - Added comprehensive master audit logging system; Removed persistent ImageManager status display
 
 .RELEASE_NOTES
+v2.5.0:
+- Added comprehensive master audit logging system for troubleshooting
+- Logs all user actions, menu selections, and errors to C:\ITTools\Scripts\Logs\master_audit_log.txt
+- Captures diagnostic info: username, computer, admin status, PS version, OS version, timestamps
+- Removed persistent ImageManager status from main menu (cleaner interface)
+
 v2.4.0:
 - Added version detection and update notifications
 - Display release notes when downloading/updating
@@ -79,6 +86,76 @@ $repoName = "IT-Troubleshooting-Toolkit"
 $installPath = "C:\ITTools\Scripts"
 $scriptName = "ftp_troubleshooter_tool.ps1"
 $serviceName = "StorageCraft ImageManager"
+$logDirectory = "C:\ITTools\Scripts\Logs"
+$auditLogFile = Join-Path $logDirectory "master_audit_log.txt"
+
+# Ensure log directory exists
+if (-not (Test-Path $logDirectory)) {
+    New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
+}
+
+function Write-AuditLog {
+    param (
+        [string]$action,
+        [string]$details = "",
+        [string]$level = "INFO",
+        [string]$errorMessage = ""
+    )
+    
+    try {
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        $username = $env:USERNAME
+        $computername = $env:COMPUTERNAME
+        $isAdmin = Test-Administrator
+        $adminStatus = if ($isAdmin) { "Admin" } else { "User" }
+        $psVersion = $PSVersionTable.PSVersion.ToString()
+        $osVersion = [System.Environment]::OSVersion.VersionString
+        
+        # Build log entry with all diagnostic information
+        $logEntry = "[$timestamp] [$level] [$adminStatus] $username@$computername`n"
+        $logEntry += "  Action: $action`n"
+        
+        if ($details) {
+            $logEntry += "  Details: $details`n"
+        }
+        
+        if ($errorMessage) {
+            $logEntry += "  Error: $errorMessage`n"
+            $logEntry += "  Stack: $($Error[0].ScriptStackTrace)`n"
+        }
+        
+        $logEntry += "  Environment: PS $psVersion | $osVersion`n"
+        $logEntry += "  Path: $installPath`n"
+        $logEntry += "  $("="*70)`n"
+        
+        # Write to audit log file
+        Add-Content -Path $auditLogFile -Value $logEntry -ErrorAction SilentlyContinue
+        
+    } catch {
+        # Silently fail if logging fails - don't disrupt user experience
+    }
+}
+
+function Get-AuditLogSummary {
+    if (Test-Path $auditLogFile) {
+        $content = Get-Content $auditLogFile -Raw
+        $lines = $content -split "`n"
+        $totalEntries = ($lines | Select-String -Pattern "^\[\d{4}-\d{2}-\d{2}").Count
+        $errorEntries = ($lines | Select-String -Pattern "\[ERROR\]").Count
+        $warnEntries = ($lines | Select-String -Pattern "\[WARN\]").Count
+        $fileSize = (Get-Item $auditLogFile).Length
+        $fileSizeKB = [math]::Round($fileSize / 1KB, 2)
+        
+        return @{
+            TotalEntries = $totalEntries
+            ErrorCount = $errorEntries
+            WarnCount = $warnEntries
+            FileSizeKB = $fileSizeKB
+            LastModified = (Get-Item $auditLogFile).LastWriteTime
+        }
+    }
+    return $null
+}
 
 function Test-Administrator {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -93,7 +170,7 @@ function Show-Menu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "               IT Troubleshooting Toolkit - v2.4.0                " -ForegroundColor Cyan
+    Write-Host "               IT Troubleshooting Toolkit - v2.5.0                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Toolkit Management:" -ForegroundColor White
@@ -108,19 +185,6 @@ function Show-Menu {
     Write-Host "    Q. Quit" -ForegroundColor Red
     Write-Host ""
     Write-Host "  Installation Path: $installPath" -ForegroundColor Gray
-    
-    # Show current service status
-    try {
-        $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
-        if ($service) {
-            $statusColor = if ($service.Status -eq 'Running') { 'Green' } else { 'Yellow' }
-            Write-Host "  ImageManager Status: " -NoNewline -ForegroundColor Gray
-            Write-Host $service.Status -ForegroundColor $statusColor
-        }
-    } catch {
-        # Service not found, silently continue
-    }
-    
     Write-Host ""
 }
 
@@ -295,6 +359,10 @@ function Download-And-Install {
         Write-Host "  Installation Path: $installPath" -ForegroundColor Gray
         Write-Host ""
         
+        # Log successful installation
+        $installType = if ($isNewInstall) { "New Install" } elseif ($newVersion -gt $currentVersion) { "Update" } else { "Reinstall" }
+        Write-AuditLog -action "Download and Install" -details "$installType completed: v$newVersion" -level "INFO"
+        
     }
     catch {
         Write-Host ""
@@ -303,6 +371,9 @@ function Download-And-Install {
         Write-Host "=================================================================" -ForegroundColor Red
         Write-Host ""
         Write-Error "Failed to download and install: $_"
+        
+        # Log installation failure
+        Write-AuditLog -action "Download and Install" -level "ERROR" -errorMessage $_.Exception.Message
         Write-Host "`nTroubleshooting tips:" -ForegroundColor Yellow
         Write-Host "- Check your internet connection" -ForegroundColor Yellow
         Write-Host "- Ensure you have write permissions to $installPath" -ForegroundColor Yellow
@@ -324,6 +395,8 @@ function Run-StorageCraftTroubleshooter {
         Write-Host "Starting StorageCraft Troubleshooter..." -ForegroundColor Green
         Write-Host ""
         
+        Write-AuditLog -action "StorageCraft Troubleshooter" -details "Launched submenu script: $scScriptName"
+        
         # Run the StorageCraft submenu script
         & $scriptPath
         
@@ -332,6 +405,9 @@ function Run-StorageCraftTroubleshooter {
         Write-Host "`nError: StorageCraft Troubleshooter not found!" -ForegroundColor Red
         Write-Host "Expected location: $scriptPath" -ForegroundColor Yellow
         Write-Host "`nPlease use Option 1 to download and install first." -ForegroundColor Yellow
+        
+        Write-AuditLog -action "StorageCraft Troubleshooter" -level "ERROR" -errorMessage "Script not found: $scriptPath"
+        
         Write-Host "`nPress any key to return to menu..."
         $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     }
@@ -360,12 +436,16 @@ function Run-MassGraveActivation {
         Write-Host "Please wait..." -ForegroundColor Yellow
         Write-Host ""
         
+        Write-AuditLog -action "MassGrave Activation" -details "User confirmed launch, downloading from get.activated.win"
+        
         try {
             # Execute the MAS script
             Invoke-Expression (Invoke-RestMethod -Uri 'https://get.activated.win')
+            Write-AuditLog -action "MassGrave Activation" -details "MAS script executed successfully"
         }
         catch {
             Write-Host "Error launching MAS: $_" -ForegroundColor Red
+            Write-AuditLog -action "MassGrave Activation" -level "ERROR" -errorMessage $_.Exception.Message
             Write-Host ""
             Write-Host "Troubleshooting:" -ForegroundColor Yellow
             Write-Host "- Check your internet connection" -ForegroundColor Yellow
@@ -377,6 +457,7 @@ function Run-MassGraveActivation {
         }
     }
     else {
+        Write-AuditLog -action "MassGrave Activation" -details "User cancelled MAS launch"
         Write-Host ""
         Write-Host "MAS launch cancelled." -ForegroundColor Yellow
         Write-Host ""
@@ -384,6 +465,9 @@ function Run-MassGraveActivation {
         $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     }
 }
+
+# Log script startup
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.5.0"
 
 # Main menu loop
 do {
@@ -393,19 +477,39 @@ do {
     
     switch ($choice.ToUpper()) {
         '1' {
-            Download-And-Install
+            Write-AuditLog -action "Menu Selection" -details "Option 1: Download and Install Latest Version"
+            try {
+                Download-And-Install
+            } catch {
+                Write-AuditLog -action "Download and Install" -level "ERROR" -errorMessage $_.Exception.Message
+                throw
+            }
         }
         '2' {
-            Run-StorageCraftTroubleshooter
+            Write-AuditLog -action "Menu Selection" -details "Option 2: StorageCraft Troubleshooter"
+            try {
+                Run-StorageCraftTroubleshooter
+            } catch {
+                Write-AuditLog -action "StorageCraft Troubleshooter" -level "ERROR" -errorMessage $_.Exception.Message
+                throw
+            }
         }
         '3' {
-            Run-MassGraveActivation
+            Write-AuditLog -action "Menu Selection" -details "Option 3: Run MassGrave Activation Scripts"
+            try {
+                Run-MassGraveActivation
+            } catch {
+                Write-AuditLog -action "MassGrave Activation" -level "ERROR" -errorMessage $_.Exception.Message
+                throw
+            }
         }
         'Q' {
+            Write-AuditLog -action "Script Exited" -details "User selected Quit"
             Write-Host "`nExiting..." -ForegroundColor Cyan
             exit 0
         }
         default {
+            Write-AuditLog -action "Invalid Menu Selection" -level "WARN" -details "User entered: $choice"
             Write-Host "`nInvalid selection. Please choose 1-3 or Q." -ForegroundColor Red
             Start-Sleep -Seconds 2
         }
