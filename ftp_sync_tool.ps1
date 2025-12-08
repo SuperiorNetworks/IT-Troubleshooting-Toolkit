@@ -48,7 +48,7 @@ $logDirectory = "C:\ITTools\Scripts\Logs"
 $logFile = Join-Path $logDirectory "ftp_sync_log.txt"
 $winscpDirectory = "C:\ITTools\WinSCP"
 $winscpExe = Join-Path $winscpDirectory "WinSCP.com"
-$winscpUrl = "https://winscp.net/download/WinSCP-5.21.7-Portable.zip"
+$winscpUrl = "https://github.com/winscp/winscp/releases/download/v6.3.5/WinSCP-6.3.5-Portable.zip"
 
 # Ensure directories exist
 if (-not (Test-Path $logDirectory)) {
@@ -107,15 +107,17 @@ function Download-WinSCP {
     try {
         Write-Host "Downloading WinSCP... Please wait..." -ForegroundColor Yellow
         
-        # Download with progress
-        $webClient = New-Object System.Net.WebClient
-        $webClient.DownloadFile($winscpUrl, $zipPath)
+        # Use Invoke-WebRequest for better compatibility
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri $winscpUrl -OutFile $zipPath -UseBasicParsing
+        $ProgressPreference = 'Continue'
         
         Write-Log "Download complete!" "SUCCESS"
         Write-Host "Extracting files..." -ForegroundColor Yellow
         
-        # Extract
-        Expand-Archive -Path $zipPath -DestinationPath $winscpDirectory -Force
+        # Extract using .NET instead of Expand-Archive for better compatibility
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $winscpDirectory)
         
         # Clean up
         Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
@@ -128,6 +130,7 @@ function Download-WinSCP {
         Write-Log "Failed to download WinSCP: $($_.Exception.Message)" "ERROR"
         Write-Host ""
         Write-Host "Please download WinSCP manually from: https://winscp.net/" -ForegroundColor Yellow
+        Write-Host "Extract to: $winscpDirectory" -ForegroundColor Yellow
         return $false
     }
 }

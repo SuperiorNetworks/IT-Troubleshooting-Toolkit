@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.0.0
+**Version:** 3.0.1
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,15 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 3.0.1 (2025-12-08)
+- **Bug Fix**: Fixed WinSCP download and extraction error
+  - Changed download URL to GitHub releases (more reliable)
+  - Updated to WinSCP 6.3.5 (latest stable)
+  - Replaced `Expand-Archive` with .NET `ZipFile.ExtractToDirectory` for better compatibility
+  - Changed download method from `WebClient` to `Invoke-WebRequest` for reliability
+  - Fixed "End of Central Directory record" extraction error
+  - Better error messages with manual download instructions
 
 ### Version 3.0.0 (2025-12-08)
 - **Major Rewrite: FTP Sync now uses WinSCP**: Professional-grade FTP synchronization
