@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.4.0  
+**Version:** 2.5.0  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,17 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.5.0 (2025-12-08)
+- **Master Audit Logging System**: Comprehensive logging for troubleshooting and support
+  - Logs all user actions, menu selections, and errors to `C:\ITTools\Scripts\Logs\master_audit_log.txt`
+  - Captures diagnostic information: username, computer name, admin status, PowerShell version, OS version, timestamps
+  - Structured log format with severity levels (INFO, WARN, ERROR)
+  - Complete error messages with stack traces for debugging
+  - Silent failure on logging errors (doesn't disrupt user experience)
+- **UI Improvement**: Removed persistent ImageManager status from main menu for cleaner interface
+- **Enhanced Changelog Display**: Now shows detailed changelog from README.md after updates (instead of brief embedded notes)
+- Status information still available in StorageCraft Troubleshooter submenu when needed
 
 ### Version 2.4.0 (2025-12-08)
 - **Enhanced Installer**: Added intelligent version detection to Download and Install function

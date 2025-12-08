@@ -205,28 +205,30 @@ function Get-CurrentVersion {
     return $null
 }
 
-function Get-ReleaseNotes {
+function Get-ChangelogFromReadme {
     param(
         [string]$version,
-        [string]$filePath = ""
+        [string]$readmePath = ""
     )
     
-    # Use provided file path or default to installed version
-    $launcherPath = if ($filePath) { $filePath } else { Join-Path $installPath "launch_menu.ps1" }
+    # Use provided README path or default to installed version
+    $readme = if ($readmePath) { $readmePath } else { Join-Path $installPath "README.md" }
     
-    if (Test-Path $launcherPath) {
+    if (Test-Path $readme) {
         try {
-            $content = Get-Content $launcherPath -Raw
+            $content = Get-Content $readme -Raw
             
-            # Extract release notes section
-            if ($content -match '\.RELEASE_NOTES\s*(.*?)\s*\.NOTES') {
-                $releaseNotesSection = $matches[1]
+            # Extract changelog section for specific version
+            # Pattern: ### Version X.X.X (date) followed by bullet points until next version or section
+            $pattern = "### Version $version \([^)]+\)\s*([\s\S]*?)(?=### Version|## |\z)"
+            
+            if ($content -match $pattern) {
+                $changelogText = $matches[1].Trim()
                 
-                # Extract notes for specific version
-                if ($releaseNotesSection -match "v$version`:\s*(.*?)(?=\s*v\d+\.\d+\.\d+`:|$)") {
-                    $notes = $matches[1].Trim()
-                    return $notes -split "`n" | Where-Object { $_ -match '^\s*-' } | ForEach-Object { $_.Trim() }
-                }
+                # Split into lines and filter for bullet points and sub-bullets
+                $lines = $changelogText -split "`n" | Where-Object { $_.Trim() -ne "" }
+                
+                return $lines
             }
         }
         catch {
@@ -339,15 +341,35 @@ function Download-And-Install {
             Write-Host "  ✓ Installed version: v$newVersion" -ForegroundColor Green
         }
         
-        # Show release notes if new install or update
+        # Show changelog if new install or update
         if ($isNewInstall -or ($newVersion -gt $currentVersion)) {
             Write-Host ""
             Write-Host "  What's New in v$newVersion`:" -ForegroundColor Cyan
-            # Get release notes from the newly downloaded file
-            $releaseNotes = Get-ReleaseNotes -version $newVersion.ToString() -filePath $newLauncherPath
-            if ($releaseNotes.Count -gt 0) {
-                foreach ($note in $releaseNotes) {
-                    Write-Host "  $note" -ForegroundColor White
+            Write-Host "" 
+            
+            # Get changelog from the newly downloaded README.md
+            $newReadmePath = Join-Path $sourceFolder "README.md"
+            $changelog = Get-ChangelogFromReadme -version $newVersion.ToString() -readmePath $newReadmePath
+            
+            if ($changelog.Count -gt 0) {
+                foreach ($line in $changelog) {
+                    # Format different line types with appropriate colors
+                    if ($line -match '^-\s*\*\*') {
+                        # Main bullet with bold (e.g., - **Feature**: description)
+                        Write-Host "  $line" -ForegroundColor Green
+                    }
+                    elseif ($line -match '^\s+-\s+') {
+                        # Sub-bullet (indented)
+                        Write-Host "  $line" -ForegroundColor Gray
+                    }
+                    elseif ($line -match '^-\s+') {
+                        # Regular bullet
+                        Write-Host "  $line" -ForegroundColor White
+                    }
+                    else {
+                        # Other text
+                        Write-Host "  $line" -ForegroundColor White
+                    }
                 }
             }
             else {
