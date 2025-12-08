@@ -4,7 +4,7 @@ StorageCraft Troubleshooter - Submenu for StorageCraft backup tools
 
 .DESCRIPTION
 Name: storagecraft_troubleshooter.ps1
-Version: 1.1.0
+Version: 1.1.1
 Purpose: Centralized submenu for StorageCraft backup troubleshooting tools.
          Provides access to Manual FTP Tool and ImageManager service management.
 Path: /scripts/storagecraft_troubleshooter.ps1
@@ -34,6 +34,7 @@ Dependencies:
 Change Log:
 2025-11-22 v1.0.0 - Initial release - Extracted from main launcher as separate submenu
 2025-11-22 v1.1.0 - Added FTP upload log viewer function
+2025-12-08 v1.1.1 - Fixed version display; Fixed Manual FTP Tool launch to wait for completion
 
 .NOTES
 This submenu provides focused access to StorageCraft backup troubleshooting tools.
@@ -58,7 +59,7 @@ function Show-StorageCraftMenu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "              StorageCraft Troubleshooter - v1.0.0                " -ForegroundColor Cyan
+    Write-Host "              StorageCraft Troubleshooter - v1.1.1                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Manual Tools:" -ForegroundColor White
@@ -104,6 +105,8 @@ function Run-ManualFTPTool {
         
         & $scriptPath
         
+        Write-Host "`nPress any key to return to menu..." -ForegroundColor Gray
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     }
     else {
         Write-Host "`nError: Manual FTP Tool not found!" -ForegroundColor Red
