@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.5.2  
+**Version:** 2.5.3  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,12 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.5.3 (2025-12-08)
+- **Testing Version**: Continued diagnosis of changelog extraction
+  - Same debug features as v2.5.2
+  - Allows testing update from v2.5.2 → v2.5.3
+  - Will show extraction folder contents and README path
 
 ### Version 2.5.2 (2025-12-08)
 - **Enhanced Debug Logging**: Added extraction folder contents listing
