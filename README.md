@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.7.1  
+**Version:** 2.7.2  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,18 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.7.2 (2025-12-08)
+- **Added launcher.bat**: Proper toolkit launcher included in repository
+  - Ensures toolkit always runs from `C:\ITTools\Scripts`
+  - Prevents running from wrong location (e.g., TEMP folder)
+  - Automatically installed with toolkit
+  - Error handling if toolkit not found
+  - Professional launch experience
+- **Usage**: Double-click `launcher.bat` to start the toolkit
+  - Located at: `C:\ITTools\Scripts\launcher.bat`
+  - Can create desktop shortcut to this file
+  - Always runs the correct installed version
 
 ### Version 2.7.1 (2025-12-08)
 - **Dynamic Version Display**: Version now reads dynamically from script header
