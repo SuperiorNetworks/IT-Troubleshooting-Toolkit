@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.3.0  
+**Version:** 2.4.0  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,16 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.4.0 (2025-12-08)
+- **Enhanced Installer**: Added intelligent version detection to Download and Install function
+  - Automatically detects currently installed version
+  - Compares with latest version from GitHub
+  - Displays appropriate message: "New Install", "Update Complete", or "Already Up-to-Date"
+  - Shows embedded release notes for new installs and updates
+  - Improved user feedback with formatted status messages
+- Updated Manual FTP Tool to v2.0.1 (confirmed pause before exit already present)
+- Enhanced user experience with clear version upgrade path
 
 ### Version 2.3.0 (2025-11-22)
 - **Major Enhancement**: Manual FTP Tool v2.0.0 with enterprise-grade reliability
