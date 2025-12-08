@@ -93,7 +93,7 @@ function Show-Menu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "               IT Troubleshooting Toolkit - v2.3.0                " -ForegroundColor Cyan
+    Write-Host "               IT Troubleshooting Toolkit - v2.4.0                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Toolkit Management:" -ForegroundColor White
@@ -142,9 +142,13 @@ function Get-CurrentVersion {
 }
 
 function Get-ReleaseNotes {
-    param([string]$version)
+    param(
+        [string]$version,
+        [string]$filePath = ""
+    )
     
-    $launcherPath = Join-Path $installPath "launch_menu.ps1"
+    # Use provided file path or default to installed version
+    $launcherPath = if ($filePath) { $filePath } else { Join-Path $installPath "launch_menu.ps1" }
     
     if (Test-Path $launcherPath) {
         try {
@@ -275,7 +279,8 @@ function Download-And-Install {
         if ($isNewInstall -or ($newVersion -gt $currentVersion)) {
             Write-Host ""
             Write-Host "  What's New in v$newVersion`:" -ForegroundColor Cyan
-            $releaseNotes = Get-ReleaseNotes -version $newVersion.ToString()
+            # Get release notes from the newly downloaded file
+            $releaseNotes = Get-ReleaseNotes -version $newVersion.ToString() -filePath $newLauncherPath
             if ($releaseNotes.Count -gt 0) {
                 foreach ($note in $releaseNotes) {
                     Write-Host "  $note" -ForegroundColor White

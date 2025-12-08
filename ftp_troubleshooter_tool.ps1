@@ -4,7 +4,7 @@ Manual FTP Tool - Enhanced interactive file uploader with retry logic and resume
 
 .DESCRIPTION
 Name: ftp_troubleshooter_tool.ps1
-Version: 2.0.1
+Version: 2.0.2
 Purpose: Manual FTP file upload utility with persistent connections, auto-retry, resume support,
          and detailed status reporting. Designed as a robust backup solution when automated 
          transfer systems experience issues.
@@ -47,6 +47,7 @@ Change Log:
 2025-11-22 v2.0.0 - Major enhancement: Added retry logic (10 attempts), resume support, 60s timeout,
                     detailed status reporting, connection monitoring, and comprehensive logging
 2025-12-08 v2.0.1 - Fixed crash issue: Added pause before exit on errors so messages are visible
+2025-12-08 v2.0.2 - Fixed Unicode character encoding issue causing PowerShell parser errors
 
 .NOTES
 This tool provides enterprise-grade reliability for FTP uploads with automatic recovery
@@ -300,7 +301,7 @@ function Upload-FileToFTP-WithRetry {
 # --- Main script logic ---
 Write-Host ""
 Write-Host "=================================================================" -ForegroundColor Cyan
-Write-Host "              Manual FTP Tool - Enhanced v2.0.1                 " -ForegroundColor White
+Write-Host "              Manual FTP Tool - Enhanced v2.0.2                 " -ForegroundColor White
 Write-Host "=================================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -331,7 +332,7 @@ $failedFiles = @()
 
 foreach ($file in $selectedFiles) {
     Write-Host ""
-    Write-Host "─────────────────────────────────────────────────────────────────" -ForegroundColor Gray
+    Write-Host "-----------------------------------------------------------------" -ForegroundColor Gray
     
     $result = Upload-FileToFTP-WithRetry -filePath $file -ftpServer $ftpDetails.Server -ftpUser $ftpDetails.User -ftpPass $ftpDetails.Pass
     
