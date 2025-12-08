@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 2.7.2  
+**Version:** 2.8.0  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,32 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 2.8.0 (2025-12-08)
+- **Bootstrap Installer**: Smart one-command installer and launcher
+  - Automatically installs toolkit if not present
+  - Checks for updates and auto-updates if available
+  - Launches toolkit from correct location (`C:\ITTools\Scripts`)
+  - Can be run from anywhere - handles everything automatically
+  - Perfect for technicians - single command to run
+  - Can be bookmarked or added to shortcuts
+- **Usage Options**:
+  - **Option 1**: Direct from GitHub (no download needed):
+    ```powershell
+    PowerShell.exe -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
+    ```
+  - **Option 2**: Download bootstrap.ps1 and run:
+    ```powershell
+    PowerShell.exe -ExecutionPolicy Bypass -File bootstrap.ps1
+    ```
+  - **Option 3**: Use launcher.bat (after installation):
+    - Located at: `C:\ITTools\Scripts\launcher.bat`
+- **Smart Features**:
+  - Version detection and comparison
+  - Automatic installation to `C:\ITTools\Scripts`
+  - Update checking against GitHub
+  - Clean error handling and user feedback
+  - Professional installation experience
 
 ### Version 2.7.2 (2025-12-08)
 - **Added launcher.bat**: Proper toolkit launcher included in repository
