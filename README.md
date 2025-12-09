@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.0.2
+**Version:** 3.0.3
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,14 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 3.0.3 (2025-12-08)
+- **Bug Fix**: Fixed WinSCP download URL (404 error)
+  - Changed from GitHub releases URL to official winscp.net download
+  - Updated to WinSCP 6.5.5 (latest version)
+  - URL: https://winscp.net/download/WinSCP-6.5.5-Portable.zip
+  - This URL is more reliable and directly from WinSCP official site
+  - Download should now work correctly
 
 ### Version 3.0.2 (2025-12-08)
 - **Version Bump**: Maintenance release

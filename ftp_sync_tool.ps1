@@ -48,7 +48,7 @@ $logDirectory = "C:\ITTools\Scripts\Logs"
 $logFile = Join-Path $logDirectory "ftp_sync_log.txt"
 $winscpDirectory = "C:\ITTools\WinSCP"
 $winscpExe = Join-Path $winscpDirectory "WinSCP.com"
-$winscpUrl = "https://github.com/winscp/winscp/releases/download/v6.3.5/WinSCP-6.3.5-Portable.zip"
+$winscpUrl = "https://winscp.net/download/WinSCP-6.5.5-Portable.zip"
 
 # Ensure directories exist
 if (-not (Test-Path $logDirectory)) {
