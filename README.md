@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.0.1
+**Version:** 3.0.2
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,11 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 3.0.2 (2025-12-08)
+- **Version Bump**: Maintenance release
+  - No functional changes
+  - Version increment for deployment tracking
 
 ### Version 3.0.1 (2025-12-08)
 - **Bug Fix**: Fixed WinSCP download and extraction error
