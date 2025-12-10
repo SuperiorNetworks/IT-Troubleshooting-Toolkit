@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.0.3
+**Version:** 3.1.0
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -369,6 +369,25 @@ This software is provided as-is without warranty of any kind.
 ---
 
 ## Change Log
+
+### Version 3.1.0 (2025-12-10)
+- **New Feature**: FTP Sync with ImageManager Integration
+  - Query ImageManager.mdb database for replication queue
+  - Display files waiting to replicate from ImageManager queue
+  - Upload queued files directly via FTP using WinSCP
+  - Automatic database schema discovery
+  - Pre-configured for ftp.sndayton.com
+  - New menu option: "FTP Sync (ImageManager Queue)"
+- **New Files**:
+  - `ftp_sync_imagemanager.ps1` - ImageManager-integrated FTP sync tool
+  - `imagemanager_db_module.ps1` - Database query module (utility)
+- **Updated Files**:
+  - `storagecraft_troubleshooter.ps1` (v1.2.0 → v1.3.0)
+    - Added option 3: FTP Sync (ImageManager Queue)
+    - Renumbered all subsequent menu options (4-8)
+  - `launch_menu.ps1` (v3.0.3 → v3.1.0)
+
+**Use Case**: Administrators can now upload files directly from ImageManager's replication queue, ensuring only files that ImageManager has queued for replication are uploaded via FTP. This is more accurate than directory comparison.
 
 ### Version 3.0.3 (2025-12-08)
 - **Bug Fix**: Fixed WinSCP download URL (404 error)
