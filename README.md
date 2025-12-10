@@ -1,370 +1,485 @@
-# IT Troubleshooting Toolkit Launcher
+# IT Troubleshooting Toolkit
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.1.0
+**Version:** 3.1.0  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
+---
+
 ## Overview
 
-The IT Troubleshooting Toolkit Launcher is a comprehensive PowerShell-based menu system that provides quick access to essential troubleshooting tools and utilities. Designed for IT professionals and MSPs, this launcher centralizes common troubleshooting tasks into a single, easy-to-use interface.
+The **IT Troubleshooting Toolkit** is a comprehensive PowerShell-based solution designed for IT professionals and Managed Service Providers (MSPs) managing **StorageCraft ShadowProtect** backup environments. This toolkit provides powerful automation tools for backup management, FTP synchronization, ImageManager integration, and service diagnostics.
 
-## Available Tools
+### Key Capabilities
 
-The launcher provides access to the following tools:
+- **StorageCraft Backup Management** - Complete toolset for managing ShadowProtect backups
+- **FTP Synchronization** - Multiple methods to sync backups to offsite FTP servers
+- **ImageManager Integration** - Query replication queue and manage backup jobs
+- **Service Management** - Control ImageManager service (start/stop/restart/status)
+- **Automated Deployment** - One-command installation and auto-update system
+- **Comprehensive Logging** - Track all operations with detailed audit trails
 
-### 1. Manual FTP Tool
-Interactive file uploader with GUI file picker for manual FTP transfers. Ideal for backup operations when automated systems fail.
-
-**Features:**
-- GUI-based file selection (single or multiple files)
-- Configurable FTP server with override option
-- Secure credential handling
-- Real-time progress tracking
-- 1MB buffer for efficient large file transfers
-
-### 2. StorageCraft ImageManager Service Management
-Complete service control for StorageCraft ImageManager backup service.
-
-**Features:**
-- Start/Stop/Restart service operations
-- Real-time service status monitoring
-- Detailed service information display
-- Administrator privilege detection
-- **MassGrave Activation Scripts (MAS)**: Windows and Office activation utility
-
-### 3. MassGrave Activation Scripts (MAS)
-Open-source Windows and Office activation utility featuring multiple activation methods.
-
-**Features:**
-- HWID (Digital License) for permanent Windows 10-11 activation
-- Ohook for permanent Office activation
-- TSforge for Windows/ESU/Office activation
-- Online KMS activation (180 days, renewable with task)
-- Advanced activation troubleshooting
-- Fully open source and based on batch scripts
-- Source: [https://massgrave.dev/](https://massgrave.dev/)
-
-## Purpose
-
-This toolkit launcher serves as a centralized troubleshooting hub for IT professionals, providing:
-
-- **Quick Access**: Launch multiple troubleshooting tools from a single menu
-- **Service Management**: Control critical backup and system services
-- **Failover Solutions**: Manual tools when automated systems fail
-- **Ease of Use**: User-friendly menu interface with clear options
-- **Self-Updating**: Download and install latest versions automatically
-
-## Launcher Menu Features
-
-- **Self-Contained Installation**: Automatic download and installation from GitHub
-- **File Overwrite Protection**: Safely updates existing installations
-- **Interactive Menu System**: Easy-to-navigate options with color-coded display
-- **Real-Time Status**: Shows current service status in menu
-- **Administrator Detection**: Automatically detects privilege level for service operations
-- **Tool Integration**: Seamlessly launches individual troubleshooting tools
-- **Persistent Menu**: Returns to menu after each operation for quick access
-
-## System Requirements
-
-- **Operating System**: Windows 10/11 or Windows Server 2016+
-- **PowerShell**: Version 5.1 or higher
-- **.NET Framework**: 4.5 or higher (for System.Windows.Forms)
-- **Network**: Access to the target FTP server
-- **Permissions**: Ability to execute PowerShell scripts (see Setup section)
+---
 
 ## Quick Start
 
-### Option 1: Launch the Toolkit Menu (Recommended)
+### One-Command Installation & Launch
 
-Download and run the interactive launcher menu:
-
-```powershell
-# Download the launcher
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/launch_menu.ps1" -OutFile "$env:TEMP\launch_menu.ps1"
-
-# Run the launcher menu
-PowerShell.exe -ExecutionPolicy Bypass -File "$env:TEMP\launch_menu.ps1"
-```
-
-**The launcher menu provides access to:**
-
-**Toolkit Management:**
-- **Option 1**: Download and install latest toolkit version to `C:\ITTools\Scripts`
-
-**Troubleshooting Tools:**
-- **Option 2**: FTP Troubleshooter Tool (manual file upload)
-
-**Service Management:**
-- **Option 3**: Start StorageCraft ImageManager service
-- **Option 4**: Stop StorageCraft ImageManager service
-- **Option 5**: Restart StorageCraft ImageManager service
-- **Option 6**: Check ImageManager service status
-
-### Option 2: One-Line Install and Launch
-
-Download, install, and launch the toolkit menu in one command:
+Run this command in PowerShell (as Administrator):
 
 ```powershell
-# Create directory, download, extract, and launch menu
-$installPath = "C:\ITTools\Scripts"; New-Item -ItemType Directory -Path $installPath -Force | Out-Null; Invoke-WebRequest**URL:** https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkitt/archive/refs/heads/master.zip" -OutFile "$env:TEMP\ftp-tool.zip"; Expand-Archive -Path "$env:TEMP\ftp-tool.zip" -DestinationPath "$env:TEMP\ftp-extract" -Force; Copy-Item -Path "$env:TEMP\ftp-extract\IT-Troubleshooting-Toolkit-master\*" -Destination $installPath -Recurse -Force; PowerShell.exe -ExecutionPolicy Bypass -File "$installPath\launch_menu.ps1"
+PowerShell.exe -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
 ```
 
-### Option 3: Manual Installation
+**What this does:**
+- Automatically installs the toolkit to `C:\ITTools\Scripts` (if not present)
+- Checks for updates and auto-updates if available
+- Launches the main menu
+- Can be run from anywhere - handles everything automatically
 
-1. Download the repository as a ZIP file from GitHub
-2. Extract to `C:\ITTools\Scripts` (or your preferred location)
-3. Run `launch_menu.ps1` to access the toolkit menu
+### After Installation
 
-## Installation
+The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
-### Automated Installation via PowerShell
+**To launch the toolkit:**
+- Double-click `launcher.bat`, or
+- Create a desktop shortcut to `launcher.bat`, or
+- Run the bootstrap command again (it will detect existing installation)
 
-To download and install to the default location (`C:\ITTools\Scripts`):
+---
 
-```powershell
-# Create installation directory
-$installPath = "C:\ITTools\Scripts"
-New-Item -ItemType Directory -Path $installPath -Force
+## Main Menu Structure
 
-# Download latest version
-$zipUrl = "https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/archive/refs/heads/master.zip"
-$zipFile = "$env:TEMP\ftp-troubleshooter.zip"
-Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile
+```
+SUPERIOR NETWORKS LLC
+IT Troubleshooting Toolkit - v3.1.0
 
-# Extract files
-$extractPath = "$env:TEMP\ftp-troubleshooter-extract"
-Expand-Archive -Path $zipFile -DestinationPath $extractPath -Force
+Toolkit Management:
+  1. Download and Install Latest Version
+  2. Toolkit Logs
 
-# Copy to installation directory
-Copy-Item -Path "$extractPath\IT-Troubleshooting-Toolkit-master\*" -Destination $installPath -Recurse -Force
+Troubleshooting Tools:
+  3. StorageCraft Troubleshooter
 
-Write-Host "Installation complete! Files are in: $installPath"
+Windows/Office Activation:
+  4. Run MassGrave Activation Scripts (MAS)
+
+  Q. Quit
 ```
 
-### Manual Installation
+---
 
-1. Download the `ftp_troubleshooter_tool.ps1` file from this repository
-2. Save it to a convenient location (e.g., `C:\ITTools\Scripts` or your Desktop)
-3. No additional installation required—the script is self-contained
+## StorageCraft Troubleshooter
 
-## Setup
+The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive backup management tools:
 
-### First-Time PowerShell Script Execution
+```
+SUPERIOR NETWORKS LLC
+StorageCraft Troubleshooter - v1.3.0
 
-If you've never run PowerShell scripts before, you'll need to adjust the execution policy:
+Manual Tools:
+  1. Manual FTP Tool
+  2. FTP Sync
+  3. FTP Sync (ImageManager Queue)
 
-1. Open **PowerShell as Administrator**
-2. Run the following command:
-   ```powershell
-   Set-ExecutionPolicy RemoteSigned
-   ```
-3. Type `Y` and press Enter to confirm
+ImageManager Service Management:
+  4. Start ImageManager Service
+  5. Stop ImageManager Service
+  6. Restart ImageManager Service
+  7. Check ImageManager Service Status
 
-This setting allows you to run locally-created scripts while maintaining security for downloaded scripts.
+Logs and Diagnostics:
+  8. View FTP Upload Logs
 
-## Configuration
-
-### Setting Your Default FTP Server
-
-Before first use, edit line 38 in the script to set your default FTP server:
-
-```powershell
-$defaultFtpServer = "ftp.sndayton.com"
+  B. Back to Main Menu
 ```
 
-Replace `ftp.sndayton.com` with your preferred FTP server address. This default can still be overridden at runtime.
+---
 
-## Usage
+## Feature Details
 
-### Method 1: Right-Click Execution (Easiest)
+### 1. Manual FTP Tool
 
-1. Navigate to the script file in File Explorer
-2. Right-click on `launch_menu.ps1`
-3. Select **"Run with PowerShell"**
-4. The toolkit menu will appear with all available options
+**Purpose:** Manual file selection and FTP upload when ImageManager replication fails
 
-### Method 2: PowerShell Console (Recommended)
+**Features:**
+- Browse and select `.spi` backup files from local directory
+- Multi-file selection support
+- Upload to FTP server with progress tracking
+- Pre-configured for ftp.sndayton.com
+- Comprehensive logging to `ftp_upload_log.txt`
+- Error handling and retry logic
 
-1. Open PowerShell (no admin rights needed for most options)
-2. Navigate to the toolkit directory:
-   ```powershell
-   cd C:\ITTools\Scripts
-   ```
-3. Launch the toolkit menu:
-   ```powershell
-   .\launch_menu.ps1
-   ```
+**Use Case:** When ImageManager FTP replication is stuck or failing, manually upload critical backup files
 
-### Method 3: Direct Launch from Any Location
+**File:** `ftp_troubleshooter_tool.ps1`
 
-Launch the toolkit menu directly without changing directories:
+---
 
-```powershell
-PowerShell.exe -ExecutionPolicy Bypass -File "C:\ITTools\Scripts\launch_menu.ps1"
+### 2. FTP Sync (Directory Comparison)
+
+**Purpose:** Compare local backup directory with FTP server to identify missing files
+
+**Features:**
+- Scans local directory for `-cd.spi` files (incremental backups)
+- Connects to FTP server using **WinSCP** (professional FTP client)
+- Compares files by name and size
+- Displays detailed sync report showing files on local but not on FTP
+- Bulk upload missing files using WinSCP engine
+- Automatic WinSCP portable download (first run only)
+- Export report to text file
+- Comprehensive logging to `ftp_sync_log.txt`
+
+**Technology:**
+- Uses **WinSCP 6.5.5 Portable** (open-source, trusted by millions)
+- Auto-downloads from winscp.net on first run (~8 MB)
+- Installs to `C:\ITTools\WinSCP`
+- No installation required - fully portable
+
+**Use Case:** Monitor backup sync status and identify which incremental backups need uploading
+
+**File:** `ftp_sync_tool.ps1`
+
+---
+
+### 3. FTP Sync (ImageManager Queue) ⭐ NEW
+
+**Purpose:** Query ImageManager database for replication queue and upload queued files via FTP
+
+**Features:**
+- **Queries ImageManager.mdb database** directly
+- Automatic database schema discovery
+- Finds replication-related tables (ReplicationQueue, Jobs, Tasks, etc.)
+- Extracts file paths from queue data
+- Displays all files waiting to replicate
+- Shows source table and column for each file
+- Upload queued files via WinSCP
+- Pre-configured for ftp.sndayton.com
+- Comprehensive logging to `ftp_sync_imagemanager_log.txt`
+
+**Technology:**
+- Uses **Microsoft ACE OLE DB Provider** to query .mdb database
+- Connection: `Provider=Microsoft.ACE.OLEDB.12.0`
+- No Access installation required (uses OLE DB driver)
+- Smart table discovery algorithm
+- Searches for `.spi` files in database fields
+
+**Database Location:** `C:\Program Files (x86)\StorageCraft\ImageManager\ImageManager.mdb`
+
+**Why This Is Better:**
+- ✅ Reads directly from ImageManager's queue
+- ✅ Shows only files ImageManager has queued for replication
+- ✅ More accurate than directory comparison
+- ✅ Reflects ImageManager's actual state
+- ✅ Helps troubleshoot why files aren't replicating
+
+**Use Case:** Upload files that ImageManager has queued but hasn't replicated yet. Perfect for troubleshooting replication issues.
+
+**Files:** 
+- `ftp_sync_imagemanager.ps1` - Main tool
+- `imagemanager_db_module.ps1` - Database query utility module
+
+---
+
+### 4-7. ImageManager Service Management
+
+**Purpose:** Control the StorageCraft ImageManager Windows service
+
+**Features:**
+- **Start Service** - Start ImageManager service
+- **Stop Service** - Stop ImageManager service
+- **Restart Service** - Restart ImageManager service
+- **Check Status** - Display detailed service information
+
+**Requirements:** Administrator privileges
+
+**Service Name:** `StorageCraft ImageManager`
+
+**Use Case:** Quickly manage ImageManager service without opening Services console
+
+---
+
+### 8. View FTP Upload Logs
+
+**Purpose:** View and analyze FTP operation logs
+
+**Features:**
+- Opens log file in Notepad
+- Shows log file size and last modified date
+- Handles missing log files gracefully
+- Color-coded log entries (ERROR, WARN, SUCCESS)
+
+**Log Locations:**
+- FTP Upload Log: `C:\ITTools\Scripts\Logs\ftp_upload_log.txt`
+- FTP Sync Log: `C:\ITTools\Scripts\Logs\ftp_sync_log.txt`
+- FTP Sync (ImageManager) Log: `C:\ITTools\Scripts\Logs\ftp_sync_imagemanager_log.txt`
+- Master Audit Log: `C:\ITTools\Scripts\Logs\master_audit_log.txt`
+
+---
+
+### Toolkit Logs Menu
+
+**Purpose:** Centralized log viewer for all toolkit operations
+
+**Features:**
+- View Master Audit Log
+- View FTP Upload Log
+- View FTP Sync Log
+- Opens logs in Notepad
+- Shows file size and last modified date
+- Handles missing logs gracefully
+
+**Use Case:** Troubleshoot toolkit operations and track historical activity
+
+---
+
+### Windows/Office Activation (MAS)
+
+**Purpose:** Activate Windows and Office using MassGrave Activation Scripts
+
+**Features:**
+- Launches official MassGrave Activation Scripts (MAS)
+- Direct download from GitHub
+- Supports Windows and Office activation
+- Industry-standard activation tool
+
+**Source:** https://github.com/massgravel/Microsoft-Activation-Scripts
+
+---
+
+## Installation Details
+
+### Directory Structure
+
+```
+C:\ITTools\
+├── Scripts\                    # Main installation directory
+│   ├── launch_menu.ps1        # Main launcher
+│   ├── storagecraft_troubleshooter.ps1
+│   ├── ftp_troubleshooter_tool.ps1
+│   ├── ftp_sync_tool.ps1
+│   ├── ftp_sync_imagemanager.ps1
+│   ├── imagemanager_db_module.ps1
+│   ├── bootstrap.ps1
+│   ├── launcher.bat           # Quick launcher
+│   ├── README.md
+│   └── Logs\                  # Log directory
+│       ├── master_audit_log.txt
+│       ├── ftp_upload_log.txt
+│       ├── ftp_sync_log.txt
+│       └── ftp_sync_imagemanager_log.txt
+├── WinSCP\                    # WinSCP portable installation
+│   ├── WinSCP.com
+│   ├── WinSCP.exe
+│   └── ...
+└── Temp\                      # Temporary files
 ```
 
-### Method 4: Launch as Administrator (For Service Management)
+### System Requirements
 
-To access service management options, run as Administrator:
+- **Operating System:** Windows 7 or later
+- **PowerShell:** 5.1 or higher (pre-installed on Windows 10/11)
+- **Permissions:** Administrator privileges (for service management)
+- **Internet Access:** Required for initial download and updates
+- **Disk Space:** ~20 MB (including WinSCP)
 
-```powershell
-# Right-click PowerShell and select "Run as Administrator", then:
-PowerShell.exe -ExecutionPolicy Bypass -File "C:\ITTools\Scripts\launch_menu.ps1"
+### Optional Requirements
+
+**For ImageManager Integration:**
+- StorageCraft ImageManager installed
+- ImageManager.mdb database present
+- Microsoft Access Database Engine (ACE) OLE DB Provider
+  - Usually pre-installed on Windows
+  - If not: Download from Microsoft (free)
+
+---
+
+## Update System
+
+### Automatic Updates
+
+The toolkit includes a smart auto-update system:
+
+1. **Version Detection** - Compares installed version with GitHub
+2. **Automatic Download** - Downloads new version if available
+3. **Staged Update** - Safely replaces files while avoiding locks
+4. **Automatic Restart** - Restarts toolkit with new version
+5. **Changelog Display** - Shows what's new after update
+
+### Manual Update Check
+
+Select **"1. Download and Install Latest Version"** from main menu
+
+### Bootstrap Installer
+
+The `bootstrap.ps1` script handles:
+- Initial installation (if toolkit not present)
+- Update checking and installation
+- Version comparison
+- Launching from correct location
+- Error handling and user feedback
+
+---
+
+## FTP Server Configuration
+
+### Default FTP Server
+
+The toolkit is pre-configured for: **ftp.sndayton.com**
+
+### Changing FTP Server
+
+You can enter a different FTP server when prompted by any FTP tool.
+
+### FTP Credentials
+
+All FTP tools prompt for:
+- FTP Server (default: ftp.sndayton.com)
+- FTP Username
+- FTP Password
+
+Credentials are **not stored** - you must enter them each time for security.
+
+---
+
+## Logging and Auditing
+
+### Master Audit Log
+
+**Location:** `C:\ITTools\Scripts\Logs\master_audit_log.txt`
+
+**Purpose:** Tracks all toolkit operations
+
+**Contents:**
+- Toolkit launches
+- Menu selections
+- Tool executions
+- Service operations
+- Errors and warnings
+
+### FTP Operation Logs
+
+**FTP Upload Log:** `C:\ITTools\Scripts\Logs\ftp_upload_log.txt`
+- Manual FTP tool operations
+- File uploads
+- FTP connection details
+- Errors and retries
+
+**FTP Sync Log:** `C:\ITTools\Scripts\Logs\ftp_sync_log.txt`
+- Directory comparison operations
+- File sync reports
+- WinSCP operations
+- Missing file lists
+
+**FTP Sync (ImageManager) Log:** `C:\ITTools\Scripts\Logs\ftp_sync_imagemanager_log.txt`
+- Database query operations
+- Queue file extraction
+- Upload operations
+- Database errors
+
+### Log Format
+
+```
+[2025-12-10 14:30:15] [INFO] FTP Sync Tool started
+[2025-12-10 14:30:20] [SUCCESS] Connected to ftp.sndayton.com
+[2025-12-10 14:30:25] [WARN] File not found on FTP: backup-001.spi
+[2025-12-10 14:30:30] [ERROR] Upload failed: Connection timeout
 ```
 
-### Toolkit Menu Workflow
-
-Once the launcher menu starts:
-
-1. **View Available Options**: The menu displays all available tools and services
-2. **Check Service Status**: Current ImageManager service status is shown (if installed)
-3. **Select an Option**: Enter the number (1-6) or Q to quit
-4. **Tool Execution**: Selected tool or service operation runs
-5. **Return to Menu**: After completion, menu redisplays for next action
-
-### Using the FTP Troubleshooter (Option 2)
-
-When you select Option 2 from the menu:
-
-1. **File Selection**: A GUI dialog appears—select one or more files to upload
-2. **FTP Server**: Press Enter to use the default or type a new address
-3. **Username**: Enter your FTP username
-4. **Password**: Enter your FTP password (input will be hidden)
-5. **Upload Progress**: Watch the progress bar as files upload
-6. **Completion**: Review the summary message when all files are processed
-
-## StorageCraft ImageManager Service Management
-
-The launcher menu includes options to manage the StorageCraft ImageManager service. **Administrator privileges are required** for service management operations.
-
-### Starting the Service
-
-```powershell
-# Start the service (requires Administrator)
-Start-Service -Name "StorageCraft ImageManager"
-```
-
-### Stopping the Service
-
-```powershell
-# Stop the service (requires Administrator)
-Stop-Service -Name "StorageCraft ImageManager" -Force
-```
-
-### Restarting the Service
-
-```powershell
-# Restart the service (requires Administrator)
-Restart-Service -Name "StorageCraft ImageManager" -Force
-```
-
-### Checking Service Status
-
-```powershell
-# Check current status
-Get-Service -Name "StorageCraft ImageManager" | Select-Object Name, Status, StartType
-```
-
-### Using the Launcher Menu
-
-The interactive launcher menu (options 3-6) provides a user-friendly interface for service management:
-
-1. Run the launcher as Administrator:
-   ```powershell
-   # Right-click PowerShell and select "Run as Administrator", then:
-   PowerShell.exe -ExecutionPolicy Bypass -File "C:\ITTools\Scripts\launch_menu.ps1"
-   ```
-
-2. Select from the menu:
-   - **Option 3**: Start the service
-   - **Option 4**: Stop the service
-   - **Option 5**: Restart the service
-   - **Option 6**: View detailed service status
-
-### Common Service Management Scenarios
-
-**When to Restart the Service:**
-- After configuration changes
-- When the Image Manager becomes unresponsive
-- Before using the FTP troubleshooter as a failover
-- After system updates
-
-**Troubleshooting Service Issues:**
-- If service won't start, check Windows Event Viewer for errors
-- Verify StorageCraft is properly installed
-- Ensure no other backup software is conflicting
-- Check that the service account has proper permissions
+---
 
 ## Troubleshooting
 
 ### Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| **"Execution policy" error** | Run `Set-ExecutionPolicy RemoteSigned` as Administrator |
-| **"File is not digitally signed" error** | Use the bypass method: `PowerShell.exe -ExecutionPolicy Bypass -File .\ftp_troubleshooter_tool.ps1` |
-| **"No files selected" message** | The file dialog was cancelled—restart the script |
-| **FTP connection timeout** | Verify network connectivity and FTP server address |
-| **Authentication failure** | Double-check username and password credentials |
-| **Upload fails mid-transfer** | Check available disk space and network stability |
+**Issue:** "ImageManager database NOT found"
+- **Solution:** Ensure StorageCraft ImageManager is installed
+- **Path:** `C:\Program Files (x86)\StorageCraft\ImageManager\ImageManager.mdb`
 
-### Error Messages
+**Issue:** "WinSCP download failed"
+- **Solution:** Download manually from https://winscp.net/
+- **Extract to:** `C:\ITTools\WinSCP`
 
-The script provides detailed error messages for each failed upload. Common errors include:
+**Issue:** "Administrator privileges required"
+- **Solution:** Right-click PowerShell and select "Run as Administrator"
 
-- **"Error uploading [file]: The remote server returned an error: (530) Not logged in."**  
-  *Solution:* Verify your FTP credentials are correct
+**Issue:** "Service not found: StorageCraft ImageManager"
+- **Solution:** Install StorageCraft ImageManager
 
-- **"Error uploading [file]: Unable to connect to the remote server"**  
-  *Solution:* Check your network connection and firewall settings
+### Getting Help
 
-- **"Error uploading [file]: The remote server returned an error: (550) File unavailable"**  
-  *Solution:* Check FTP server permissions and available disk space
+**Check Logs:**
+1. Select "2. Toolkit Logs" from main menu
+2. View relevant log file
+3. Look for ERROR or WARN entries
+
+**GitHub Issues:**
+- https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/issues
+
+---
 
 ## Security Considerations
 
-- **Password Handling**: While the script uses `SecureString` for initial input, it must convert to plaintext for the FTP connection. The password is cleared from memory after use.
-- **Credential Storage**: This tool does NOT store credentials—you must enter them each time.
-- **FTP Protocol**: Standard FTP transmits credentials in plaintext. Consider using SFTP or FTPS for sensitive environments.
-- **Network Security**: Ensure your FTP server is properly secured with firewalls and access controls.
+### Execution Policy
 
-## Technical Details
+The toolkit requires `ExecutionPolicy Bypass` to run PowerShell scripts.
 
-### Dependencies
+**Bootstrap command includes:** `-ExecutionPolicy Bypass`
 
-- `System.Windows.Forms`: Provides the GUI file picker dialog
-- `System.Net.FtpWebRequest`: Handles FTP protocol communication
-- `System.IO.File`: Manages file stream operations
+This is safe when running trusted scripts from Superior Networks.
 
-### Transfer Specifications
+### FTP Credentials
 
-- **Buffer Size**: 1,048,576 bytes (1 MB)
-- **Transfer Mode**: Binary
-- **Connection Mode**: Passive FTP
-- **Keep-Alive**: Disabled (new connection per file)
+- **Not stored** - You must enter credentials each time
+- **Not logged** - Passwords are never written to log files
+- **Secure input** - Password prompts use `-AsSecureString` when possible
 
-## Use Cases
+### Administrator Privileges
 
-This toolkit launcher is ideal for:
+Required only for:
+- Service management (start/stop/restart ImageManager)
+- Some system-level operations
 
-1. **IT Troubleshooting**: Quick access to multiple diagnostic and repair tools
-2. **Backup Failover**: Manual file transfers when automated backup systems fail
-3. **Service Management**: Restart unresponsive backup services without navigating Windows Services
-4. **MSP Operations**: Standardized toolkit for technicians across multiple client sites
-5. **Emergency Response**: Fast deployment and execution during system issues
-6. **Training**: Easy-to-use interface for junior technicians
+Not required for:
+- FTP operations
+- Log viewing
+- Database queries
 
-## Contributing
+---
 
-Contributions, issues, and feature requests are welcome. Feel free to check the issues page if you want to contribute.
+## License and Disclaimer
 
-## License
-
-Copyright © 2025. All rights reserved.
+**Copyright © 2025 Superior Networks LLC**
 
 This software is provided as-is without warranty of any kind.
+
+**Use at your own risk.** Always test in a non-production environment first.
+
+**StorageCraft, ShadowProtect, and ImageManager** are trademarks of StorageCraft Technology Corporation (now Arcserve).
+
+**WinSCP** is open-source software licensed under GNU GPL.
+
+---
+
+## Credits
+
+**Developed by:** Superior Networks LLC
+
+**Third-Party Components:**
+- **WinSCP** - https://winscp.net/ (GNU GPL)
+- **MassGrave Activation Scripts** - https://github.com/massgravel/Microsoft-Activation-Scripts (GNU GPL)
+
+---
+
+## Support
+
+For support, feature requests, or bug reports:
+
+**GitHub Issues:** https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/issues
+
+**Website:** https://help.manus.im
 
 ---
 
@@ -557,189 +672,6 @@ This software is provided as-is without warranty of any kind.
   6. Batch script restarts toolkit with new version
   7. Self-cleans batch file
 
-### Version 2.6.1 (2025-12-08)
-- **Testing Version**: Verify changelog display functionality
-  - Same features as v2.6.0
-  - Allows testing update from v2.6.0 → v2.6.1
-  - Confirms changelog extraction and display works correctly
-  - User can verify color-coded formatting
+---
 
-### Version 2.6.0 (2025-12-08)
-- **Fixed Changelog Display**: Changelog now displays properly after updates
-  - Changed to read README.md from installed location (C:\ITTools\Scripts\README.md) instead of temp extraction folder
-  - Eliminates path issues with temp directory changes
-  - Simpler, more reliable approach
-  - Works regardless of temp folder location
-- **Improved File Organization**: All toolkit files now in C:\ITTools
-  - Installation: C:\ITTools\Scripts
-  - Logs: C:\ITTools\Scripts\Logs
-  - Temp files: C:\ITTools\Temp
-- **Code Cleanup**: Removed all debug logging code
-  - Cleaner, production-ready code
-  - Faster execution
-  - Better user experience
-- **Enhanced Changelog Formatting**: Color-coded changelog display
-  - Main features in green
-  - Sub-bullets in gray
-  - Professional presentation
-
-### Version 2.5.5 (2025-12-08)
-- **Enhanced Debug Output**: Added complete extraction folder tree view
-  - Shows all directories and files in extraction folder
-  - Displays full recursive file listing
-  - Helps identify if README.md is missing from GitHub ZIP
-  - Shows total item count in source folder
-
-### Version 2.5.4 (2025-12-08)
-- **Improved File Management**: Changed temp directory from C:\WINDOWS\TEMP to C:\ITTools\Temp
-  - All toolkit files now stay within C:\ITTools directory structure
-  - Temp files: C:\ITTools\Temp
-  - Scripts: C:\ITTools\Scripts
-  - Logs: C:\ITTools\Scripts\Logs
-- **Enhanced README Detection**: Added fallback search for README.md
-  - If not found in expected location, recursively searches extraction folder
-  - More robust changelog extraction
-  - Better error messages showing where files are actually located
-
-### Version 2.5.3 (2025-12-08)
-- **Testing Version**: Continued diagnosis of changelog extraction
-  - Same debug features as v2.5.2
-  - Allows testing update from v2.5.2 → v2.5.3
-  - Will show extraction folder contents and README path
-
-### Version 2.5.2 (2025-12-08)
-- **Enhanced Debug Logging**: Added extraction folder contents listing
-  - Shows sourceFolder path during installation
-  - Lists all files in extraction directory
-  - Verifies README.md existence before reading
-  - Helps diagnose path construction issues
-
-### Version 2.5.1 (2025-12-08)
-- **Debug Enhancement**: Added comprehensive debug logging to changelog extraction
-  - Shows detailed debug messages when changelog fails to display
-  - Helps troubleshoot README.md path issues
-  - Displays pattern matching diagnostics
-  - Identifies file read errors
-- Internal testing version to diagnose changelog display issues
-
-### Version 2.5.0 (2025-12-08)
-- **Master Audit Logging System**: Comprehensive logging for troubleshooting and support
-  - Logs all user actions, menu selections, and errors to `C:\ITTools\Scripts\Logs\master_audit_log.txt`
-  - Captures diagnostic information: username, computer name, admin status, PowerShell version, OS version, timestamps
-  - Structured log format with severity levels (INFO, WARN, ERROR)
-  - Complete error messages with stack traces for debugging
-  - Silent failure on logging errors (doesn't disrupt user experience)
-- **UI Improvement**: Removed persistent ImageManager status from main menu for cleaner interface
-- **Enhanced Changelog Display**: Now shows detailed changelog from README.md after updates (instead of brief embedded notes)
-- Status information still available in StorageCraft Troubleshooter submenu when needed
-
-### Version 2.4.0 (2025-12-08)
-- **Enhanced Installer**: Added intelligent version detection to Download and Install function
-  - Automatically detects currently installed version
-  - Compares with latest version from GitHub
-  - Displays appropriate message: "New Install", "Update Complete", or "Already Up-to-Date"
-  - Shows embedded release notes for new installs and updates
-  - Improved user feedback with formatted status messages
-- Updated Manual FTP Tool to v2.0.1 (confirmed pause before exit already present)
-- Enhanced user experience with clear version upgrade path
-
-### Version 2.3.0 (2025-11-22)
-- **Major Enhancement**: Manual FTP Tool v2.0.0 with enterprise-grade reliability
-  - Added persistent connection with auto-retry (10 attempts)
-  - Implemented resume support for interrupted uploads
-  - Added 60-second timeout detection
-  - Enhanced status reporting with real-time connection monitoring
-  - Comprehensive logging to `C:\ITTools\Scripts\Logs\ftp_upload_log.txt`
-  - Exponential backoff between retry attempts
-  - Speed and time remaining estimates
-  - Automatic skip of failed files with detailed summary report
-- Added FTP Upload Log Viewer to StorageCraft Troubleshooter menu (Option 6)
-- Enhanced error handling and recovery for large file transfers
-
-### Version 2.2.0 (2025-11-22)
-- **Major Update**: Created separate StorageCraft Troubleshooter script with dedicated submenu
-- Moved Manual FTP Tool and all ImageManager service controls to StorageCraft submenu
-- Simplified main launcher menu (now 3 options instead of 7)
-- Improved organization with modular script architecture
-- Enhanced user experience with focused troubleshooting submenus
-
-### Version 2.1.0 (2025-11-22)
-- Reorganized menu structure for better tool grouping
-- Created "StorageCraft Troubleshooter" section combining FTP and ImageManager tools
-- Renamed "Run FTP Troubleshooter Tool" to "Manual FTP Tool"
-- Improved menu clarity and logical organization
-
-### Version 2.0.0 (2025-11-22)
-- **Major Update**: Renamed repository to IT-Troubleshooting-Toolkit
-- **New Feature**: Integrated MassGrave PowerShell Utilities (MAS) for Windows/Office activation
-- Added Option 7: Run MassGrave Activation Scripts
-- Updated all documentation and URLs for new repository name
-- Enhanced toolkit with activation capabilities
-
-### Version 1.9.0 (2025-11-22)
-- Fixed PowerShell encoding issues with ASCII art branding
-- Simplified header to use standard ASCII characters for compatibility
-- Maintained Superior Networks branding with clean, professional layout
-- Resolved parser errors in Windows PowerShell
-
-### Version 1.8.0 (2025-11-22)
-- Integrated Superior Networks branding and logo
-- Added branded header to launcher menu
-- Updated color scheme to match company branding (Cyan/White)
-- Added logo to repository and README
-
-### Version 1.7.0 (2025-11-21)
-- Updated installation path to C:\\ITTools\\Scripts for better organization
-- Removed all references to old FTPFIX path
-- Updated toolkit structure documentation
-
-### Version 1.6.0 (2025-11-21)
-- Rebranded as IT Troubleshooting Toolkit Launcher
-- Updated documentation to emphasize toolkit launcher concept
-- Listed all available tools in documentation
-- Updated Quick Start to launch menu instead of FTP tool directly
-- Reorganized documentation for better clarity
-
-### Version 1.5.0 (2025-11-21)
-- Fixed file overwrite behavior during installation
-- Installation now properly overwrites existing files
-- Launcher menu always displays first (no auto-run)
-
-### Version 1.4.0 (2025-11-21)
-- Updated installation path from C:\\sndayton\\ftpfix to C:\\ITTools\\Scripts
-- Updated all documentation and scripts with new path
-
-### Version 1.3.0 (2025-11-21)
-- Added StorageCraft ImageManager service management to launcher menu
-- Added options to start, stop, and restart ImageManager service
-- Added service status checking functionality
-- Added administrator privilege detection
-- Updated documentation with service management commands and scenarios
-- Enhanced launcher menu with service status display
-
-### Version 1.2.0 (2025-11-21)
-- Added interactive launcher menu script (launch_menu.ps1)
-- Added Quick Start section with multiple installation options
-- Added one-line install and run command
-- Updated documentation with PowerShell commands for download, unzip, and run
-- Standardized installation path to C:\\ITTools\\Scripts
-
-### Version 1.1.0 (2025-11-21)
-- Sanitized for public release
-- Removed personally identifiable information
-- Generalized documentation for broader use cases
-- Improved security documentation
-
-### Version 1.0.1 (2025-11-21)
-- Fixed syntax error in error handling block (line 133)
-- Improved error message formatting for better readability
-- Updated variable reference handling in catch block
-
-### Version 1.0.0 (2025-11-21)
-- Initial release
-- Interactive file picker with multi-select support
-- Hard-coded default FTP server with override option
-- Secure credential prompting
-- Progress tracking for uploads
-- Comprehensive error handling
-- Memory cleanup for security
+**For complete version history, see the full changelog in the repository.**
