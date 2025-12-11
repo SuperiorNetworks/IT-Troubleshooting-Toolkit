@@ -4,7 +4,7 @@ StorageCraft Troubleshooter - Submenu for StorageCraft backup tools
 
 .DESCRIPTION
 Name: storagecraft_troubleshooter.ps1
-Version: 1.4.0
+Version: 1.5.0
 Purpose: Centralized submenu for StorageCraft backup troubleshooting tools.
          Provides access to Manual FTP Tool, FTP Sync, and ImageManager service management.
 Path: /scripts/storagecraft_troubleshooter.ps1
@@ -62,7 +62,7 @@ function Show-StorageCraftMenu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "              StorageCraft Troubleshooter - v1.4.0                " -ForegroundColor Cyan
+    Write-Host "              StorageCraft Troubleshooter - v1.5.0                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Manual Tools:" -ForegroundColor White
@@ -392,9 +392,9 @@ function Install-WinSCP {
             New-Item -ItemType Directory -Path $winscpPath -Force | Out-Null
         }
         
-        # Download URL
-        $downloadUrl = "https://winscp.net/download/WinSCP-6.5.5-Portable.zip"
-        $zipFile = "C:\ITTools\Temp\WinSCP.zip"
+        # Download URL from GitHub repository
+        $downloadUrl = "https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/WinSCP-6.5.5-Setup.exe"
+        $installerFile = "C:\ITTools\Temp\WinSCP-Setup.exe"
         
         # Create temp directory
         $tempDir = "C:\ITTools\Temp"
@@ -402,27 +402,28 @@ function Install-WinSCP {
             New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
         }
         
-        Write-Host "Download URL: $downloadUrl" -ForegroundColor Gray
+        Write-Host "Download source: GitHub Repository" -ForegroundColor Gray
         Write-Host ""
-        Write-Host "Downloading WinSCP... Please wait..." -ForegroundColor Yellow
+        Write-Host "Downloading WinSCP installer... Please wait..." -ForegroundColor Yellow
         
         # Download with progress
         $webClient = New-Object System.Net.WebClient
-        $webClient.DownloadFile($downloadUrl, $zipFile)
+        $webClient.DownloadFile($downloadUrl, $installerFile)
         
         Write-Host "Download complete!" -ForegroundColor Green
         Write-Host ""
-        Write-Host "Extracting files..." -ForegroundColor Yellow
+        Write-Host "Extracting portable files..." -ForegroundColor Yellow
         
-        # Extract using .NET (PowerShell 4.0 compatible)
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipFile, $winscpPath)
+        # Run installer in extract-only mode (no actual installation)
+        # /VERYSILENT = silent mode, /DIR = extract location, /PORTABLE = portable mode
+        $extractArgs = "/VERYSILENT /DIR=`"$winscpPath`" /NOCANCEL /NORESTART"
+        $process = Start-Process -FilePath $installerFile -ArgumentList $extractArgs -Wait -PassThru
         
         Write-Host "Extraction complete!" -ForegroundColor Green
         Write-Host ""
         
         # Cleanup
-        Remove-Item $zipFile -Force -ErrorAction SilentlyContinue
+        Remove-Item $installerFile -Force -ErrorAction SilentlyContinue
         
         # Verify installation
         if (Test-Path $winscpExe) {
@@ -449,10 +450,10 @@ function Install-WinSCP {
         Write-Host "Error: $_" -ForegroundColor Red
         Write-Host ""
         Write-Host "Manual Installation Instructions:" -ForegroundColor Yellow
-        Write-Host "1. Download WinSCP Portable from: https://winscp.net/" -ForegroundColor White
-        Write-Host "2. Extract the ZIP file" -ForegroundColor White
-        Write-Host "3. Copy the extracted folder to: C:\ITTools\WinSCP" -ForegroundColor White
-        Write-Host "4. Verify WinSCP.com exists at: C:\ITTools\WinSCP\WinSCP.com" -ForegroundColor White
+        Write-Host "1. Download WinSCP installer from GitHub:" -ForegroundColor White
+        Write-Host "   https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/raw/master/WinSCP-6.5.5-Setup.exe" -ForegroundColor White
+        Write-Host "2. Run the installer and choose installation directory: C:\ITTools\WinSCP" -ForegroundColor White
+        Write-Host "3. Verify WinSCP.com exists at: C:\ITTools\WinSCP\WinSCP.com" -ForegroundColor White
         Write-Host ""
     }
     

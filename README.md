@@ -485,6 +485,29 @@ For support, feature requests, or bug reports:
 
 ## Change Log
 
+### Version 3.3.0 (2025-12-10)
+- **Major Improvement**: WinSCP Now Downloaded from GitHub Repository
+  - Uploaded WinSCP 6.5.5 installer to GitHub repository (11.11 MB)
+  - All download functions now use GitHub-hosted installer
+  - Much more reliable than downloading from winscp.net
+  - No more SSL/TLS connection errors on Server 2012 R2
+  - Uses silent installer extraction instead of ZIP files
+- **Benefits**:
+  - Single source of truth (your own repository)
+  - Faster downloads (GitHub CDN)
+  - No dependency on external websites
+  - Works perfectly on PowerShell 4.0 (Server 2012 R2)
+  - Consistent download experience across all systems
+- **Files Updated**:
+  - `storagecraft_troubleshooter.ps1` (v1.4.0 → v1.5.0)
+  - `ftp_sync_tool.ps1` - Updated download URL and method
+  - `ftp_sync_imagemanager.ps1` - Updated download URL and method
+  - `launch_menu.ps1` (v3.2.0 → v3.3.0)
+- **New File**:
+  - `WinSCP-6.5.5-Setup.exe` - Hosted in repository
+
+**Use Case**: WinSCP downloads are now 100% reliable on all Windows versions, including Server 2012 R2. No more external download failures.
+
 ### Version 3.2.0 (2025-12-10)
 - **New Feature**: WinSCP Download Menu Option
   - Added option #9 in StorageCraft Troubleshooter: "Download/Install WinSCP"

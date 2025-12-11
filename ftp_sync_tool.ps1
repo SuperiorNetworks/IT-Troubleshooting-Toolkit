@@ -48,7 +48,7 @@ $logDirectory = "C:\ITTools\Scripts\Logs"
 $logFile = Join-Path $logDirectory "ftp_sync_log.txt"
 $winscpDirectory = "C:\ITTools\WinSCP"
 $winscpExe = Join-Path $winscpDirectory "WinSCP.com"
-$winscpUrl = "https://winscp.net/download/WinSCP-6.5.5-Portable.zip"
+$winscpUrl = "https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/WinSCP-6.5.5-Setup.exe"
 
 # Ensure directories exist
 if (-not (Test-Path $logDirectory)) {
@@ -97,12 +97,12 @@ function Download-WinSCP {
     Write-Host "=================================================================" -ForegroundColor Cyan
     Write-Host ""
     
-    Write-Log "WinSCP not found. Downloading portable version..."
+    Write-Log "WinSCP not found. Downloading from GitHub repository..."
     Write-Host "This only needs to happen once." -ForegroundColor Yellow
-    Write-Host "Download URL: $winscpUrl" -ForegroundColor Gray
+    Write-Host "Download source: GitHub Repository" -ForegroundColor Gray
     Write-Host ""
     
-    $zipPath = Join-Path $env:TEMP "WinSCP-Portable.zip"
+    $installerPath = Join-Path $env:TEMP "WinSCP-Setup.exe"
     
     try {
         # Enable TLS 1.2 for older systems
@@ -110,21 +110,21 @@ function Download-WinSCP {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         Write-Host ""
         
-        Write-Host "Downloading WinSCP... Please wait..." -ForegroundColor Yellow
+        Write-Host "Downloading WinSCP installer... Please wait..." -ForegroundColor Yellow
         
         # Use WebClient for better compatibility with PowerShell 4.0
         $webClient = New-Object System.Net.WebClient
-        $webClient.DownloadFile($winscpUrl, $zipPath)
+        $webClient.DownloadFile($winscpUrl, $installerPath)
         
         Write-Log "Download complete!" "SUCCESS"
-        Write-Host "Extracting files..." -ForegroundColor Yellow
+        Write-Host "Extracting portable files..." -ForegroundColor Yellow
         
-        # Extract using .NET instead of Expand-Archive for better compatibility
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $winscpDirectory)
+        # Run installer in silent mode to extract files
+        $extractArgs = "/VERYSILENT /DIR=`"$winscpDirectory`" /NOCANCEL /NORESTART"
+        $process = Start-Process -FilePath $installerPath -ArgumentList $extractArgs -Wait -PassThru
         
         # Clean up
-        Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
+        Remove-Item $installerPath -Force -ErrorAction SilentlyContinue
         
         Write-Log "WinSCP installed successfully to: $winscpDirectory" "SUCCESS"
         Write-Host ""
