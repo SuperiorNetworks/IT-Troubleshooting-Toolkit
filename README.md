@@ -485,6 +485,26 @@ For support, feature requests, or bug reports:
 
 ## Change Log
 
+### Version 3.2.0 (2025-12-10)
+- **New Feature**: WinSCP Download Menu Option
+  - Added option #9 in StorageCraft Troubleshooter: "Download/Install WinSCP"
+  - Manual WinSCP download/installation from menu
+  - Automatic detection of existing WinSCP installation
+  - Version display if already installed
+  - Prevents re-downloading if already present
+- **Improved Download Reliability**:
+  - All WinSCP download functions now auto-enable TLS 1.2
+  - Changed from `Invoke-WebRequest` to `WebClient` for PowerShell 4.0 compatibility
+  - Works on Windows Server 2012 R2 (PowerShell 4.0)
+  - No more "Unable to connect to remote server" errors on older systems
+- **Files Updated**:
+  - `storagecraft_troubleshooter.ps1` (v1.3.0 → v1.4.0)
+  - `ftp_sync_tool.ps1` - Improved download function
+  - `ftp_sync_imagemanager.ps1` - Improved download function
+  - `launch_menu.ps1` (v3.1.0 → v3.2.0)
+
+**Use Case**: Users on Windows Server 2012 R2 can now download WinSCP automatically without SSL/TLS errors. Menu option allows manual retry if automatic download fails during FTP Sync tool launch.
+
 ### Version 3.1.0 (2025-12-10)
 - **New Feature**: FTP Sync with ImageManager Integration
   - Query ImageManager.mdb database for replication queue
