@@ -77,12 +77,12 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - v1.3.0
+StorageCraft Troubleshooter - v1.6.0
 
 Manual Tools:
-  1. Manual FTP Tool
-  2. FTP Sync
-  3. FTP Sync (ImageManager Queue)
+  1. Upload Single File (PowerShell FTP)
+  2. Sync Local Backups to FTP (WinSCP)
+  3. Upload ImageManager Queue (WinSCP)
 
 ImageManager Service Management:
   4. Start ImageManager Service
@@ -93,6 +93,9 @@ ImageManager Service Management:
 Logs and Diagnostics:
   8. View FTP Upload Logs
 
+Utilities:
+  9. Download/Install WinSCP
+
   B. Back to Main Menu
 ```
 
@@ -100,7 +103,7 @@ Logs and Diagnostics:
 
 ## Feature Details
 
-### 1. Manual FTP Tool
+### 1. Upload Single File (PowerShell FTP)
 
 **Purpose:** Manual file selection and FTP upload when ImageManager replication fails
 
@@ -118,7 +121,7 @@ Logs and Diagnostics:
 
 ---
 
-### 2. FTP Sync (Directory Comparison)
+### 2. Sync Local Backups to FTP (WinSCP)
 
 **Purpose:** Compare local backup directory with FTP server to identify missing files
 
@@ -144,7 +147,7 @@ Logs and Diagnostics:
 
 ---
 
-### 3. FTP Sync (ImageManager Queue) ⭐ NEW
+### 3. Upload ImageManager Queue (WinSCP) ⭐
 
 **Purpose:** Query ImageManager database for replication queue and upload queued files via FTP
 
@@ -484,6 +487,26 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.4.0 (2025-12-10)
+- **Improved UX**: Clearer Menu Names for FTP Tools
+  - Renamed confusing menu options for better clarity
+  - Each name now describes what the tool does and which technology it uses
+- **Menu Changes**:
+  - "Manual FTP Tool" → **"Upload Single File (PowerShell FTP)"**
+  - "FTP Sync" → **"Sync Local Backups to FTP (WinSCP)"**
+  - "FTP Sync (ImageManager Queue)" → **"Upload ImageManager Queue (WinSCP)"**
+- **Benefits**:
+  - Immediately understand what each tool does
+  - Know which technology is used (PowerShell vs WinSCP)
+  - No more confusion between two "FTP Sync" options
+  - Action-focused naming (Upload, Sync)
+- **Files Updated**:
+  - `storagecraft_troubleshooter.ps1` (v1.5.0 → v1.6.0)
+  - `launch_menu.ps1` (v3.3.0 → v3.4.0)
+  - `README.md` - Updated all documentation
+
+**Use Case**: Users can now quickly identify which tool to use based on clear, descriptive names instead of generic "FTP Sync" labels.
 
 ### Version 3.3.0 (2025-12-10)
 - **Major Improvement**: WinSCP Now Downloaded from GitHub Repository

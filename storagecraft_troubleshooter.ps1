@@ -4,7 +4,7 @@ StorageCraft Troubleshooter - Submenu for StorageCraft backup tools
 
 .DESCRIPTION
 Name: storagecraft_troubleshooter.ps1
-Version: 1.5.0
+Version: 1.6.0
 Purpose: Centralized submenu for StorageCraft backup troubleshooting tools.
          Provides access to Manual FTP Tool, FTP Sync, and ImageManager service management.
 Path: /scripts/storagecraft_troubleshooter.ps1
@@ -62,13 +62,13 @@ function Show-StorageCraftMenu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "              StorageCraft Troubleshooter - v1.5.0                " -ForegroundColor Cyan
+    Write-Host "              StorageCraft Troubleshooter - v1.6.0                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Manual Tools:" -ForegroundColor White
-    Write-Host "    1. Manual FTP Tool" -ForegroundColor Yellow
-    Write-Host "    2. FTP Sync" -ForegroundColor Yellow
-    Write-Host "    3. FTP Sync (ImageManager Queue)" -ForegroundColor Yellow
+    Write-Host "    1. Upload Single File (PowerShell FTP)" -ForegroundColor Yellow
+    Write-Host "    2. Sync Local Backups to FTP (WinSCP)" -ForegroundColor Yellow
+    Write-Host "    3. Upload ImageManager Queue (WinSCP)" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "  ImageManager Service Management:" -ForegroundColor White
     Write-Host "    4. Start ImageManager Service" -ForegroundColor Green
