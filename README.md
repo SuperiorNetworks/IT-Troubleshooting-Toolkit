@@ -27,10 +27,20 @@ The **IT Troubleshooting Toolkit** is a comprehensive PowerShell-based solution 
 
 ### One-Command Installation & Launch
 
+#### For Windows 10/11 and Server 2016+
+
 Run this command in PowerShell (as Administrator):
 
 ```powershell
 PowerShell.exe -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
+```
+
+#### For Windows Server 2012 R2 / Windows 7/8 (PowerShell 4.0)
+
+Run this command in PowerShell (as Administrator):
+
+```powershell
+[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_ps4.ps1|iex
 ```
 
 **What this does:**
@@ -38,6 +48,7 @@ PowerShell.exe -ExecutionPolicy Bypass -Command "irm https://raw.githubuserconte
 - Checks for updates and auto-updates if available
 - Launches the main menu
 - Can be run from anywhere - handles everything automatically
+- Works on all Windows versions (Server 2012 R2 through Server 2025)
 
 ### After Installation
 
@@ -354,8 +365,10 @@ C:\ITTools\
 
 ### System Requirements
 
-- **Operating System:** Windows 7 or later
-- **PowerShell:** 5.1 or higher (pre-installed on Windows 10/11)
+- **Operating System:** Windows 7 or later, Windows Server 2012 R2 or later
+- **PowerShell:** 4.0 or higher
+  - PowerShell 4.0: Windows Server 2012 R2, Windows 7/8 (use `bootstrap_ps4.ps1`)
+  - PowerShell 5.1+: Windows 10/11, Server 2016+ (use `bootstrap.ps1`)
 - **Permissions:** Administrator privileges (for service management)
 - **Internet Access:** Required for initial download and updates
 - **Disk Space:** ~20 MB (including WinSCP)

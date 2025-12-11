@@ -8,7 +8,11 @@ Compatible with PowerShell 4.0+ (Windows Server 2012 R2, Windows 7, and newer).
 Can be run from anywhere - handles everything automatically.
 
 .USAGE
-PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_ps4.ps1 | iex"
+For Windows Server 2012 R2 / Windows 7/8 (PowerShell 4.0), run this command:
+
+[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_ps4.ps1|iex
+
+Note: No spaces around operators (=, ;, |) for PowerShell 4.0 compatibility
 
 Or save this file and run:
 PowerShell.exe -ExecutionPolicy Bypass -File bootstrap_ps4.ps1
