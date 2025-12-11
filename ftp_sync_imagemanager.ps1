@@ -4,7 +4,7 @@ FTP Sync with ImageManager Integration
 
 .DESCRIPTION
 Name: ftp_sync_imagemanager.ps1
-Version: 1.2.0
+Version: 1.3.0
 Purpose: Query ImageManager replication queue and upload queued files via FTP using WinSCP
 Path: /scripts/ftp_sync_imagemanager.ps1
 Copyright: 2025
@@ -297,7 +297,7 @@ function Get-ReplicationQueueFiles {
     $tables | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
     Write-Host ""
     
-    # Try common table names
+    # Try common table names and FTP queue tables
     $commonTableNames = @(
         "ReplicationQueue",
         "ReplicationJobs",
@@ -308,6 +308,13 @@ function Get-ReplicationQueueFiles {
         "ManagedFolders",
         "Folders"
     )
+    
+    # Add FTP queue tables (ftp1Queue, ftp2Queue, etc.)
+    $ftpQueueTables = $tables | Where-Object { $_ -match '^ftp\d+Queue$' }
+    if ($ftpQueueTables) {
+        Write-Host "Found FTP Queue tables: $($ftpQueueTables -join ', ')" -ForegroundColor Cyan
+        $commonTableNames += $ftpQueueTables
+    }
     
     $queueFiles = @()
     
@@ -323,6 +330,22 @@ function Get-ReplicationQueueFiles {
                 $columns = $data.Columns | ForEach-Object { $_.ColumnName }
                 Write-Host "  Columns: $($columns -join ', ')" -ForegroundColor Gray
                 
+                # Show first row sample data for diagnostics
+                if ($data.Rows.Count -gt 0) {
+                    Write-Host "  Sample data from first row:" -ForegroundColor Gray
+                    $firstRow = $data.Rows[0]
+                    foreach ($col in $columns | Select-Object -First 5) {
+                        try {
+                            $sampleValue = $firstRow[$col]
+                            if ($null -ne $sampleValue) {
+                                $sampleStr = $sampleValue.ToString()
+                                if ($sampleStr.Length -gt 50) { $sampleStr = $sampleStr.Substring(0, 50) + "..." }
+                                Write-Host "    $col = $sampleStr" -ForegroundColor DarkGray
+                            }
+                        } catch { }
+                    }
+                }
+                
                 # Try to extract file paths
                 foreach ($row in $data.Rows) {
                     foreach ($column in $columns) {
@@ -330,7 +353,17 @@ function Get-ReplicationQueueFiles {
                             $value = $row[$column]
                             if ($null -ne $value -and -not [string]::IsNullOrWhiteSpace($value)) {
                                 $valueStr = $value.ToString()
-                                if ($valueStr.Contains("\") -and $valueStr.Contains(".spi")) {
+                                # Look for .spi files (with or without full path)
+                                if ($valueStr -match '\.spi$' -or $valueStr -match '\.spi\b') {
+                                    # If it's just a filename, try to build full path from other columns
+                                    if (-not $valueStr.Contains("\") -and -not $valueStr.Contains("/")) {
+                                        # Try to find path in other columns
+                                        $pathColumn = $columns | Where-Object { $_ -match 'path|folder|directory|location' } | Select-Object -First 1
+                                        if ($pathColumn -and $row[$pathColumn]) {
+                                            $basePath = $row[$pathColumn].ToString()
+                                            $valueStr = Join-Path $basePath $valueStr
+                                        }
+                                    }
                                     $queueFiles += [PSCustomObject]@{
                                         Table = $tableName
                                         Column = $column
@@ -365,7 +398,17 @@ function Get-ReplicationQueueFiles {
                             $value = $row[$column]
                             if ($null -ne $value -and -not [string]::IsNullOrWhiteSpace($value)) {
                                 $valueStr = $value.ToString()
-                                if ($valueStr.Contains("\") -and $valueStr.Contains(".spi")) {
+                                # Look for .spi files (with or without full path)
+                                if ($valueStr -match '\.spi$' -or $valueStr -match '\.spi\b') {
+                                    # If it's just a filename, try to build full path from other columns
+                                    if (-not $valueStr.Contains("\") -and -not $valueStr.Contains("/")) {
+                                        # Try to find path in other columns
+                                        $pathColumn = $columns | Where-Object { $_ -match 'path|folder|directory|location' } | Select-Object -First 1
+                                        if ($pathColumn -and $row[$pathColumn]) {
+                                            $basePath = $row[$pathColumn].ToString()
+                                            $valueStr = Join-Path $basePath $valueStr
+                                        }
+                                    }
                                     $queueFiles += [PSCustomObject]@{
                                         Table = $tableName
                                         Column = $column
