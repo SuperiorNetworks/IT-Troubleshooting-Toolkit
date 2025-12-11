@@ -4,7 +4,7 @@ FTP Sync with ImageManager Integration
 
 .DESCRIPTION
 Name: ftp_sync_imagemanager.ps1
-Version: 1.1.0
+Version: 1.2.0
 Purpose: Query ImageManager replication queue and upload queued files via FTP using WinSCP
 Path: /scripts/ftp_sync_imagemanager.ps1
 Copyright: 2025
@@ -326,13 +326,22 @@ function Get-ReplicationQueueFiles {
                 # Try to extract file paths
                 foreach ($row in $data.Rows) {
                     foreach ($column in $columns) {
-                        $value = $row[$column]
-                        if ($value -and $value.ToString().Contains("\") -and $value.ToString().Contains(".spi")) {
-                            $queueFiles += [PSCustomObject]@{
-                                Table = $tableName
-                                Column = $column
-                                FilePath = $value.ToString()
+                        try {
+                            $value = $row[$column]
+                            if ($null -ne $value -and -not [string]::IsNullOrWhiteSpace($value)) {
+                                $valueStr = $value.ToString()
+                                if ($valueStr.Contains("\") -and $valueStr.Contains(".spi")) {
+                                    $queueFiles += [PSCustomObject]@{
+                                        Table = $tableName
+                                        Column = $column
+                                        FilePath = $valueStr
+                                    }
+                                }
                             }
+                        }
+                        catch {
+                            # Skip columns that can't be accessed or converted
+                            continue
                         }
                     }
                 }
@@ -352,13 +361,22 @@ function Get-ReplicationQueueFiles {
                 
                 foreach ($row in $data.Rows) {
                     foreach ($column in $columns) {
-                        $value = $row[$column]
-                        if ($value -and $value.ToString().Contains("\") -and $value.ToString().Contains(".spi")) {
-                            $queueFiles += [PSCustomObject]@{
-                                Table = $tableName
-                                Column = $column
-                                FilePath = $value.ToString()
+                        try {
+                            $value = $row[$column]
+                            if ($null -ne $value -and -not [string]::IsNullOrWhiteSpace($value)) {
+                                $valueStr = $value.ToString()
+                                if ($valueStr.Contains("\") -and $valueStr.Contains(".spi")) {
+                                    $queueFiles += [PSCustomObject]@{
+                                        Table = $tableName
+                                        Column = $column
+                                        FilePath = $valueStr
+                                    }
+                                }
                             }
+                        }
+                        catch {
+                            # Skip columns that can't be accessed or converted
+                            continue
                         }
                     }
                 }

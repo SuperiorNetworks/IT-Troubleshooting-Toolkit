@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.5.0  
+**Version:** 3.5.1  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -54,7 +54,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.5.0
+IT Troubleshooting Toolkit - v3.5.1
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -559,6 +559,19 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.5.1 (2025-12-11) 🐛 BUG FIX
+- **Bug Fix**: Fixed ImageManager Queue tool database query errors
+  - Added proper null value handling in database row iteration
+  - Added try-catch blocks to skip inaccessible columns
+  - Fixed "Cannot index into a null array" error
+  - Better error handling for different database structures
+  - Tool now gracefully handles null/empty values in database fields
+- **Files Updated**:
+  - `ftp_sync_imagemanager.ps1` (v1.1.0 → v1.2.0)
+  - `launch_menu.ps1` (v3.5.0 → v3.5.1)
+
+**Use Case**: Users can now successfully query ImageManager database even when some fields contain null values or have unexpected structures.
 
 ### Version 3.5.0 (2025-12-11) ⭐ NEW
 - **Major Feature**: Access Database Engine Auto-Installer
