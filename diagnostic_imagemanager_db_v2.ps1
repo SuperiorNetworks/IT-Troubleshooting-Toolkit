@@ -77,7 +77,7 @@ function Export-TableWithDataReader {
         
         $reader.Close()
         
-        "Column Count: $columnCount" | Out-File $outputFile -Append
+        "Column Count: " + $columnCount | Out-File $outputFile -Append
         "" | Out-File $outputFile -Append
         
         "Column Names and Types:" | Out-File $outputFile -Append
@@ -96,7 +96,7 @@ function Export-TableWithDataReader {
         $rowNum = 0
         while ($dataReader.Read() -and $rowNum -lt $MaxRows) {
             $rowNum++
-            "Row $rowNum:" | Out-File $outputFile -Append
+            "Row " + $rowNum + ":" | Out-File $outputFile -Append
             
             for ($i = 0; $i -lt $columnCount; $i++) {
                 try {
@@ -156,7 +156,7 @@ try {
     Write-Host "Found $($tables.Count) tables" -ForegroundColor Green
     Write-Host ""
     
-    "Total Tables: $($tables.Count)" | Out-File $outputFile -Append
+    "Total Tables: " + $tables.Count | Out-File $outputFile -Append
     "" | Out-File $outputFile -Append
     
     # Find FTP queue tables
@@ -166,7 +166,7 @@ try {
         Write-Host "FTP Queue Tables: $($ftpQueueTables -join ', ')" -ForegroundColor Yellow
         Write-Host ""
         
-        "FTP Queue Tables: $($ftpQueueTables -join ', ')" | Out-File $outputFile -Append
+        "FTP Queue Tables: " + ($ftpQueueTables -join ', ') | Out-File $outputFile -Append
         "" | Out-File $outputFile -Append
         
         # Export each FTP queue table
