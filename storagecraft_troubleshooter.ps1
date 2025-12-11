@@ -4,7 +4,7 @@ StorageCraft Troubleshooter - Submenu for StorageCraft backup tools
 
 .DESCRIPTION
 Name: storagecraft_troubleshooter.ps1
-Version: 1.3.0
+Version: 1.4.0
 Purpose: Centralized submenu for StorageCraft backup troubleshooting tools.
          Provides access to Manual FTP Tool, FTP Sync, and ImageManager service management.
 Path: /scripts/storagecraft_troubleshooter.ps1
@@ -62,7 +62,7 @@ function Show-StorageCraftMenu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "              StorageCraft Troubleshooter - v1.3.0                " -ForegroundColor Cyan
+    Write-Host "              StorageCraft Troubleshooter - v1.4.0                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Manual Tools:" -ForegroundColor White
@@ -78,6 +78,9 @@ function Show-StorageCraftMenu {
     Write-Host ""
     Write-Host "  Logs and Diagnostics:" -ForegroundColor White
     Write-Host "    8. View FTP Upload Logs" -ForegroundColor Magenta
+    Write-Host ""
+    Write-Host "  Utilities:" -ForegroundColor White
+    Write-Host "    9. Download/Install WinSCP" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "    B. Back to Main Menu" -ForegroundColor Gray
     Write-Host ""
@@ -347,10 +350,120 @@ function View-FTPUploadLogs {
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
 
+function Install-WinSCP {
+    Write-Host "`n=== WinSCP Download and Installation ===" -ForegroundColor Cyan
+    Write-Host ""
+    
+    $winscpPath = "C:\ITTools\WinSCP"
+    $winscpExe = Join-Path $winscpPath "WinSCP.com"
+    
+    # Check if already installed
+    if (Test-Path $winscpExe) {
+        Write-Host "WinSCP is already installed!" -ForegroundColor Green
+        Write-Host "Location: $winscpPath" -ForegroundColor Gray
+        Write-Host ""
+        
+        # Get version if possible
+        try {
+            $versionInfo = (Get-Item $winscpExe).VersionInfo
+            Write-Host "Version: $($versionInfo.FileVersion)" -ForegroundColor Gray
+        }
+        catch {
+            Write-Host "Version: Unknown" -ForegroundColor Gray
+        }
+        
+        Write-Host ""
+        Write-Host "Press any key to return to menu..." -ForegroundColor Gray
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        return
+    }
+    
+    Write-Host "WinSCP not found. Downloading portable version..." -ForegroundColor Yellow
+    Write-Host "This only needs to happen once." -ForegroundColor Yellow
+    Write-Host ""
+    
+    try {
+        # Enable TLS 1.2
+        Write-Host "Configuring secure connection..." -ForegroundColor Gray
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        
+        # Create directory
+        if (-not (Test-Path $winscpPath)) {
+            New-Item -ItemType Directory -Path $winscpPath -Force | Out-Null
+        }
+        
+        # Download URL
+        $downloadUrl = "https://winscp.net/download/WinSCP-6.5.5-Portable.zip"
+        $zipFile = "C:\ITTools\Temp\WinSCP.zip"
+        
+        # Create temp directory
+        $tempDir = "C:\ITTools\Temp"
+        if (-not (Test-Path $tempDir)) {
+            New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+        }
+        
+        Write-Host "Download URL: $downloadUrl" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "Downloading WinSCP... Please wait..." -ForegroundColor Yellow
+        
+        # Download with progress
+        $webClient = New-Object System.Net.WebClient
+        $webClient.DownloadFile($downloadUrl, $zipFile)
+        
+        Write-Host "Download complete!" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "Extracting files..." -ForegroundColor Yellow
+        
+        # Extract using .NET (PowerShell 4.0 compatible)
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipFile, $winscpPath)
+        
+        Write-Host "Extraction complete!" -ForegroundColor Green
+        Write-Host ""
+        
+        # Cleanup
+        Remove-Item $zipFile -Force -ErrorAction SilentlyContinue
+        
+        # Verify installation
+        if (Test-Path $winscpExe) {
+            Write-Host "================================================================" -ForegroundColor Green
+            Write-Host "  WinSCP installed successfully!" -ForegroundColor Green
+            Write-Host "================================================================" -ForegroundColor Green
+            Write-Host ""
+            Write-Host "Installation Path: $winscpPath" -ForegroundColor Gray
+            Write-Host "Executable: $winscpExe" -ForegroundColor Gray
+            Write-Host ""
+            Write-Host "You can now use FTP Sync tools." -ForegroundColor Cyan
+        }
+        else {
+            Write-Host "Warning: Installation may not have completed correctly." -ForegroundColor Yellow
+            Write-Host "Please check: $winscpPath" -ForegroundColor Yellow
+        }
+    }
+    catch {
+        Write-Host ""
+        Write-Host "================================================================" -ForegroundColor Red
+        Write-Host "  Failed to download WinSCP" -ForegroundColor Red
+        Write-Host "================================================================" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Error: $_" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Manual Installation Instructions:" -ForegroundColor Yellow
+        Write-Host "1. Download WinSCP Portable from: https://winscp.net/" -ForegroundColor White
+        Write-Host "2. Extract the ZIP file" -ForegroundColor White
+        Write-Host "3. Copy the extracted folder to: C:\ITTools\WinSCP" -ForegroundColor White
+        Write-Host "4. Verify WinSCP.com exists at: C:\ITTools\WinSCP\WinSCP.com" -ForegroundColor White
+        Write-Host ""
+    }
+    
+    Write-Host "Press any key to return to menu..." -ForegroundColor Gray
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}
+
 # Main menu loop
 do {
     Show-StorageCraftMenu
-    Write-Host "  Select an option (1-8 or B): " -NoNewline -ForegroundColor White
+    Write-Host "  Select an option (1-9 or B): " -NoNewline -ForegroundColor White
     $choice = Read-Host
     
     switch ($choice.ToUpper()) {
@@ -378,12 +491,15 @@ do {
         '8' {
             View-FTPUploadLogs
         }
+        '9' {
+            Install-WinSCP
+        }
         'B' {
             Write-Host "`nReturning to main menu..." -ForegroundColor Cyan
             exit 0
         }
         default {
-            Write-Host "`nInvalid selection. Please choose 1-8 or B." -ForegroundColor Red
+            Write-Host "`nInvalid selection. Please choose 1-9 or B." -ForegroundColor Red
             Start-Sleep -Seconds 2
         }
     }

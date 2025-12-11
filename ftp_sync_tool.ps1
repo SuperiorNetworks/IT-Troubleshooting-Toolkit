@@ -105,12 +105,16 @@ function Download-WinSCP {
     $zipPath = Join-Path $env:TEMP "WinSCP-Portable.zip"
     
     try {
+        # Enable TLS 1.2 for older systems
+        Write-Host "Configuring secure connection..." -ForegroundColor Gray
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Write-Host ""
+        
         Write-Host "Downloading WinSCP... Please wait..." -ForegroundColor Yellow
         
-        # Use Invoke-WebRequest for better compatibility
-        $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri $winscpUrl -OutFile $zipPath -UseBasicParsing
-        $ProgressPreference = 'Continue'
+        # Use WebClient for better compatibility with PowerShell 4.0
+        $webClient = New-Object System.Net.WebClient
+        $webClient.DownloadFile($winscpUrl, $zipPath)
         
         Write-Log "Download complete!" "SUCCESS"
         Write-Host "Extracting files..." -ForegroundColor Yellow
