@@ -395,7 +395,7 @@ function Install-WinSCP {
         }
         
         # Download URL from GitHub repository
-        $downloadUrl = "https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/WinSCP-6.5.5-Setup.exe"
+        $downloadUrl = "https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/releases/download/v3.5.1-assets/WinSCP-6.5.5-Setup.exe"
         $installerFile = "C:\ITTools\Temp\WinSCP-Setup.exe"
         
         # Create temp directory

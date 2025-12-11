@@ -28,7 +28,7 @@ $logDirectory = "C:\ITTools\Scripts\Logs"
 $logFile = Join-Path $logDirectory "ftp_sync_imagemanager_log.txt"
 $winscpDirectory = "C:\ITTools\WinSCP"
 $winscpExe = Join-Path $winscpDirectory "WinSCP.com"
-$winscpUrl = "https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/WinSCP-6.5.5-Setup.exe"
+$winscpUrl = "https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/releases/download/v3.5.1-assets/WinSCP-6.5.5-Setup.exe"
 $aceInstallerPath = "C:\ITTools\Scripts\install_access_engine.ps1"
 
 # Ensure directories exist
