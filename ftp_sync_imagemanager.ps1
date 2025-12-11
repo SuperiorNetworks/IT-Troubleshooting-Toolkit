@@ -4,7 +4,7 @@ FTP Sync with ImageManager Integration
 
 .DESCRIPTION
 Name: ftp_sync_imagemanager.ps1
-Version: 1.0.0
+Version: 1.1.0
 Purpose: Query ImageManager replication queue and upload queued files via FTP using WinSCP
 Path: /scripts/ftp_sync_imagemanager.ps1
 Copyright: 2025
@@ -29,6 +29,7 @@ $logFile = Join-Path $logDirectory "ftp_sync_imagemanager_log.txt"
 $winscpDirectory = "C:\ITTools\WinSCP"
 $winscpExe = Join-Path $winscpDirectory "WinSCP.com"
 $winscpUrl = "https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/WinSCP-6.5.5-Setup.exe"
+$aceInstallerPath = "C:\ITTools\Scripts\install_access_engine.ps1"
 
 # Ensure directories exist
 if (-not (Test-Path $logDirectory)) {
@@ -116,6 +117,91 @@ function Download-WinSCP {
         Write-Host ""
         Write-Host "Press any key to exit..." -ForegroundColor Gray
         $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        return $false
+    }
+}
+
+# --- Access Database Engine Functions ---
+function Test-ACEInstalled {
+    # Check if ACE provider is available
+    $aceProviders = @(
+        "Microsoft.ACE.OLEDB.12.0",
+        "Microsoft.ACE.OLEDB.14.0",
+        "Microsoft.ACE.OLEDB.15.0",
+        "Microsoft.ACE.OLEDB.16.0"
+    )
+    
+    foreach ($provider in $aceProviders) {
+        try {
+            $conn = New-Object System.Data.OleDb.OleDbConnection
+            $conn.Provider = $provider
+            $conn = $null
+            Write-Log "Access Database Engine detected: $provider" "SUCCESS"
+            return $true
+        }
+        catch {
+            # Provider not available, continue checking
+        }
+    }
+    
+    Write-Log "Access Database Engine NOT detected" "WARN"
+    return $false
+}
+
+function Install-ACEPrompt {
+    Write-Host ""
+    Write-Host "================================================================" -ForegroundColor Yellow
+    Write-Host "          ACCESS DATABASE ENGINE REQUIRED" -ForegroundColor Yellow
+    Write-Host "================================================================" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "The ImageManager Queue tool requires the Microsoft Access" -ForegroundColor White
+    Write-Host "Database Engine to read the ImageManager.mdb file." -ForegroundColor White
+    Write-Host ""
+    Write-Host "This is a free Microsoft component (~25 MB download)." -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Would you like to install it now? (Y/N): " -ForegroundColor Yellow -NoNewline
+    $response = Read-Host
+    
+    if ($response -match '^[Yy]') {
+        Write-Host ""
+        Write-Host "Launching Access Database Engine installer..." -ForegroundColor Cyan
+        Write-Host ""
+        
+        if (Test-Path $aceInstallerPath) {
+            # Run the installer
+            & $aceInstallerPath
+            
+            # Check if installation was successful
+            if (Test-ACEInstalled) {
+                Write-Host ""
+                Write-Host "Installation successful! Continuing with ImageManager Queue tool..." -ForegroundColor Green
+                Write-Host ""
+                return $true
+            }
+            else {
+                Write-Host ""
+                Write-Host "Installation may require a system restart." -ForegroundColor Yellow
+                Write-Host "Please restart and try again." -ForegroundColor Yellow
+                Write-Host ""
+                return $false
+            }
+        }
+        else {
+            Write-Host ""
+            Write-Host "Error: Installer not found at: $aceInstallerPath" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "Please use menu option #10 to install Access Database Engine." -ForegroundColor Yellow
+            Write-Host ""
+            return $false
+        }
+    }
+    else {
+        Write-Host ""
+        Write-Host "Installation cancelled." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "To use this tool, you can install Access Database Engine" -ForegroundColor White
+        Write-Host "using menu option #10 in the StorageCraft Troubleshooter." -ForegroundColor White
+        Write-Host ""
         return $false
     }
 }
@@ -357,6 +443,18 @@ function Main {
     
     Write-Log "FTP Sync Tool started (ImageManager-based)"
     Write-Host "Script location: $PSCommandPath" -ForegroundColor Gray
+    Write-Host ""
+    
+    # Check for Access Database Engine
+    Write-Host "Checking for Access Database Engine..." -ForegroundColor Cyan
+    if (-not (Test-ACEInstalled)) {
+        Write-Host ""
+        if (-not (Install-ACEPrompt)) {
+            Write-Host "Press any key to exit..." -ForegroundColor Gray
+            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+            return
+        }
+    }
     Write-Host ""
     
     # Check for ImageManager database

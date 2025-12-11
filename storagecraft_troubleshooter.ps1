@@ -4,7 +4,7 @@ StorageCraft Troubleshooter - Submenu for StorageCraft backup tools
 
 .DESCRIPTION
 Name: storagecraft_troubleshooter.ps1
-Version: 1.6.0
+Version: 1.7.0
 Purpose: Centralized submenu for StorageCraft backup troubleshooting tools.
          Provides access to Manual FTP Tool, FTP Sync, and ImageManager service management.
 Path: /scripts/storagecraft_troubleshooter.ps1
@@ -47,6 +47,7 @@ $installPath = "C:\ITTools\Scripts"
 $ftpScriptName = "ftp_troubleshooter_tool.ps1"
 $ftpSyncScriptName = "ftp_sync_tool.ps1"
 $ftpSyncImageManagerScriptName = "ftp_sync_imagemanager.ps1"
+$aceInstallerScriptName = "install_access_engine.ps1"
 $serviceName = "StorageCraft ImageManager"
 
 function Test-Administrator {
@@ -62,7 +63,7 @@ function Show-StorageCraftMenu {
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "              StorageCraft Troubleshooter - v1.6.0                " -ForegroundColor Cyan
+    Write-Host "              StorageCraft Troubleshooter - v1.7.0                " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Manual Tools:" -ForegroundColor White
@@ -81,6 +82,7 @@ function Show-StorageCraftMenu {
     Write-Host ""
     Write-Host "  Utilities:" -ForegroundColor White
     Write-Host "    9. Download/Install WinSCP" -ForegroundColor Cyan
+    Write-Host "   10. Install Access Database Engine" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "    B. Back to Main Menu" -ForegroundColor Gray
     Write-Host ""
@@ -461,10 +463,37 @@ function Install-WinSCP {
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
 
+function Install-AccessEngine {
+    Write-Host "`n=== Access Database Engine Installation ===" -ForegroundColor Cyan
+    Write-Host ""
+    
+    $scriptPath = Join-Path $installPath $aceInstallerScriptName
+    
+    if (Test-Path $scriptPath) {
+        Write-Host "Starting Access Database Engine installer..." -ForegroundColor Green
+        Write-Host "Script location: $scriptPath" -ForegroundColor Gray
+        Write-Host ""
+        
+        # Run the installer script
+        & $scriptPath
+        
+        # No need for "press any key" here - the installer script handles it
+    }
+    else {
+        Write-Host "Error: Access Database Engine installer not found!" -ForegroundColor Red
+        Write-Host "Expected location: $scriptPath" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Please use the main menu to download and install the toolkit first." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Press any key to return to menu..." -ForegroundColor Gray
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
+}
+
 # Main menu loop
 do {
     Show-StorageCraftMenu
-    Write-Host "  Select an option (1-9 or B): " -NoNewline -ForegroundColor White
+    Write-Host "  Select an option (1-10 or B): " -NoNewline -ForegroundColor White
     $choice = Read-Host
     
     switch ($choice.ToUpper()) {
@@ -495,12 +524,15 @@ do {
         '9' {
             Install-WinSCP
         }
+        '10' {
+            Install-AccessEngine
+        }
         'B' {
             Write-Host "`nReturning to main menu..." -ForegroundColor Cyan
             exit 0
         }
         default {
-            Write-Host "`nInvalid selection. Please choose 1-9 or B." -ForegroundColor Red
+            Write-Host "`nInvalid selection. Please choose 1-10 or B." -ForegroundColor Red
             Start-Sleep -Seconds 2
         }
     }

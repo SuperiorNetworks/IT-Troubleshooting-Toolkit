@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.1.0  
+**Version:** 3.5.0  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -54,7 +54,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.1.0
+IT Troubleshooting Toolkit - v3.5.0
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -77,7 +77,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - v1.6.0
+StorageCraft Troubleshooter - v1.7.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -95,6 +95,7 @@ Logs and Diagnostics:
 
 Utilities:
   9. Download/Install WinSCP
+  10. Install Access Database Engine
 
   B. Back to Main Menu
 ```
@@ -165,9 +166,15 @@ Utilities:
 **Technology:**
 - Uses **Microsoft ACE OLE DB Provider** to query .mdb database
 - Connection: `Provider=Microsoft.ACE.OLEDB.12.0`
-- No Access installation required (uses OLE DB driver)
+- Auto-detects if ACE provider is missing and offers to install
 - Smart table discovery algorithm
 - Searches for `.spi` files in database fields
+
+**Requirements:**
+- Microsoft Access Database Engine (ACE) OLE DB Provider
+- Automatically prompts to install if missing (menu option #10)
+- Free Microsoft component (~25 MB download)
+- Works on all Windows versions (Server 2008 R2+, Windows 7+)
 
 **Database Location:** `C:\Program Files (x86)\StorageCraft\ImageManager\ImageManager.mdb`
 
@@ -201,6 +208,71 @@ Utilities:
 **Service Name:** `StorageCraft ImageManager`
 
 **Use Case:** Quickly manage ImageManager service without opening Services console
+
+---
+
+### 9. Download/Install WinSCP
+
+**Purpose:** Install WinSCP portable for FTP sync operations
+
+**Features:**
+- Downloads WinSCP 6.5.5 installer from GitHub repository
+- Extracts portable version to `C:\ITTools\WinSCP`
+- Detects existing installation
+- Shows version information
+- Silent installation (no user interaction)
+- TLS 1.2 support for older systems
+
+**Use Case:** Required for FTP Sync tools (options #2 and #3)
+
+---
+
+### 10. Install Access Database Engine ⭐ NEW
+
+**Purpose:** Install Microsoft Access Database Engine for ImageManager database access
+
+**Features:**
+- **Triple detection method** - Registry, OLE DB providers, and DLL files
+- **Auto-detects system architecture** - 64-bit vs 32-bit
+- **Works on all Windows versions** - Server 2008 R2 through Server 2022, Windows 7-11
+- **Verbose troubleshooting** - Detailed on-screen output and logging
+- **Comprehensive logging** - All operations logged to toolkit logs
+- **Always asks confirmation** - User control before installation
+- **Silent installation** - No user interaction during install
+- **Post-installation verification** - Tests provider availability
+- **Error handling** - Retry option and manual instructions
+- **Disk space validation** - Ensures 200 MB free space
+- **Administrator check** - Validates privileges before proceeding
+
+**What It Installs:**
+- Microsoft Access Database Engine (ACE) OLE DB Provider
+- Size: ~25 MB download, ~50 MB installed
+- Official Microsoft component
+- Does NOT install Microsoft Access application
+- Only installs database drivers and OLE DB providers
+
+**Detection Methods:**
+1. **Registry Check** - Searches Office registry paths for ACE installation
+2. **OLE DB Provider Test** - Tests if ACE providers are available (12.0, 14.0, 15.0, 16.0)
+3. **DLL File Check** - Looks for ACEOLEDB.DLL in Common Files
+
+**Installation Process:**
+1. Detects if already installed (skips if present)
+2. Checks Windows version and architecture
+3. Validates disk space (200 MB required)
+4. Asks user confirmation
+5. Downloads installer from Microsoft (~25 MB)
+6. Runs silent installation
+7. Verifies installation success
+8. Offers retry or manual instructions if failed
+
+**Use Case:** Required for option #3 (Upload ImageManager Queue). The tool will auto-prompt to install if missing.
+
+**Hybrid Approach:**
+- **Menu Option #10** - Install manually anytime
+- **Auto-Prompt** - When using option #3, automatically detects and offers to install
+
+**File:** `install_access_engine.ps1`
 
 ---
 
@@ -487,6 +559,43 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.5.0 (2025-12-11) ⭐ NEW
+- **Major Feature**: Access Database Engine Auto-Installer
+  - New menu option #10: "Install Access Database Engine"
+  - Hybrid approach: Manual installation via menu + auto-prompt when needed
+  - Required for option #3 (Upload ImageManager Queue) to read ImageManager.mdb
+  - Triple detection method: Registry, OLE DB providers, and DLL files
+  - Auto-detects 64-bit vs 32-bit systems
+  - Works on all Windows versions (Server 2008 R2+, Windows 7-11)
+  - Verbose troubleshooting output on-screen
+  - Comprehensive logging to toolkit logs
+  - Always asks for user confirmation before installing
+  - Silent installation with progress tracking
+  - Post-installation verification
+  - Retry option and manual instructions if installation fails
+  - Disk space validation (200 MB required)
+  - Administrator privilege check
+- **Auto-Detection Integration**:
+  - Option #3 (Upload ImageManager Queue) now auto-detects missing ACE
+  - Prompts user to install if not found
+  - Seamless integration - no manual steps required
+  - Can also install manually via menu option #10 anytime
+- **What It Installs**:
+  - Microsoft Access Database Engine (ACE) OLE DB Provider
+  - Size: ~25 MB download, ~50 MB installed
+  - Official Microsoft component (not third-party)
+  - Only installs database drivers (not Access application)
+  - Safe for all Windows Server versions
+- **Files Added**:
+  - `install_access_engine.ps1` (v1.0.0) - ACE installer with verbose logging
+- **Files Updated**:
+  - `storagecraft_troubleshooter.ps1` (v1.6.0 → v1.7.0) - Added menu option #10
+  - `ftp_sync_imagemanager.ps1` (v1.0.0 → v1.1.0) - Added ACE auto-detection
+  - `launch_menu.ps1` (v3.4.0 → v3.5.0)
+  - `README.md` - Added comprehensive ACE installer documentation
+
+**Use Case**: Users on fresh Windows installations or systems without Office can now easily install the required Access Database Engine to use the ImageManager Queue tool. The tool automatically detects and offers to install if missing.
 
 ### Version 3.4.0 (2025-12-10)
 - **Improved UX**: Clearer Menu Names for FTP Tools
