@@ -22,13 +22,16 @@ try {
         }
     }
     
-    Write-Host "Found FTP Queue tables: $($tables -join ', ')" -ForegroundColor Green
+    $tableList = $tables -join ', '
+    Write-Host "Found FTP Queue tables: $tableList" -ForegroundColor Green
     Write-Host ""
     
     $allFiles = @()
     
     foreach ($table in $tables) {
-        Write-Host "Querying $table..." -ForegroundColor Yellow
+        Write-Host "Querying " -NoNewline -ForegroundColor Yellow
+        Write-Host "$table" -NoNewline -ForegroundColor Yellow
+        Write-Host "..." -ForegroundColor Yellow
         
         $cmd = $conn.CreateCommand()
         $cmd.CommandText = "SELECT Name, FileSize, CreateTime FROM [$table]"
@@ -53,13 +56,16 @@ try {
         }
         
         $reader.Close()
-        Write-Host "  Found $count files" -ForegroundColor Gray
+        Write-Host "  Found " -NoNewline -ForegroundColor Gray
+        Write-Host "$count" -NoNewline -ForegroundColor Gray
+        Write-Host " files" -ForegroundColor Gray
     }
     
     $conn.Close()
     
     Write-Host ""
-    Write-Host "Total files in queue: $($allFiles.Count)" -ForegroundColor Green
+    $totalCount = $allFiles.Count
+    Write-Host "Total files in queue: $totalCount" -ForegroundColor Green
     Write-Host ""
     
     if ($allFiles.Count -gt 0) {
