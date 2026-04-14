@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.6.0
+Version: 3.7.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -60,6 +60,7 @@ Change Log:
 2025-12-08 v2.7.1 - Fixed version display; Made version dynamic instead of hardcoded
 2025-12-08 v2.7.2 - Added launcher.bat for proper toolkit execution from correct directory
 2025-12-08 v2.8.0 - Added bootstrap.ps1 smart installer (auto-install/update/launch)
+2026-04-14 v3.7.0 - Added DoH fallback for MAS activation
 
 .RELEASE_NOTES
 v2.5.0:
@@ -203,6 +204,7 @@ function Show-Menu {
     Write-Host ""
     Write-Host "  Windows/Office Activation:" -ForegroundColor White
     Write-Host "    4. Run MassGrave Activation Scripts (MAS)" -ForegroundColor Magenta
+    Write-Host "    4B. Run MAS (Alternative DoH Method)" -ForegroundColor Magenta
     Write-Host ""
     Write-Host "    Q. Quit" -ForegroundColor Red
     Write-Host ""
@@ -628,6 +630,9 @@ function Open-LogInEditor {
 }
 
 function Run-MassGraveActivation {
+    param (
+        [bool]$UseDoH = $false
+    )
     Write-Host "`n=== MassGrave Activation Scripts (MAS) ===" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "This will launch the Microsoft Activation Scripts (MAS) utility." -ForegroundColor Yellow
@@ -654,7 +659,12 @@ function Run-MassGraveActivation {
         
         try {
             # Execute the MAS script
-            Invoke-Expression (Invoke-RestMethod -Uri 'https://get.activated.win')
+            if ($UseDoH) {
+                Write-AuditLog -action "MassGrave Activation" -details "Using DoH fallback method"
+                Invoke-Expression (curl.exe -s --doh-url https://1.1.1.1/dns-query https://get.activated.win | Out-String)
+            } else {
+                Invoke-Expression (Invoke-RestMethod -Uri 'https://get.activated.win')
+            }
             Write-AuditLog -action "MassGrave Activation" -details "MAS script executed successfully"
         }
         catch {
@@ -681,7 +691,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v2.8.0"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.7.0"
 
 # Main menu loop
 do {
@@ -720,7 +730,16 @@ do {
         '4' {
             Write-AuditLog -action "Menu Selection" -details "Option 4: Run MassGrave Activation Scripts"
             try {
-                Run-MassGraveActivation
+                Run-MassGraveActivation -UseDoH $false
+            } catch {
+                Write-AuditLog -action "MassGrave Activation" -level "ERROR" -errorMessage $_.Exception.Message
+                throw
+            }
+        }
+        '4B' {
+            Write-AuditLog -action "Menu Selection" -details "Option 4B: Run MassGrave Activation Scripts (DoH Fallback)"
+            try {
+                Run-MassGraveActivation -UseDoH $true
             } catch {
                 Write-AuditLog -action "MassGrave Activation" -level "ERROR" -errorMessage $_.Exception.Message
                 throw

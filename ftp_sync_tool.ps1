@@ -126,9 +126,15 @@ function Download-WinSCP {
         # Clean up
         Remove-Item $installerPath -Force -ErrorAction SilentlyContinue
         
-        Write-Log "WinSCP installed successfully to: $winscpDirectory" "SUCCESS"
-        Write-Host ""
-        return $true
+        if ($process.ExitCode -eq 0 -and (Test-Path $winscpExe)) {
+            Write-Log "WinSCP installed successfully to: $winscpDirectory" "SUCCESS"
+            Write-Host ""
+            return $true
+        } else {
+            Write-Log "WinSCP installation failed or executable not found at $winscpExe" "ERROR"
+            Write-Host ""
+            return $false
+        }
     }
     catch {
         Write-Log "Failed to download WinSCP: $($_.Exception.Message)" "ERROR"

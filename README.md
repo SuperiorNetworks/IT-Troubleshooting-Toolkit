@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.6.0  
+**Version:** 3.7.0  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -76,6 +76,7 @@ Troubleshooting Tools:
 
 Windows/Office Activation:
   4. Run MassGrave Activation Scripts (MAS)
+  4B. Run MAS (Alternative DoH Method)
 
   Q. Quit
 ```
@@ -88,25 +89,26 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - v1.7.0
+StorageCraft Troubleshooter - v1.8.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
   2. Sync Local Backups to FTP (WinSCP)
   3. Upload ImageManager Queue (WinSCP)
+  4. Test FTP Connectivity (PS Checker)
 
 ImageManager Service Management:
-  4. Start ImageManager Service
-  5. Stop ImageManager Service
-  6. Restart ImageManager Service
-  7. Check ImageManager Service Status
+  5. Start ImageManager Service
+  6. Stop ImageManager Service
+  7. Restart ImageManager Service
+  8. Check ImageManager Service Status
 
 Logs and Diagnostics:
-  8. View FTP Upload Logs
+  9. View FTP Upload Logs
 
 Utilities:
-  9. Download/Install WinSCP
-  10. Install Access Database Engine
+  10. Download/Install WinSCP
+  11. Install Access Database Engine
 
   B. Back to Main Menu
 ```
@@ -204,7 +206,25 @@ Utilities:
 
 ---
 
-### 4-7. ImageManager Service Management
+### 4. Test FTP Connectivity (PS Checker) ⭐ NEW
+
+**Purpose:** Test FTP connectivity, authentication, and directory listing using pure PowerShell without relying on external tools like WinSCP.
+
+**Features:**
+- Pure PowerShell implementation (no WinSCP dependency)
+- Tests TCP Port 21 connectivity
+- Tests FTP authentication
+- Tests FTP directory listing
+- Verbose troubleshooting output
+- Comprehensive logging to master audit log
+
+**Use Case:** Useful for isolating network/firewall issues when FTP uploads fail.
+
+**File:** `ftp_ps_checker.ps1`
+
+---
+
+### 5-8. ImageManager Service Management
 
 **Purpose:** Control the StorageCraft ImageManager Windows service
 
@@ -222,7 +242,7 @@ Utilities:
 
 ---
 
-### 9. Download/Install WinSCP
+### 10. Download/Install WinSCP
 
 **Purpose:** Install WinSCP portable for FTP sync operations
 
@@ -238,7 +258,7 @@ Utilities:
 
 ---
 
-### 10. Install Access Database Engine ⭐ NEW
+### 11. Install Access Database Engine
 
 **Purpose:** Install Microsoft Access Database Engine for ImageManager database access
 
@@ -287,7 +307,7 @@ Utilities:
 
 ---
 
-### 8. View FTP Upload Logs
+### 9. View FTP Upload Logs
 
 **Purpose:** View and analyze FTP operation logs
 
@@ -754,7 +774,13 @@ For support, feature requests, or bug reports:
   - Fixed "End of Central Directory record" extraction error
   - Better error messages with manual download instructions
 
-### Version 3.0.0 (2025-12-08)
+### Version 3.7.0 (2026-04-14)
+- Added FTP PS Checker tool to test FTP connectivity using pure PowerShell
+- Added DoH fallback method for MassGrave Activation Scripts (MAS)
+- Fixed WinSCP installer verification to ensure executable exists before reporting success
+- Updated documentation to reflect new menu options and versions
+
+### Version 3.6.0 (2025-12-08)
 - **Major Rewrite: FTP Sync now uses WinSCP**: Professional-grade FTP synchronization
   - Completely rewrote FTP Sync tool to use WinSCP open-source FTP client
   - Eliminates all PowerShell parsing issues with custom FTP code
