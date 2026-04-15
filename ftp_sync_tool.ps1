@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.1.4
+Version: 2.1.5
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -52,6 +52,8 @@ Change Log:
 2026-04-15 v2.1.3 - Removed .spa from sync filter; only .spi and .spf files are synced
 2026-04-15 v2.1.4 - Added per-file stall detection (120s timeout); on stall/error, deletes
                     partial file on FTP and retries once; failed files listed at end
+2026-04-15 v2.1.5 - Fixed PowerShell parse error caused by UTF-8 em-dash characters;
+                    replaced with ASCII hyphens for full PS 4.0 compatibility
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -520,13 +522,13 @@ function Upload-FilesWithWinSCP {
             continue
         }
 
-        # --- Stall or error detected — delete partial and retry once ---
+        # --- Stall or error detected  -  delete partial and retry once ---
         if ($attempt1Stall -or $attempt1Error) {
             $retryCount++
             if ($attempt1Stall) {
-                Write-Log "  STALL detected on: $relPath — deleting partial and retrying..." "WARN"
+                Write-Log "  STALL detected on: $relPath  -  deleting partial and retrying..." "WARN"
             } else {
-                Write-Log "  ERROR on: $relPath — deleting partial and retrying..." "WARN"
+                Write-Log "  ERROR on: $relPath  -  deleting partial and retrying..." "WARN"
             }
 
             # Attempt 2: delete partial first, then re-upload
@@ -545,13 +547,13 @@ function Upload-FilesWithWinSCP {
                 Write-Log "  RETRY OK: $relPath" "SUCCESS"
                 $successCount++
             } else {
-                Write-Log "  RETRY FAILED: $relPath — skipping, added to failed list" "ERROR"
+                Write-Log "  RETRY FAILED: $relPath  -  skipping, added to failed list" "ERROR"
                 $failCount++
                 $failedFiles += $relPath
             }
         } else {
-            # No stall, no explicit error — but also no success confirmation; log as failed
-            Write-Log "  NO CONFIRMATION for: $relPath — skipping" "WARN"
+            # No stall, no explicit error  -  but also no success confirmation; log as failed
+            Write-Log "  NO CONFIRMATION for: $relPath  -  skipping" "WARN"
             $failCount++
             $failedFiles += $relPath
         }
