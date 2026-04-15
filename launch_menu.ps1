@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.7.5
+Version: 3.7.8
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -66,6 +66,9 @@ Change Log:
 2026-04-14 v3.7.3 - Added manual file list upload option to FTP Sync Tool
 2026-04-14 v3.7.4 - Version sync and changelog update
 2026-04-14 v3.7.5 - Rewrote updater to check all script versions independently
+2026-04-15 v3.7.6 - Updated ftp_sync_tool.ps1 to v2.1.8 (recursive sync, stall detection)
+2026-04-15 v3.7.7 - Added WinSCP NOOP keepalive to prevent NAT session drops
+2026-04-15 v3.7.8 - Added pre-upload file existence check to ftp_sync_tool.ps1
 
 .RELEASE_NOTES
 v2.5.0:

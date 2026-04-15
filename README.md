@@ -866,6 +866,22 @@ For support, feature requests, or bug reports:
   - Quick identification of missing incremental backups
   - Streamlines manual backup replication workflows
 
+### Version 3.7.8 (2026-04-15)
+- **FTP Sync Tool Enhancements**:
+  - Added pre-upload local file existence check to prevent WinSCP errors
+  - Added WinSCP NOOP keepalive (every 10s) to prevent NAT session drops during large transfers
+  - Added post-upload FTP stat check to confirm file actually exists before deciding to retry
+  - Fixed false ERROR/RETRY loop caused by 550 MKD response poisoning exit code
+  - Updated file filter to include `.spa` files in addition to `.spi` and `.spf`
+  - Added manual file list upload option (paste space-separated list of filenames)
+- **Toolkit Updater Improvements**:
+  - Rewrote updater to check all script versions independently, not just the launcher
+  - Displays exactly which modules were updated
+- **New Tools & Fixes**:
+  - Added pure PowerShell FTP Connectivity Tester (Option 4 in StorageCraft menu)
+  - Added DoH fallback for MAS activation (Option 4B)
+  - Fixed ACE provider detection logic in `install_access_engine.ps1` and `ftp_sync_imagemanager.ps1`
+
 ### Version 2.8.0 (2025-12-08)
 - **Bootstrap Installer**: Smart one-command installer and launcher
   - Automatically installs toolkit if not present

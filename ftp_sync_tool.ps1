@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.1.8
+Version: 2.1.9
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -62,6 +62,8 @@ Change Log:
 2026-04-15 v2.1.8 - Fixed false ERROR/RETRY loop: exit code is poisoned by 550 MKD response
                     even when upload succeeds; replaced with post-upload FTP stat check
                     to confirm file actually exists before deciding to retry
+2026-04-15 v2.1.9 - Added pre-upload local file existence check to prevent WinSCP errors
+                    when attempting to upload files that were deleted or moved locally
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -535,6 +537,15 @@ function Upload-FilesWithWinSCP {
             $ftpDest    = ""
         }
         $ftpFullPath = "/" + $relPath.TrimStart('/')   # /SN-RLS08/backup.spi
+
+        # --- Pre-upload existence check ---
+        if (-not (Test-Path $file.FullPath)) {
+            Write-Log "[$fileIndex/$($files.Count)] ERROR: Local file not found: $relPath" "ERROR"
+            Write-Log "  Skipping upload for this file." "WARN"
+            $failCount++
+            $failedFiles += "$relPath (Not found on disk)"
+            continue
+        }
 
         Write-Log "[$fileIndex/$($files.Count)] Uploading: $relPath"
 
