@@ -4,17 +4,17 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.0.0
+Version: 2.0.1
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
-         Pre-configured for ftp.sndayton.com with -cd.spi file filtering.
+         Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
 Path: /scripts/ftp_sync_tool.ps1
 Copyright: 2025
 
 Key Features:
 - Automatic WinSCP portable download and setup
 - Pre-configured for ftp.sndayton.com
-- Compare local vs FTP files (filtered for -cd.spi)
+- Compare local vs FTP files (filtered for .spi, .spf, .spa)
 - Display files missing on FTP
 - Bulk upload missing files using WinSCP
 - Professional WinSCP synchronization engine
@@ -36,6 +36,7 @@ Dependencies:
 
 Change Log:
 2025-12-08 v2.0.0 - Rewritten to use WinSCP for reliability
+2026-04-14 v2.0.1 - Updated filter to include all StorageCraft backup types (.spi, .spf, .spa)
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -265,16 +266,19 @@ function Compare-Files {
         [array]$ftpFiles
     )
     
-    Write-Log "Scanning local directory for *-cd.spi files..."
+    Write-Log "Scanning local directory for StorageCraft backup files (.spi, .spf, .spa)..."
     
-    $localFiles = Get-ChildItem -Path $localPath -File -Filter "*-cd.spi" -ErrorAction SilentlyContinue
+    # PowerShell 4.0 compatible way to filter multiple extensions
+    $localFiles = Get-ChildItem -Path $localPath -File -ErrorAction SilentlyContinue | Where-Object {
+        $_.Extension -match '\.(spi|spf|spa)$'
+    }
     
     if (-not $localFiles) {
-        Write-Log "No *-cd.spi files found in local directory." "WARN"
+        Write-Log "No StorageCraft backup files found in local directory." "WARN"
         return @()
     }
     
-    Write-Log "Found $($localFiles.Count) local *-cd.spi files."
+    Write-Log "Found $($localFiles.Count) local backup files."
     
     $missingFiles = @()
     
@@ -311,7 +315,7 @@ function Show-SyncReport {
     Write-Host "FTP Destination:    " -NoNewline -ForegroundColor Gray
     Write-Host $defaultFtpServer -ForegroundColor White
     Write-Host "Filter:             " -NoNewline -ForegroundColor Gray
-    Write-Host "*-cd.spi" -ForegroundColor White
+    Write-Host "*.spi, *.spf, *.spa" -ForegroundColor White
     Write-Host ""
     
     if ($missingFiles.Count -eq 0) {
