@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.1.6
+Version: 2.1.7
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -57,6 +57,8 @@ Change Log:
 2026-04-15 v2.1.6 - Fixed 'call mkdir' and 'call rm' sending raw FTP commands that FileZilla
                     rejects with 500; replaced with WinSCP native mkdir/rm commands;
                     tightened error detection to avoid false positives from mkdir/rm 550 noise
+2026-04-15 v2.1.7 - Fixed false 'NO CONFIRMATION' warnings: replaced unreliable output text
+                    parsing with WinSCP exit code detection (0=success, 1=error)
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -418,11 +420,11 @@ function Show-SyncReport {
     Write-Host ""
 }
 
-# Helper: run a single WinSCP script file and return the output lines
+# Helper: run a single WinSCP script file; returns a hashtable with Output and ExitCode
 function Invoke-WinSCP {
     param ([string]$scriptPath)
     $output = & $winscpExe /script=$scriptPath /log="$logDirectory\winscp.log" 2>&1
-    return $output
+    return @{ Output = $output; ExitCode = $LASTEXITCODE }
 }
 
 # Helper: build a WinSCP script that uploads ONE file, with stall timeout,
@@ -514,53 +516,42 @@ function Upload-FilesWithWinSCP {
             -ftpDestPath $ftpFullPath `
             -deleteFirst $false
 
-        $output = Invoke-WinSCP -scriptPath $scriptPath
+        $result1 = Invoke-WinSCP -scriptPath $scriptPath
         Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
 
-        $attempt1Success = $output | Where-Object { $_ -match 'Upload of file.*finished' }
-        $attempt1Stall   = $output | Where-Object { $_ -match 'Timeout|Stall|timed out|no data' }
-        # Only flag as error if WinSCP itself reports a transfer failure (not mkdir/rm 550 noise)
-        $attempt1Error   = $output | Where-Object { $_ -match 'Error transferring|Upload of file.*failed|Cannot upload' }
-
-        if ($attempt1Success) {
+        # WinSCP exit code 0 = success, 1 = error (most reliable detection method)
+        if ($result1.ExitCode -eq 0) {
             Write-Log "  OK: $relPath" "SUCCESS"
             $successCount++
             continue
         }
 
-        # --- Stall or error detected  -  delete partial and retry once ---
-        if ($attempt1Stall -or $attempt1Error) {
-            $retryCount++
-            if ($attempt1Stall) {
-                Write-Log "  STALL detected on: $relPath  -  deleting partial and retrying..." "WARN"
-            } else {
-                Write-Log "  ERROR on: $relPath  -  deleting partial and retrying..." "WARN"
-            }
+        # Exit code non-zero: check if it was a stall/timeout or a hard error
+        $attempt1Stall = $result1.Output | Where-Object { $_ -match 'Timeout|Stall|timed out|no data' }
 
-            # Attempt 2: delete partial first, then re-upload
-            $scriptPath2 = New-UploadScript -ftpCreds $ftpCreds `
-                -localFullPath $file.FullPath `
-                -ftpDestDir $ftpDest `
-                -ftpDestPath $ftpFullPath `
-                -deleteFirst $true
-
-            $output2 = Invoke-WinSCP -scriptPath $scriptPath2
-            Remove-Item $scriptPath2 -Force -ErrorAction SilentlyContinue
-
-            $attempt2Success = $output2 | Where-Object { $_ -match 'Upload of file.*finished' }
-            $attempt2Error   = $output2 | Where-Object { $_ -match 'Error transferring|Upload of file.*failed|Cannot upload' }
-
-            if ($attempt2Success) {
-                Write-Log "  RETRY OK: $relPath" "SUCCESS"
-                $successCount++
-            } else {
-                Write-Log "  RETRY FAILED: $relPath  -  skipping, added to failed list" "ERROR"
-                $failCount++
-                $failedFiles += $relPath
-            }
+        # --- Upload failed  -  delete any partial on FTP and retry once ---
+        $retryCount++
+        if ($attempt1Stall) {
+            Write-Log "  STALL detected on: $relPath  -  deleting partial and retrying..." "WARN"
         } else {
-            # No stall, no explicit error  -  but also no success confirmation; log as failed
-            Write-Log "  NO CONFIRMATION for: $relPath  -  skipping" "WARN"
+            Write-Log "  ERROR on: $relPath  -  deleting partial and retrying..." "WARN"
+        }
+
+        # Attempt 2: delete partial first, then re-upload
+        $scriptPath2 = New-UploadScript -ftpCreds $ftpCreds `
+            -localFullPath $file.FullPath `
+            -ftpDestDir $ftpDest `
+            -ftpDestPath $ftpFullPath `
+            -deleteFirst $true
+
+        $result2 = Invoke-WinSCP -scriptPath $scriptPath2
+        Remove-Item $scriptPath2 -Force -ErrorAction SilentlyContinue
+
+        if ($result2.ExitCode -eq 0) {
+            Write-Log "  RETRY OK: $relPath" "SUCCESS"
+            $successCount++
+        } else {
+            Write-Log "  RETRY FAILED: $relPath  -  skipping, added to failed list" "ERROR"
             $failCount++
             $failedFiles += $relPath
         }
