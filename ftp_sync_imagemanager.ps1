@@ -4,7 +4,7 @@ FTP Sync with ImageManager Integration
 
 .DESCRIPTION
 Name: ftp_sync_imagemanager.ps1
-Version: 1.3.0
+Version: 1.3.1
 Purpose: Query ImageManager replication queue and upload queued files via FTP using WinSCP
 Path: /scripts/ftp_sync_imagemanager.ps1
 Copyright: 2025
@@ -140,8 +140,13 @@ function Test-ACEInstalled {
     foreach ($provider in $aceProviders) {
         try {
             $conn = New-Object System.Data.OleDb.OleDbConnection
-            $conn.Provider = $provider
+            $conn.ConnectionString = "Provider=$provider;Data Source=''"
             $conn = $null
+            
+            $comConn = New-Object -ComObject ADODB.Connection
+            $comConn.Provider = $provider
+            $comConn = $null
+            
             Write-Log "Access Database Engine detected: $provider" "SUCCESS"
             return $true
         }

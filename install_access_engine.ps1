@@ -6,7 +6,7 @@
     required for reading ImageManager.mdb files. Includes verbose troubleshooting,
     comprehensive logging, and support for all Windows versions.
 .NOTES
-    Version: 1.0.0
+    Version: 1.0.1
     Author: Superior Networks LLC
     Requires: PowerShell 4.0+, Administrator privileges
 #>
@@ -21,7 +21,7 @@ $ErrorActionPreference = "Stop"
 $VerbosePreference = "Continue"
 
 # Script version
-$ScriptVersion = "1.0.0"
+$ScriptVersion = "1.0.1"
 
 # Paths
 $LogDir = "C:\ITTools\Scripts\Logs"
@@ -108,10 +108,16 @@ function Test-ACEInstalled {
     foreach ($Provider in $ACE_Providers) {
         try {
             Write-VerboseLog "  Testing provider: $Provider"
-            $null = New-Object -ComObject ADODB.Connection
-            $conn = New-Object -ComObject ADODB.Connection
-            $conn.Provider = $Provider
+            $conn = New-Object System.Data.OleDb.OleDbConnection
+            $conn.ConnectionString = "Provider=$Provider;Data Source=''"
+            # We don't open it, just creating the object and setting connection string is enough to test if provider class exists
+            # But to truly test if it's registered, we can try to instantiate it via COM as a fallback
             $conn = $null
+            
+            $comConn = New-Object -ComObject ADODB.Connection
+            $comConn.Provider = $Provider
+            $comConn = $null
+            
             Write-Log "Access Database Engine detected via provider: $Provider" -Level 'SUCCESS'
             return $true
         }
@@ -148,14 +154,14 @@ function Test-ACEInstalled {
 function Get-SystemArchitecture {
     Write-VerboseLog "Detecting system architecture..."
     
-    if ([Environment]::Is64BitOperatingSystem) {
-        Write-VerboseLog "  System is 64-bit"
-        Write-Log "Detected 64-bit operating system" -Level 'INFO'
+    if ([Environment]::Is64BitProcess) {
+        Write-VerboseLog "  PowerShell process is 64-bit"
+        Write-Log "Detected 64-bit PowerShell process" -Level 'INFO'
         return "x64"
     }
     else {
-        Write-VerboseLog "  System is 32-bit"
-        Write-Log "Detected 32-bit operating system" -Level 'INFO'
+        Write-VerboseLog "  PowerShell process is 32-bit"
+        Write-Log "Detected 32-bit PowerShell process" -Level 'INFO'
         return "x86"
     }
 }
