@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.1.2
+Version: 2.1.3
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -15,7 +15,7 @@ Key Features:
 - Automatic WinSCP portable download and setup
 - Pre-configured for ftp.sndayton.com
 - Recursive folder scanning on both local and FTP sides
-- Compare local vs FTP files (filtered for .spi, .spf, .spa) including subdirectories
+- Compare local vs FTP files (filtered for .spi, .spf only) including subdirectories
 - Mirrors local folder structure on FTP during upload
 - Display files missing on FTP
 - Bulk upload missing files using WinSCP (preserving subfolder paths)
@@ -47,6 +47,7 @@ Change Log:
 2026-04-15 v2.1.1 - Fixed comparison hang by using hash table for O(1) lookup instead of O(n^2) loop
 2026-04-15 v2.1.2 - Fixed upload abort caused by '550 Directory already exists' on mkdir;
                     changed batch mode to 'continue' and deduplicated mkdir calls per subfolder
+2026-04-15 v2.1.3 - Removed .spa from sync filter; only .spi and .spf files are synced
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -261,7 +262,7 @@ exit
                     $subFolders += $fullPath
                 } else {
                     # Only track backup files
-                    if ($name -match '\.(spi|spf|spa)$') {
+                    if ($name -match '\.(spi|spf)$') {
                         $allFiles += [PSCustomObject]@{
                             Name         = $name
                             RelativePath = $fullPath   # e.g. /SN-RLS08/backup.spi
@@ -306,11 +307,11 @@ function Compare-Files {
         [array]$ftpFiles
     )
     
-    Write-Log "Scanning local directory recursively for StorageCraft backup files (.spi, .spf, .spa)..."
+    Write-Log "Scanning local directory recursively for StorageCraft backup files (.spi, .spf)..."
     
     # PowerShell 4.0 compatible recursive scan
     $localFiles = Get-ChildItem -Path $localPath -Recurse -File -ErrorAction SilentlyContinue | Where-Object {
-        $_.Extension -match '\.(spi|spf|spa)$'
+        $_.Extension -match '\.(spi|spf)$'
     }
     
     if (-not $localFiles) {
@@ -369,7 +370,7 @@ function Show-SyncReport {
     Write-Host "FTP Destination:    " -NoNewline -ForegroundColor Gray
     Write-Host $defaultFtpServer -ForegroundColor White
     Write-Host "Filter:             " -NoNewline -ForegroundColor Gray
-    Write-Host "*.spi, *.spf, *.spa (all subfolders)" -ForegroundColor White
+    Write-Host "*.spi, *.spf (all subfolders)" -ForegroundColor White
     Write-Host ""
     
     if ($missingFiles.Count -eq 0) {
