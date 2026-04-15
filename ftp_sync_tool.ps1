@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.0.2
+Version: 2.0.3
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -39,6 +39,7 @@ Change Log:
 2025-12-08 v2.0.0 - Rewritten to use WinSCP for reliability
 2026-04-14 v2.0.1 - Updated filter to include all StorageCraft backup types (.spi, .spf, .spa)
 2026-04-14 v2.0.2 - Added manual file list upload option
+2026-04-14 v2.0.3 - Fixed early exit when FTP returns 0 files; added raw WinSCP output logging
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -223,11 +224,15 @@ exit
         $files = @()
         $inListing = $false
         
+        # Log raw output for debugging
+        Write-Log "--- RAW WINSCP OUTPUT START ---"
+        
         foreach ($line in $output) {
             $lineStr = $line.ToString()
+            Write-Log $lineStr
             
             # Look for file listings (start with date or permissions)
-            if ($lineStr -match '^\d{2}-\d{2}-\d{2}' -or $lineStr -match '^-rw') {
+            if ($lineStr -match '^\d{2}-\d{2}-\d{2}' -or $lineStr -match '^-rw' -or $lineStr -match '^[d-]rwx') {
                 $inListing = $true
                 
                 # Extract filename (last part after spaces)
@@ -252,13 +257,15 @@ exit
         # Clean up
         Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
         
+        Write-Log "--- RAW WINSCP OUTPUT END ---"
+        
         Write-Log "Retrieved $($files.Count) files from FTP server." "SUCCESS"
         return $files
     }
     catch {
         Write-Log "ERROR: Failed to list FTP files: $($_.Exception.Message)" "ERROR"
         Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
-        return $null
+        return @() # Return empty array instead of null to prevent early exit
     }
 }
 
@@ -463,9 +470,7 @@ Write-Host "Retrieving FTP file list..." -ForegroundColor Yellow
 $ftpFiles = Get-FtpFileList -ftpCreds $ftpCreds
 
 if ($null -eq $ftpFiles) {
-    Write-Host "`nPress any key to exit..." -ForegroundColor Gray
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    exit 1
+    $ftpFiles = @() # Ensure it's an array even if null is returned
 }
 
 # Compare files
