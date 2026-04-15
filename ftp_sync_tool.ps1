@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.0.1
+Version: 2.0.2
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -17,6 +17,7 @@ Key Features:
 - Compare local vs FTP files (filtered for .spi, .spf, .spa)
 - Display files missing on FTP
 - Bulk upload missing files using WinSCP
+- Manual file list upload option
 - Professional WinSCP synchronization engine
 - Comprehensive logging
 
@@ -37,6 +38,7 @@ Dependencies:
 Change Log:
 2025-12-08 v2.0.0 - Rewritten to use WinSCP for reliability
 2026-04-14 v2.0.1 - Updated filter to include all StorageCraft backup types (.spi, .spf, .spa)
+2026-04-14 v2.0.2 - Added manual file list upload option
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -472,25 +474,79 @@ $missingFiles = Compare-Files -localPath $localPath -ftpFiles $ftpFiles
 # Show report
 Show-SyncReport -missingFiles $missingFiles -localPath $localPath
 
-if ($missingFiles.Count -eq 0) {
-    Write-Host "Press any key to return to menu..." -ForegroundColor Gray
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    exit 0
-}
-
 # Ask if user wants to upload
 Write-Host "Options:" -ForegroundColor Cyan
-Write-Host "  1. Upload ALL missing files (using WinSCP)" -ForegroundColor White
-Write-Host "  2. Return to menu" -ForegroundColor White
+
+if ($missingFiles.Count -gt 0) {
+    Write-Host "  1. Upload ALL missing files (using WinSCP)" -ForegroundColor White
+} else {
+    Write-Host "  1. Upload ALL missing files (using WinSCP) - [DISABLED: No missing files]" -ForegroundColor DarkGray
+}
+
+Write-Host "  2. Manual Upload: Paste a list of filenames to upload" -ForegroundColor White
+Write-Host "  3. Return to menu" -ForegroundColor White
 Write-Host ""
 
-$choice = Read-Host "Select an option (1-2)"
+$choice = Read-Host "Select an option (1-3)"
 
 switch ($choice) {
     "1" {
-        Upload-FilesWithWinSCP -files $missingFiles -ftpCreds $ftpCreds
+        if ($missingFiles.Count -gt 0) {
+            Upload-FilesWithWinSCP -files $missingFiles -ftpCreds $ftpCreds
+        } else {
+            Write-Host "No missing files to upload. Returning to menu..." -ForegroundColor Yellow
+        }
     }
     "2" {
+        Write-Host ""
+        Write-Host "Manual File Upload" -ForegroundColor Cyan
+        Write-Host "Paste a space-separated list of filenames (e.g., file1.spi file2.spi)" -ForegroundColor Gray
+        Write-Host "Files must exist in the local directory: $localPath" -ForegroundColor Gray
+        Write-Host ""
+        
+        $manualInput = Read-Host "Enter filenames"
+        
+        if (-not [string]::IsNullOrWhiteSpace($manualInput)) {
+            # Split by spaces, commas, or semicolons and remove empty entries
+            $fileNames = $manualInput -split '[\s,;]+' | Where-Object { $_ -ne '' }
+            
+            $manualFiles = @()
+            $notFoundCount = 0
+            
+            foreach ($name in $fileNames) {
+                $fullPath = Join-Path $localPath $name
+                if (Test-Path $fullPath -PathType Leaf) {
+                    $manualFiles += [PSCustomObject]@{
+                        Name = $name
+                        FullPath = $fullPath
+                    }
+                } else {
+                    Write-Host "File not found locally: $name" -ForegroundColor Red
+                    $notFoundCount++
+                }
+            }
+            
+            if ($manualFiles.Count -gt 0) {
+                Write-Host ""
+                Write-Host "Found $($manualFiles.Count) valid files to upload." -ForegroundColor Green
+                if ($notFoundCount -gt 0) {
+                    Write-Host "Skipped $notFoundCount invalid files." -ForegroundColor Yellow
+                }
+                
+                $confirm = Read-Host "Proceed with upload? (Y/N)"
+                if ($confirm -match '^[Yy]') {
+                    Upload-FilesWithWinSCP -files $manualFiles -ftpCreds $ftpCreds
+                } else {
+                    Write-Host "Upload cancelled." -ForegroundColor Yellow
+                }
+            } else {
+                Write-Host "No valid files found to upload." -ForegroundColor Red
+            }
+        } else {
+            Write-Host "No input provided." -ForegroundColor Yellow
+        }
+    }
+    "3" {
         Write-Host "Returning to menu..." -ForegroundColor Yellow
     }
     default {
