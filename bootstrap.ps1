@@ -109,11 +109,11 @@ function Install-Toolkit {
         Remove-Item -Path $zipFile -Force -ErrorAction SilentlyContinue
         Remove-Item -Path $extractPath -Recurse -Force -ErrorAction SilentlyContinue
         
-        Write-Host "✓ Installation complete!" -ForegroundColor Green
+        Write-Host "[OK] Installation complete!" -ForegroundColor Green
         return $true
     }
     catch {
-        Write-Host "✗ Installation failed: $_" -ForegroundColor Red
+        Write-Host "[FAIL] Installation failed: $_" -ForegroundColor Red
         return $false
     }
 }
@@ -131,7 +131,7 @@ if ($null -eq $installedVersion) {
     if (Install-Toolkit -isUpdate $false) {
         $installedVersion = Get-InstalledVersion
         Write-Host ""
-        Write-Host "✓ Installed IT Troubleshooting Toolkit v$installedVersion" -ForegroundColor Green
+        Write-Host "[OK] Installed IT Troubleshooting Toolkit v$installedVersion" -ForegroundColor Green
         Write-Host "  Location: $installPath" -ForegroundColor Gray
     }
     else {
@@ -145,7 +145,7 @@ if ($null -eq $installedVersion) {
 }
 else {
     # Already installed - check for updates
-    Write-Host "✓ Toolkit found: v$installedVersion" -ForegroundColor Green
+    Write-Host "[OK] Toolkit found: v$installedVersion" -ForegroundColor Green
     Write-Host "  Location: $installPath" -ForegroundColor Gray
     Write-Host ""
     Write-Host "Checking for updates..." -ForegroundColor Cyan
@@ -153,17 +153,17 @@ else {
     $latestVersion = Get-LatestVersion
     
     if ($null -ne $latestVersion -and $latestVersion -gt $installedVersion) {
-        Write-Host "Update available: v$installedVersion → v$latestVersion" -ForegroundColor Yellow
+        Write-Host "Update available: v$installedVersion -> v$latestVersion" -ForegroundColor Yellow
         Write-Host ""
         
         if (Install-Toolkit -isUpdate $true) {
             $installedVersion = Get-InstalledVersion
             Write-Host ""
-            Write-Host "✓ Updated to v$installedVersion" -ForegroundColor Green
+            Write-Host "[OK] Updated to v$installedVersion" -ForegroundColor Green
         }
     }
     else {
-        Write-Host "✓ Already up-to-date" -ForegroundColor Green
+        Write-Host "[OK] Already up-to-date" -ForegroundColor Green
     }
 }
 

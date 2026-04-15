@@ -450,13 +450,13 @@ del "%~f0"
             Write-Host "                  Installation Complete                          " -ForegroundColor White
             Write-Host "=================================================================" -ForegroundColor Cyan
             Write-Host ""
-            Write-Host "  ✓ Installed IT Troubleshooting Toolkit v$newVersion" -ForegroundColor Green
+            Write-Host "  [OK] Installed IT Troubleshooting Toolkit v$newVersion" -ForegroundColor Green
         }
         elseif ($updateNeeded) {
             Write-Host "                    Update Complete                              " -ForegroundColor White
             Write-Host "=================================================================" -ForegroundColor Cyan
             Write-Host ""
-            Write-Host "  ✓ Toolkit updated successfully!" -ForegroundColor Green
+            Write-Host "  [OK] Toolkit updated successfully!" -ForegroundColor Green
             Write-Host ""
             Write-Host "  Updated Modules:" -ForegroundColor Cyan
             foreach ($mod in $updatedScripts) {
@@ -467,7 +467,7 @@ del "%~f0"
             Write-Host "                  Already Up-to-Date                             " -ForegroundColor White
             Write-Host "=================================================================" -ForegroundColor Cyan
             Write-Host ""
-            Write-Host "  ✓ All modules are already at the latest version." -ForegroundColor Green
+            Write-Host "  [OK] All modules are already at the latest version." -ForegroundColor Green
             Write-Host ""
             Write-Host "  No updates available." -ForegroundColor Yellow
         }
@@ -718,7 +718,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.7.4"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.7.5"
 
 # Main menu loop
 do {
