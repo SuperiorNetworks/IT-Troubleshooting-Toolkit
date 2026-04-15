@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.7.0  
+**Version:** 3.7.1  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -65,7 +65,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.6.0
+IT Troubleshooting Toolkit - v3.7.1
 
 Toolkit Management:
   1. Download and Install Latest Version
