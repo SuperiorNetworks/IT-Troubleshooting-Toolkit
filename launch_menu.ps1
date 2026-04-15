@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.7.4
+Version: 3.7.5
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -65,6 +65,7 @@ Change Log:
 2026-04-14 v3.7.2 - Updated FTP Sync Tool file filter to include .spa files
 2026-04-14 v3.7.3 - Added manual file list upload option to FTP Sync Tool
 2026-04-14 v3.7.4 - Version sync and changelog update
+2026-04-14 v3.7.5 - Rewrote updater to check all script versions independently
 
 .RELEASE_NOTES
 v2.5.0:
@@ -216,12 +217,11 @@ function Show-Menu {
     Write-Host ""
 }
 
-function Get-CurrentVersion {
-    $launcherPath = Join-Path $installPath "launch_menu.ps1"
-    
-    if (Test-Path $launcherPath) {
+function Get-ScriptVersion {
+    param([string]$filePath)
+    if (Test-Path $filePath) {
         try {
-            $content = Get-Content $launcherPath -Raw
+            $content = Get-Content $filePath -Raw
             if ($content -match 'Version:\s*(\d+\.\d+\.\d+)') {
                 return [version]$matches[1]
             }
@@ -231,6 +231,10 @@ function Get-CurrentVersion {
         }
     }
     return $null
+}
+
+function Get-CurrentVersion {
+    return Get-ScriptVersion -filePath (Join-Path $installPath "launch_menu.ps1")
 }
 
 function Get-ChangelogFromReadme {
@@ -321,17 +325,37 @@ function Download-And-Install {
         # Get new version from downloaded files
         $sourceFolder = Join-Path $extractPath "$repoName-master"
         $newLauncherPath = Join-Path $sourceFolder "launch_menu.ps1"
-        $newVersion = $null
+        $newVersion = Get-ScriptVersion -filePath $newLauncherPath
         
-        if (Test-Path $newLauncherPath) {
-            $content = Get-Content $newLauncherPath -Raw
-            if ($content -match 'Version:\s*(\d+\.\d+\.\d+)') {
-                $newVersion = [version]$matches[1]
+        # Check if ANY script has an update
+        $updateNeeded = $false
+        $updatedScripts = @()
+        
+        if ($isNewInstall) {
+            $updateNeeded = $true
+        } else {
+            # Compare all .ps1 files
+            $downloadedScripts = Get-ChildItem -Path $sourceFolder -Filter "*.ps1"
+            foreach ($script in $downloadedScripts) {
+                $localScriptPath = Join-Path $installPath $script.Name
+                $newScriptVer = Get-ScriptVersion -filePath $script.FullName
+                $localScriptVer = Get-ScriptVersion -filePath $localScriptPath
+                
+                if ($null -ne $newScriptVer) {
+                    if ($null -eq $localScriptVer -or $newScriptVer -gt $localScriptVer) {
+                        $updateNeeded = $true
+                        $updatedScripts += [PSCustomObject]@{
+                            Name = $script.Name
+                            OldVer = if ($localScriptVer) { $localScriptVer.ToString() } else { "None" }
+                            NewVer = $newScriptVer.ToString()
+                        }
+                    }
+                }
             }
         }
 
         # For updates, use staged approach with batch file to avoid file locking issues
-        if ($newVersion -gt $currentVersion) {
+        if ($updateNeeded -and -not $isNewInstall) {
             Write-Host "Staging update files..." -ForegroundColor Yellow
             
             # Create staging directory
@@ -428,29 +452,28 @@ del "%~f0"
             Write-Host ""
             Write-Host "  ✓ Installed IT Troubleshooting Toolkit v$newVersion" -ForegroundColor Green
         }
-        elseif ($newVersion -gt $currentVersion) {
+        elseif ($updateNeeded) {
             Write-Host "                    Update Complete                              " -ForegroundColor White
             Write-Host "=================================================================" -ForegroundColor Cyan
             Write-Host ""
-            Write-Host "  ✓ Updated from v$currentVersion → v$newVersion" -ForegroundColor Green
+            Write-Host "  ✓ Toolkit updated successfully!" -ForegroundColor Green
+            Write-Host ""
+            Write-Host "  Updated Modules:" -ForegroundColor Cyan
+            foreach ($mod in $updatedScripts) {
+                Write-Host "  - $($mod.Name): v$($mod.OldVer) -> v$($mod.NewVer)" -ForegroundColor White
+            }
         }
-        elseif ($newVersion -eq $currentVersion) {
+        else {
             Write-Host "                  Already Up-to-Date                             " -ForegroundColor White
             Write-Host "=================================================================" -ForegroundColor Cyan
             Write-Host ""
-            Write-Host "  ✓ You already have the latest version: v$newVersion" -ForegroundColor Green
+            Write-Host "  ✓ All modules are already at the latest version." -ForegroundColor Green
             Write-Host ""
             Write-Host "  No updates available." -ForegroundColor Yellow
         }
-        else {
-            Write-Host "                  Installation Complete                          " -ForegroundColor White
-            Write-Host "=================================================================" -ForegroundColor Cyan
-            Write-Host ""
-            Write-Host "  ✓ Installed version: v$newVersion" -ForegroundColor Green
-        }
         
         # Show changelog if new install or update
-        if ($isNewInstall -or ($newVersion -gt $currentVersion)) {
+        if ($isNewInstall -or $updateNeeded) {
             Write-Host ""
             Write-Host "  What's New in v$newVersion`:" -ForegroundColor Cyan
             Write-Host "" 
