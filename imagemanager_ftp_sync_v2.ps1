@@ -245,9 +245,8 @@ try {
     
     "option batch abort" | Out-File $scriptPath -Encoding ASCII
     "option confirm off" | Out-File $scriptPath -Append -Encoding ASCII
-    "option keepuptodate off" | Out-File $scriptPath -Append -Encoding ASCII
-    "keepalive 10" | Out-File $scriptPath -Append -Encoding ASCII
-    "open $ftpUrl" | Out-File $scriptPath -Append -Encoding ASCII
+
+    "open $ftpUrl -rawsettings FtpPingType=1 FtpPingInterval=10" | Out-File $scriptPath -Append -Encoding ASCII
     
     foreach ($file in $filesToUpload) {
         $escapedPath = $file.LocalPath.Replace("'", "''")

@@ -238,9 +238,8 @@ function Get-FtpFileListRecursive {
     $script = @"
 option batch abort
 option confirm off
-option keepuptodate off
-keepalive 10
-open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
+
+open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10
 ls $ftpFolder
 exit
 "@
@@ -450,9 +449,8 @@ function Test-FtpFileExists {
     $statContent = @"
 option batch abort
 option confirm off
-option keepuptodate off
-keepalive 10
-open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
+
+open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10
 stat "$ftpFullPath"
 exit
 "@
@@ -481,7 +479,7 @@ option batch continue
 option confirm off
 option transfer binary
 option transfer stall 120
-open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
+open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10
 "@
 
     # Ensure subfolder exists (silently ignore if already present)

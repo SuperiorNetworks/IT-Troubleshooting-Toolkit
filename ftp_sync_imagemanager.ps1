@@ -465,11 +465,10 @@ function Upload-FilesViaWinSCP {
     $scriptPath = Join-Path $env:TEMP "winscp_upload_script.txt"
     
     $scriptContent = @"
-open ftp://${FtpUsername}:${FtpPassword}@${FtpServer}/
+open ftp://${FtpUsername}:${FtpPassword}@${FtpServer}/ -rawsettings FtpPingType=1 FtpPingInterval=10
 option batch abort
 option confirm off
-option keepuptodate off
-keepalive 10
+
 "@
     
     foreach ($file in $Files) {
