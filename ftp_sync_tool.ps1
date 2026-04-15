@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.1.1
+Version: 2.1.2
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -45,6 +45,8 @@ Change Log:
 2026-04-15 v2.1.0 - Added recursive folder scanning on both local and FTP sides;
                     upload now preserves subfolder structure on FTP destination
 2026-04-15 v2.1.1 - Fixed comparison hang by using hash table for O(1) lookup instead of O(n^2) loop
+2026-04-15 v2.1.2 - Fixed upload abort caused by '550 Directory already exists' on mkdir;
+                    changed batch mode to 'continue' and deduplicated mkdir calls per subfolder
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -421,8 +423,12 @@ function Upload-FilesWithWinSCP {
     # Create WinSCP script
     $scriptPath = Join-Path $env:TEMP "winscp_upload.txt"
     
+    # Track which FTP subdirs we've already tried to create so we don't
+    # issue redundant mkdir commands (one per unique subfolder is enough)
+    $createdDirs = @{}
+
     $scriptContent = @"
-option batch abort
+option batch continue
 option confirm off
 open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
 "@
@@ -435,7 +441,14 @@ open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
         if ($slashIdx -gt 0) {
             # File is inside a subfolder — ensure the folder exists then upload there
             $ftpSubDir = "/" + $relPath.Substring(0, $slashIdx)   # e.g. /SN-RLS08
-            $scriptContent += "`nmkdir $ftpSubDir"
+
+            # Only emit mkdir once per unique subfolder to reduce noise
+            if (-not $createdDirs.ContainsKey($ftpSubDir)) {
+                # Use -ignoreerrors so '550 Directory already exists' does not abort the session
+                $scriptContent += "`ncall mkdir $ftpSubDir"
+                $createdDirs[$ftpSubDir] = $true
+            }
+
             $scriptContent += "`nput `"$($file.FullPath)`" `"$ftpSubDir/`""
         } else {
             # File is in the root
