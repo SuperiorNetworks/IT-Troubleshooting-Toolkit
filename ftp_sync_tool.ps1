@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.1.3
+Version: 2.1.4
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -19,6 +19,8 @@ Key Features:
 - Mirrors local folder structure on FTP during upload
 - Display files missing on FTP
 - Bulk upload missing files using WinSCP (preserving subfolder paths)
+- Stall detection: 120-second timeout per file; auto-deletes partial and retries once
+- Failed file list displayed at end of upload session
 - Manual file list upload option
 - Professional WinSCP synchronization engine
 - Comprehensive logging
@@ -48,6 +50,8 @@ Change Log:
 2026-04-15 v2.1.2 - Fixed upload abort caused by '550 Directory already exists' on mkdir;
                     changed batch mode to 'continue' and deduplicated mkdir calls per subfolder
 2026-04-15 v2.1.3 - Removed .spa from sync filter; only .spi and .spf files are synced
+2026-04-15 v2.1.4 - Added per-file stall detection (120s timeout); on stall/error, deletes
+                    partial file on FTP and retries once; failed files listed at end
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -409,101 +413,173 @@ function Show-SyncReport {
     Write-Host ""
 }
 
+# Helper: run a single WinSCP script file and return the output lines
+function Invoke-WinSCP {
+    param ([string]$scriptPath)
+    $output = & $winscpExe /script=$scriptPath /log="$logDirectory\winscp.log" 2>&1
+    return $output
+}
+
+# Helper: build a WinSCP script that uploads ONE file, with stall timeout,
+# optional pre-delete of any partial on FTP, and returns the script path
+function New-UploadScript {
+    param (
+        [hashtable]$ftpCreds,
+        [string]$localFullPath,
+        [string]$ftpDestDir,      # e.g. /SN-RLS08  (empty string = root)
+        [string]$ftpDestPath,     # full FTP path e.g. /SN-RLS08/backup.spi
+        [bool]$deleteFirst = $false
+    )
+
+    $scriptPath = Join-Path $env:TEMP "winscp_upload_single.txt"
+
+    $scriptContent = @"
+option batch continue
+option confirm off
+option transfer binary
+option transfer stall 120
+open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
+"@
+
+    # Ensure subfolder exists (silently ignore if already present)
+    if ($ftpDestDir -ne "") {
+        $scriptContent += "`ncall mkdir $ftpDestDir"
+    }
+
+    # Delete any leftover partial file before uploading
+    if ($deleteFirst) {
+        $scriptContent += "`ncall rm `"$ftpDestPath`""
+    }
+
+    # Upload the file
+    if ($ftpDestDir -ne "") {
+        $scriptContent += "`nput `"$localFullPath`" `"$ftpDestDir/`""
+    } else {
+        $scriptContent += "`nput `"$localFullPath`""
+    }
+
+    $scriptContent += "`nexit"
+    $scriptContent | Out-File -FilePath $scriptPath -Encoding ASCII
+    return $scriptPath
+}
+
 function Upload-FilesWithWinSCP {
     param (
         [array]$files,
         [hashtable]$ftpCreds
     )
-    
+
     Write-Host ""
     Write-Host "=================================================================" -ForegroundColor Cyan
     Write-Host "              Uploading Files with WinSCP                        " -ForegroundColor White
     Write-Host "=================================================================" -ForegroundColor Cyan
     Write-Host ""
-    
-    # Create WinSCP script
-    $scriptPath = Join-Path $env:TEMP "winscp_upload.txt"
-    
-    # Track which FTP subdirs we've already tried to create so we don't
-    # issue redundant mkdir commands (one per unique subfolder is enough)
-    $createdDirs = @{}
 
-    $scriptContent = @"
-option batch continue
-option confirm off
-open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
-"@
-    
+    Write-Log "Starting upload of $($files.Count) files (stall timeout: 120s, auto-retry on stall)..."
+
+    $successCount  = 0
+    $retryCount    = 0
+    $failCount     = 0
+    $failedFiles   = @()
+    $createdDirs   = @{}
+
+    $fileIndex = 0
     foreach ($file in $files) {
-        # Determine the FTP destination folder from the relative path
-        $relPath   = $file.RelativePath   # e.g. SN-RLS08/backup.spi  or  backup.spi
-        $slashIdx  = $relPath.LastIndexOf('/')
+        $fileIndex++
+        $relPath  = $file.RelativePath   # e.g. SN-RLS08/backup.spi
+        $slashIdx = $relPath.LastIndexOf('/')
 
         if ($slashIdx -gt 0) {
-            # File is inside a subfolder — ensure the folder exists then upload there
-            $ftpSubDir = "/" + $relPath.Substring(0, $slashIdx)   # e.g. /SN-RLS08
-
-            # Only emit mkdir once per unique subfolder to reduce noise
-            if (-not $createdDirs.ContainsKey($ftpSubDir)) {
-                # Use -ignoreerrors so '550 Directory already exists' does not abort the session
-                $scriptContent += "`ncall mkdir $ftpSubDir"
-                $createdDirs[$ftpSubDir] = $true
-            }
-
-            $scriptContent += "`nput `"$($file.FullPath)`" `"$ftpSubDir/`""
+            $ftpSubDir  = "/" + $relPath.Substring(0, $slashIdx)   # /SN-RLS08
+            $ftpDest    = $ftpSubDir
         } else {
-            # File is in the root
-            $scriptContent += "`nput `"$($file.FullPath)`""
+            $ftpSubDir  = ""
+            $ftpDest    = ""
         }
-    }
-    
-    $scriptContent += "`nexit"
-    
-    $scriptContent | Out-File -FilePath $scriptPath -Encoding ASCII
-    
-    try {
-        Write-Log "Starting upload of $($files.Count) files (preserving folder structure)..."
-        
-        # Run WinSCP
-        $output = & $winscpExe /script=$scriptPath /log="$logDirectory\winscp.log" 2>&1
-        
-        # Check for success
-        $successCount = 0
-        $failCount = 0
-        
-        foreach ($line in $output) {
-            if ($line -match 'Upload of file.*finished') {
+        $ftpFullPath = "/" + $relPath.TrimStart('/')   # /SN-RLS08/backup.spi
+
+        Write-Log "[$fileIndex/$($files.Count)] Uploading: $relPath"
+
+        # --- Attempt 1: normal upload ---
+        $scriptPath = New-UploadScript -ftpCreds $ftpCreds `
+            -localFullPath $file.FullPath `
+            -ftpDestDir $ftpDest `
+            -ftpDestPath $ftpFullPath `
+            -deleteFirst $false
+
+        $output = Invoke-WinSCP -scriptPath $scriptPath
+        Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
+
+        $attempt1Success = $output | Where-Object { $_ -match 'Upload of file.*finished' }
+        $attempt1Stall   = $output | Where-Object { $_ -match 'Timeout|Stall|timed out|no data' }
+        $attempt1Error   = $output | Where-Object { $_ -match 'Error|Failed|Cannot' }
+
+        if ($attempt1Success) {
+            Write-Log "  OK: $relPath" "SUCCESS"
+            $successCount++
+            continue
+        }
+
+        # --- Stall or error detected — delete partial and retry once ---
+        if ($attempt1Stall -or $attempt1Error) {
+            $retryCount++
+            if ($attempt1Stall) {
+                Write-Log "  STALL detected on: $relPath — deleting partial and retrying..." "WARN"
+            } else {
+                Write-Log "  ERROR on: $relPath — deleting partial and retrying..." "WARN"
+            }
+
+            # Attempt 2: delete partial first, then re-upload
+            $scriptPath2 = New-UploadScript -ftpCreds $ftpCreds `
+                -localFullPath $file.FullPath `
+                -ftpDestDir $ftpDest `
+                -ftpDestPath $ftpFullPath `
+                -deleteFirst $true
+
+            $output2 = Invoke-WinSCP -scriptPath $scriptPath2
+            Remove-Item $scriptPath2 -Force -ErrorAction SilentlyContinue
+
+            $attempt2Success = $output2 | Where-Object { $_ -match 'Upload of file.*finished' }
+
+            if ($attempt2Success) {
+                Write-Log "  RETRY OK: $relPath" "SUCCESS"
                 $successCount++
-            }
-            elseif ($line -match 'Error|Failed') {
+            } else {
+                Write-Log "  RETRY FAILED: $relPath — skipping, added to failed list" "ERROR"
                 $failCount++
+                $failedFiles += $relPath
             }
+        } else {
+            # No stall, no explicit error — but also no success confirmation; log as failed
+            Write-Log "  NO CONFIRMATION for: $relPath — skipping" "WARN"
+            $failCount++
+            $failedFiles += $relPath
         }
-        
-        # Clean up
-        Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
-        
+    }
+
+    # --- Summary ---
+    Write-Host ""
+    Write-Host "-----------------------------------------------------------------" -ForegroundColor Gray
+    Write-Host "Upload Summary:" -ForegroundColor Cyan
+    Write-Host "  Total Files:  $($files.Count)" -ForegroundColor White
+    Write-Host "  Successful:   $successCount" -ForegroundColor Green
+    Write-Host "  Auto-Retried: $retryCount" -ForegroundColor Yellow
+    Write-Host "  Failed:       $failCount" -ForegroundColor $(if ($failCount -gt 0) { 'Red' } else { 'Green' })
+
+    if ($failedFiles.Count -gt 0) {
         Write-Host ""
-        Write-Host "-----------------------------------------------------------------" -ForegroundColor Gray
-        Write-Host "Upload Summary:" -ForegroundColor Cyan
-        Write-Host "  Total Files: $($files.Count)" -ForegroundColor White
-        Write-Host "  Successful: $successCount" -ForegroundColor Green
-        
-        if ($failCount -gt 0) {
-            Write-Host "  Failed: $failCount" -ForegroundColor Red
-            Write-Host ""
-            Write-Host "Check log for details: $logDirectory\winscp.log" -ForegroundColor Yellow
+        Write-Host "Files that could not be uploaded after retry:" -ForegroundColor Red
+        foreach ($f in $failedFiles) {
+            Write-Host "  $f" -ForegroundColor Red
         }
-        
-        Write-Host "-----------------------------------------------------------------" -ForegroundColor Gray
         Write-Host ""
-        
-        Write-Log "Upload complete: $successCount successful, $failCount failed" "SUCCESS"
+        Write-Host "Check log for details: $logDirectory\winscp.log" -ForegroundColor Yellow
     }
-    catch {
-        Write-Log "ERROR: Upload failed: $($_.Exception.Message)" "ERROR"
-        Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
-    }
+
+    Write-Host "-----------------------------------------------------------------" -ForegroundColor Gray
+    Write-Host ""
+
+    Write-Log "Upload complete: $successCount succeeded, $retryCount retried, $failCount failed" "SUCCESS"
 }
 
 # --- Main Script ---
