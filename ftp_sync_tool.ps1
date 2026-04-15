@@ -231,6 +231,8 @@ function Get-FtpFileListRecursive {
     $script = @"
 option batch abort
 option confirm off
+option keepuptodate off
+keepalive 10
 open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
 ls $ftpFolder
 exit
@@ -441,6 +443,8 @@ function Test-FtpFileExists {
     $statContent = @"
 option batch abort
 option confirm off
+option keepuptodate off
+keepalive 10
 open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
 stat "$ftpFullPath"
 exit

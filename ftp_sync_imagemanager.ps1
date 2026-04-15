@@ -468,6 +468,8 @@ function Upload-FilesViaWinSCP {
 open ftp://${FtpUsername}:${FtpPassword}@${FtpServer}/
 option batch abort
 option confirm off
+option keepuptodate off
+keepalive 10
 "@
     
     foreach ($file in $Files) {
