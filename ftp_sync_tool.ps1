@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.1.7
+Version: 2.1.8
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -59,6 +59,9 @@ Change Log:
                     tightened error detection to avoid false positives from mkdir/rm 550 noise
 2026-04-15 v2.1.7 - Fixed false 'NO CONFIRMATION' warnings: replaced unreliable output text
                     parsing with WinSCP exit code detection (0=success, 1=error)
+2026-04-15 v2.1.8 - Fixed false ERROR/RETRY loop: exit code is poisoned by 550 MKD response
+                    even when upload succeeds; replaced with post-upload FTP stat check
+                    to confirm file actually exists before deciding to retry
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -420,11 +423,33 @@ function Show-SyncReport {
     Write-Host ""
 }
 
-# Helper: run a single WinSCP script file; returns a hashtable with Output and ExitCode
+# Helper: run a single WinSCP script file and return raw output lines
 function Invoke-WinSCP {
     param ([string]$scriptPath)
     $output = & $winscpExe /script=$scriptPath /log="$logDirectory\winscp.log" 2>&1
-    return @{ Output = $output; ExitCode = $LASTEXITCODE }
+    return $output
+}
+
+# Helper: verify a file exists on FTP by running a stat-only WinSCP script
+# Returns $true if the file is present, $false if not
+function Test-FtpFileExists {
+    param (
+        [hashtable]$ftpCreds,
+        [string]$ftpFullPath
+    )
+    $statScript = Join-Path $env:TEMP "winscp_stat.txt"
+    $statContent = @"
+option batch abort
+option confirm off
+open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
+stat "$ftpFullPath"
+exit
+"@
+    $statContent | Out-File -FilePath $statScript -Encoding ASCII
+    $statOutput = & $winscpExe /script=$statScript /log="$logDirectory\winscp.log" 2>&1
+    Remove-Item $statScript -Force -ErrorAction SilentlyContinue
+    # WinSCP stat exits 0 if file found, 1 if not found
+    return ($LASTEXITCODE -eq 0)
 }
 
 # Helper: build a WinSCP script that uploads ONE file, with stall timeout,
@@ -516,20 +541,26 @@ function Upload-FilesWithWinSCP {
             -ftpDestPath $ftpFullPath `
             -deleteFirst $false
 
-        $result1 = Invoke-WinSCP -scriptPath $scriptPath
+        $output1 = Invoke-WinSCP -scriptPath $scriptPath
         Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
 
-        # WinSCP exit code 0 = success, 1 = error (most reliable detection method)
-        if ($result1.ExitCode -eq 0) {
+        # Check stall in output (exit code is unreliable when batch continue absorbs MKD 550)
+        $attempt1Stall = $output1 | Where-Object { $_ -match 'Timeout|Stall|timed out|no data' }
+
+        # Verify success by confirming the file actually exists on FTP
+        if (-not $attempt1Stall) {
+            $fileOnFtp = Test-FtpFileExists -ftpCreds $ftpCreds -ftpFullPath $ftpFullPath
+        } else {
+            $fileOnFtp = $false
+        }
+
+        if ($fileOnFtp) {
             Write-Log "  OK: $relPath" "SUCCESS"
             $successCount++
             continue
         }
 
-        # Exit code non-zero: check if it was a stall/timeout or a hard error
-        $attempt1Stall = $result1.Output | Where-Object { $_ -match 'Timeout|Stall|timed out|no data' }
-
-        # --- Upload failed  -  delete any partial on FTP and retry once ---
+        # --- File not on FTP after upload  -  delete any partial and retry once ---
         $retryCount++
         if ($attempt1Stall) {
             Write-Log "  STALL detected on: $relPath  -  deleting partial and retrying..." "WARN"
@@ -544,10 +575,13 @@ function Upload-FilesWithWinSCP {
             -ftpDestPath $ftpFullPath `
             -deleteFirst $true
 
-        $result2 = Invoke-WinSCP -scriptPath $scriptPath2
+        $output2 = Invoke-WinSCP -scriptPath $scriptPath2
         Remove-Item $scriptPath2 -Force -ErrorAction SilentlyContinue
 
-        if ($result2.ExitCode -eq 0) {
+        # Verify retry success the same way
+        $fileOnFtpAfterRetry = Test-FtpFileExists -ftpCreds $ftpCreds -ftpFullPath $ftpFullPath
+
+        if ($fileOnFtpAfterRetry) {
             Write-Log "  RETRY OK: $relPath" "SUCCESS"
             $successCount++
         } else {
