@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.1.0
+Version: 2.1.1
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -44,6 +44,7 @@ Change Log:
 2026-04-14 v2.0.3 - Fixed early exit when FTP returns 0 files; added raw WinSCP output logging
 2026-04-15 v2.1.0 - Added recursive folder scanning on both local and FTP sides;
                     upload now preserves subfolder structure on FTP destination
+2026-04-15 v2.1.1 - Fixed comparison hang by using hash table for O(1) lookup instead of O(n^2) loop
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -317,19 +318,25 @@ function Compare-Files {
     
     Write-Log "Found $($localFiles.Count) local backup file(s) (including subfolders)."
     
+    # Build a hash table of FTP files for O(1) lookup
+    Write-Log "Building hash table for fast comparison..."
+    $ftpHashTable = @{}
+    foreach ($ftpFile in $ftpFiles) {
+        if ($ftpFile.RelativePath) {
+            $key = $ftpFile.RelativePath.TrimStart('/')
+            $ftpHashTable[$key] = $true
+        }
+    }
+    
     $missingFiles = @()
     
+    Write-Log "Comparing local files against FTP hash table..."
     foreach ($localFile in $localFiles) {
         # Build the relative path from the local root  (e.g. SN-RLS08\backup.spi)
         $relativePath = $localFile.FullName.Substring($localPath.Length).TrimStart('\').Replace('\', '/')
 
-        # Check if this relative path exists on the FTP side
-        # Match on RelativePath (strip leading slash for comparison)
-        $foundOnFtp = $ftpFiles | Where-Object {
-            $_.RelativePath.TrimStart('/') -eq $relativePath
-        }
-        
-        if (-not $foundOnFtp) {
+        # Check if this relative path exists on the FTP side using the hash table
+        if (-not $ftpHashTable.ContainsKey($relativePath)) {
             $missingFiles += [PSCustomObject]@{
                 Name         = $localFile.Name
                 RelativePath = $relativePath          # e.g. SN-RLS08/backup.spi
