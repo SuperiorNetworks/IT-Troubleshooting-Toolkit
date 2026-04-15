@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.7.1  
+**Version:** 3.7.10  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -65,7 +65,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.7.1
+IT Troubleshooting Toolkit - v3.7.10
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -953,3 +953,41 @@ For support, feature requests, or bug reports:
 ---
 
 **For complete version history, see the full changelog in the repository.**
+
+
+## Changelog
+
+### v3.7.10 (2026-04-15)
+- **Keepalive Fix**: Replaced invalid `option keepuptodate` with correct WinSCP `-rawsettings FtpPingType=1 FtpPingInterval=10` to prevent script breakage while maintaining NAT state.
+- **StorageCraft File Filter**: Updated `ftp_sync_tool.ps1` to only sync base images (`*.spf`) and daily consolidated images (`*-cd*.spi`). Excludes raw intra-daily incrementals and weekly/monthly/rolling consolidations which are handled by remote ImageManager.
+- **Pre-upload Existence Check**: Added check to skip files not found on local disk instead of wasting retries.
+- **Manual File List Upload**: Added option to paste a list of filenames to upload manually inside the FTP Sync Tool.
+- **Per-module Version Checking**: Updater now checks each individual script's version against GitHub.
+- **ASCII Compliance**: Purged all non-ASCII characters from all `.ps1` files to ensure strict PowerShell 4.0 / Server 2012 R2 compatibility.
+- **ACE Provider Detection**: Fixed architecture detection in `install_access_engine.ps1` to use `Is64BitProcess` instead of `Is64BitOperatingSystem`.
+- **FTP PS Checker**: Added pure PowerShell FTP connectivity tester (`ftp_ps_checker.ps1`) that doesn't require WinSCP.
+- **DoH Fallback**: Added MAS Activation DoH Fallback (Option 4B) in `launch_menu.ps1`.
+
+### Technical Notes
+
+#### WinSCP Keepalive
+When scripting WinSCP for long-running FTP transfers over NAT/WAN, NOOP keepalives are required to prevent the control channel from timing out. 
+**CRITICAL:** Do NOT use `option keepuptodate` or `keepalive` commands in WinSCP scripts, as these are GUI-only or invalid and will break the script. 
+Instead, use the `-rawsettings` parameter on the `open` command:
+`open ftp://user:pass@server/ -rawsettings FtpPingType=1 FtpPingInterval=10`
+
+#### StorageCraft File Filter Logic
+The `ftp_sync_tool.ps1` is specifically designed to replicate StorageCraft backups to a remote ImageManager instance. It only syncs:
+- Base images (`*.spf`)
+- Daily consolidated images (`*-cd*.spi`)
+
+It explicitly excludes:
+- Raw intra-daily incrementals (`*-i####.spi`)
+- Weekly consolidated (`*-cw*.spi`)
+- Monthly consolidated (`*-cm*.spi`)
+- Rolling consolidated (`*-cr*.spi`)
+
+This is because the remote ImageManager instance will generate its own weekly, monthly, and rolling consolidations from the daily files. Syncing them over the WAN wastes bandwidth and causes conflicts.
+
+#### PowerShell 4.0 Compatibility
+All `.ps1` files in this repository must remain pure ASCII. PowerShell 4.0 (Server 2012 R2) parses scripts as ASCII/ANSI by default and will throw `TerminatorExpectedAtEndOfString` errors if it encounters UTF-8 multi-byte characters (like checkmarks or em-dashes).

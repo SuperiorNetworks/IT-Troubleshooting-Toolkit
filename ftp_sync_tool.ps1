@@ -225,90 +225,6 @@ function Get-LocalPath {
     return $localPath
 }
 
-# Helper: recursively list all files on FTP by walking each subdirectory
-function Get-FtpFileListRecursive {
-    param (
-        [hashtable]$ftpCreds,
-        [string]$ftpFolder = "/"
-    )
-
-    $scriptPath = Join-Path $env:TEMP "winscp_list_recursive.txt"
-
-    # Build a WinSCP script that lists the given folder
-    $script = @"
-option batch abort
-option confirm off
-
-open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10
-ls $ftpFolder
-exit
-"@
-
-    $script | Out-File -FilePath $scriptPath -Encoding ASCII
-
-    $allFiles   = @()
-    $subFolders = @()
-
-    try {
-        $output = & $winscpExe /script=$scriptPath 2>&1
-        Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
-
-        # Log raw output only for root to avoid flooding the log
-        if ($ftpFolder -eq "/") {
-            Write-Log "--- RAW WINSCP OUTPUT START ---"
-            foreach ($line in $output) { Write-Log $line.ToString() }
-            Write-Log "--- RAW WINSCP OUTPUT END ---"
-        }
-
-        foreach ($line in $output) {
-            $lineStr = $line.ToString()
-
-            # Unix-style listing: permissions + size + date + name
-            # e.g.  drwxr-xr-x   0 Apr 14 21:45:00 2026 SN-RLS08
-            #       -rw-r--r-- 1234 Apr 14 21:45:00 2026 backup.spi
-            if ($lineStr -match '^([d-])') {
-                $isDir = ($Matches[1] -eq 'd')
-
-                # Split on whitespace; name is the last token
-                $parts = $lineStr -split '\s+'
-                $name  = $parts[-1]
-
-                # Skip . and .. entries
-                if ($name -eq '.' -or $name -eq '..') { continue }
-
-                # Normalise folder path
-                $cleanFolder = $ftpFolder.TrimEnd('/')
-                $fullPath    = "$cleanFolder/$name"
-
-                if ($isDir) {
-                    $subFolders += $fullPath
-                } else {
-                    # Only track backup files
-                    if ($name -match '\.(spi|spf)$' -and $name -notmatch '.*-i\d+\.spi$') {
-                        $allFiles += [PSCustomObject]@{
-                            Name         = $name
-                            RelativePath = $fullPath   # e.g. /SN-RLS08/backup.spi
-                        }
-                    }
-                }
-            }
-        }
-    }
-    catch {
-        Write-Log "ERROR listing FTP folder '$ftpFolder': $($_.Exception.Message)" "ERROR"
-        Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
-    }
-
-    # Recurse into each discovered subdirectory
-    foreach ($sub in $subFolders) {
-        Write-Log "  Scanning FTP subfolder: $sub"
-        $subFiles = Get-FtpFileListRecursive -ftpCreds $ftpCreds -ftpFolder $sub
-        $allFiles += $subFiles
-    }
-
-    return $allFiles
-}
-
 function Get-FtpFileList {
     param (
         [hashtable]$ftpCreds
@@ -316,11 +232,68 @@ function Get-FtpFileList {
     
     Write-Log "Connecting to FTP server: $($ftpCreds.Server)..."
     Write-Log "Scanning FTP server recursively (including all subfolders)..."
-
-    $files = Get-FtpFileListRecursive -ftpCreds $ftpCreds -ftpFolder "/"
-
-    Write-Log "Retrieved $($files.Count) backup file(s) from FTP server (all folders)." "SUCCESS"
-    return $files
+    
+    $scriptPath = Join-Path $env:TEMP "winscp_list.txt"
+    
+    # Build a WinSCP script that lists the root folder recursively
+    $script = @"
+option batch abort
+option confirm off
+open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10
+ls -R /
+exit
+"@
+    $script | Out-File -FilePath $scriptPath -Encoding ASCII
+    
+    $allFiles = @()
+    
+    try {
+        $output = & $winscpExe /script=$scriptPath 2>&1
+        Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
+        
+        Write-Log "--- RAW WINSCP OUTPUT START ---"
+        foreach ($line in $output) { Write-Log $line.ToString() }
+        Write-Log "--- RAW WINSCP OUTPUT END ---"
+        
+        $currentDir = ""
+        foreach ($line in $output) {
+            $lineStr = $line.ToString()
+            
+            # Track directory headers in recursive ls output
+            if ($lineStr -match '^Directory of (.*)$') {
+                $currentDir = $matches[1].Trim()
+                if ($currentDir -eq "/") { $currentDir = "" }
+                continue
+            }
+            
+            # Match standard WinSCP ls output
+            if ($lineStr -match '^([d-])') {
+                $isDir = ($Matches[1] -eq 'd')
+                $parts = $lineStr -split '\s+'
+                $name  = $parts[-1]
+                
+                if ($name -eq '.' -or $name -eq '..') { continue }
+                
+                if (-not $isDir) {
+                    # Only track backup files
+                    if ($name -match '\.(spi|spf)$' -and $name -notmatch '.*-i\d+\.spi$') {
+                        $fullPath = if ($currentDir -eq "") { "/$name" } else { "$currentDir/$name" }
+                        $allFiles += [PSCustomObject]@{
+                            Name         = $name
+                            RelativePath = $fullPath
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch {
+        Write-Log "ERROR listing FTP directory: $($_.Exception.Message)" "ERROR"
+        Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
+    }
+    
+    Write-Log "Retrieved $($allFiles.Count) backup file(s) from FTP server (all folders)." "SUCCESS"
+    return $allFiles
 }
 
 function Compare-Files {
