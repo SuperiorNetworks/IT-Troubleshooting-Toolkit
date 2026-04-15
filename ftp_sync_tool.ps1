@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.1.9
+Version: 2.2.0
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -64,6 +64,11 @@ Change Log:
                     to confirm file actually exists before deciding to retry
 2026-04-15 v2.1.9 - Added pre-upload local file existence check to prevent WinSCP errors
                     when attempting to upload files that were deleted or moved locally
+2026-04-15 v2.2.0 - Updated file filter to match ImageManager replication behavior:
+                    Only syncs base (.spf) and unconsolidated .spi files that do NOT
+                    have -i#### suffix (raw incrementals). Excludes consolidated
+                    -cd (daily), -cw (weekly), -cm (monthly), -cr (rolling) files
+                    which ImageManager at the remote site creates independently.
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -280,7 +285,7 @@ exit
                     $subFolders += $fullPath
                 } else {
                     # Only track backup files
-                    if ($name -match '\.(spi|spf)$') {
+                    if ($name -match '\.(spi|spf)$' -and $name -notmatch '.*-i\d+\.spi$') {
                         $allFiles += [PSCustomObject]@{
                             Name         = $name
                             RelativePath = $fullPath   # e.g. /SN-RLS08/backup.spi
@@ -329,7 +334,7 @@ function Compare-Files {
     
     # PowerShell 4.0 compatible recursive scan
     $localFiles = Get-ChildItem -Path $localPath -Recurse -File -ErrorAction SilentlyContinue | Where-Object {
-        $_.Extension -match '\.(spi|spf)$'
+        $_.Extension -match '\.(spi|spf)$' -and $_.Name -notmatch '.*-i\d+\.spi$'
     }
     
     if (-not $localFiles) {
@@ -388,7 +393,7 @@ function Show-SyncReport {
     Write-Host "FTP Destination:    " -NoNewline -ForegroundColor Gray
     Write-Host $defaultFtpServer -ForegroundColor White
     Write-Host "Filter:             " -NoNewline -ForegroundColor Gray
-    Write-Host "*.spi, *.spf (all subfolders)" -ForegroundColor White
+    Write-Host "*.spi, *.spf (excluding unconsolidated intra-daily incrementals)" -ForegroundColor White
     Write-Host ""
     
     if ($missingFiles.Count -eq 0) {
