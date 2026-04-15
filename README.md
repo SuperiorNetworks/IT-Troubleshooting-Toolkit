@@ -593,6 +593,14 @@ For support, feature requests, or bug reports:
 
 ## Change Log
 
+### Version 3.7.4 (2026-04-14) ⭐ NEW + BUG FIXES
+- **New Feature**: Added manual file list upload option to FTP Sync Tool
+- **New Feature**: Added FTP PS Checker (pure PowerShell FTP connectivity tester)
+- **New Feature**: Added DoH fallback for MAS activation
+- **Bug Fix**: Updated FTP Sync Tool file filter to include all StorageCraft backup types (.spi, .spf, .spa)
+- **Bug Fix**: Fixed ACE provider detection logic in install_access_engine.ps1 and ftp_sync_imagemanager.ps1
+- **Bug Fix**: Fixed WinSCP installer verification logic
+
 ### Version 3.6.0 (2025-12-11) ⚡ PERFORMANCE + BUG FIX
 - **Major Performance Optimization**: 50% faster toolkit updates
   - Moved WinSCP installer (12 MB) to GitHub Releases

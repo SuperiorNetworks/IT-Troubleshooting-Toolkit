@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.7.1
+Version: 3.7.4
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -62,6 +62,9 @@ Change Log:
 2025-12-08 v2.8.0 - Added bootstrap.ps1 smart installer (auto-install/update/launch)
 2026-04-14 v3.7.0 - Added DoH fallback for MAS activation
 2026-04-14 v3.7.1 - Version sync; ACE provider detection fix in sub-scripts
+2026-04-14 v3.7.2 - Updated FTP Sync Tool file filter to include .spa files
+2026-04-14 v3.7.3 - Added manual file list upload option to FTP Sync Tool
+2026-04-14 v3.7.4 - Version sync and changelog update
 
 .RELEASE_NOTES
 v2.5.0:
@@ -692,7 +695,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.7.1"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.7.4"
 
 # Main menu loop
 do {
