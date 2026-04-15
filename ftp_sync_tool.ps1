@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.1.5
+Version: 2.1.6
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -54,6 +54,9 @@ Change Log:
                     partial file on FTP and retries once; failed files listed at end
 2026-04-15 v2.1.5 - Fixed PowerShell parse error caused by UTF-8 em-dash characters;
                     replaced with ASCII hyphens for full PS 4.0 compatibility
+2026-04-15 v2.1.6 - Fixed 'call mkdir' and 'call rm' sending raw FTP commands that FileZilla
+                    rejects with 500; replaced with WinSCP native mkdir/rm commands;
+                    tightened error detection to avoid false positives from mkdir/rm 550 noise
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -444,13 +447,15 @@ open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
 "@
 
     # Ensure subfolder exists (silently ignore if already present)
+    # WinSCP 'mkdir' is the correct command; 'call mkdir' sends raw FTP which FileZilla rejects
     if ($ftpDestDir -ne "") {
-        $scriptContent += "`ncall mkdir $ftpDestDir"
+        $scriptContent += "`nmkdir $ftpDestDir"
     }
 
     # Delete any leftover partial file before uploading
+    # WinSCP 'rm' is the correct command; 'call rm' sends raw FTP which FileZilla rejects
     if ($deleteFirst) {
-        $scriptContent += "`ncall rm `"$ftpDestPath`""
+        $scriptContent += "`nrm `"$ftpDestPath`""
     }
 
     # Upload the file
@@ -514,7 +519,8 @@ function Upload-FilesWithWinSCP {
 
         $attempt1Success = $output | Where-Object { $_ -match 'Upload of file.*finished' }
         $attempt1Stall   = $output | Where-Object { $_ -match 'Timeout|Stall|timed out|no data' }
-        $attempt1Error   = $output | Where-Object { $_ -match 'Error|Failed|Cannot' }
+        # Only flag as error if WinSCP itself reports a transfer failure (not mkdir/rm 550 noise)
+        $attempt1Error   = $output | Where-Object { $_ -match 'Error transferring|Upload of file.*failed|Cannot upload' }
 
         if ($attempt1Success) {
             Write-Log "  OK: $relPath" "SUCCESS"
@@ -542,6 +548,7 @@ function Upload-FilesWithWinSCP {
             Remove-Item $scriptPath2 -Force -ErrorAction SilentlyContinue
 
             $attempt2Success = $output2 | Where-Object { $_ -match 'Upload of file.*finished' }
+            $attempt2Error   = $output2 | Where-Object { $_ -match 'Error transferring|Upload of file.*failed|Cannot upload' }
 
             if ($attempt2Success) {
                 Write-Log "  RETRY OK: $relPath" "SUCCESS"
