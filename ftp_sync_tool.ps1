@@ -4,19 +4,21 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.0.3
+Version: 2.1.0
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
-Path: /scripts/ftp_sync_tool.ps1
-Copyright: 2025
+Path: C:\ITTools\Scripts\ftp_sync_tool.ps1
+Copyright: 2026
 
 Key Features:
 - Automatic WinSCP portable download and setup
 - Pre-configured for ftp.sndayton.com
-- Compare local vs FTP files (filtered for .spi, .spf, .spa)
+- Recursive folder scanning on both local and FTP sides
+- Compare local vs FTP files (filtered for .spi, .spf, .spa) including subdirectories
+- Mirrors local folder structure on FTP during upload
 - Display files missing on FTP
-- Bulk upload missing files using WinSCP
+- Bulk upload missing files using WinSCP (preserving subfolder paths)
 - Manual file list upload option
 - Professional WinSCP synchronization engine
 - Comprehensive logging
@@ -26,12 +28,12 @@ Input:
 - Local backup directory path
 
 Output:
-- Comparison report showing missing files
-- Option to upload selected files via WinSCP
+- Comparison report showing missing files (with relative paths)
+- Option to upload selected files via WinSCP (preserving folder structure)
 - Detailed log file
 
 Dependencies:
-- Windows PowerShell 5.1 or higher
+- Windows PowerShell 4.0 or higher
 - Internet access (for WinSCP download if needed)
 - Network access to FTP server
 
@@ -40,6 +42,8 @@ Change Log:
 2026-04-14 v2.0.1 - Updated filter to include all StorageCraft backup types (.spi, .spf, .spa)
 2026-04-14 v2.0.2 - Added manual file list upload option
 2026-04-14 v2.0.3 - Fixed early exit when FTP returns 0 files; added raw WinSCP output logging
+2026-04-15 v2.1.0 - Added recursive folder scanning on both local and FTP sides;
+                    upload now preserves subfolder structure on FTP destination
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -196,77 +200,101 @@ function Get-LocalPath {
     return $localPath
 }
 
+# Helper: recursively list all files on FTP by walking each subdirectory
+function Get-FtpFileListRecursive {
+    param (
+        [hashtable]$ftpCreds,
+        [string]$ftpFolder = "/"
+    )
+
+    $scriptPath = Join-Path $env:TEMP "winscp_list_recursive.txt"
+
+    # Build a WinSCP script that lists the given folder
+    $script = @"
+option batch abort
+option confirm off
+open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
+ls $ftpFolder
+exit
+"@
+
+    $script | Out-File -FilePath $scriptPath -Encoding ASCII
+
+    $allFiles   = @()
+    $subFolders = @()
+
+    try {
+        $output = & $winscpExe /script=$scriptPath 2>&1
+        Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
+
+        # Log raw output only for root to avoid flooding the log
+        if ($ftpFolder -eq "/") {
+            Write-Log "--- RAW WINSCP OUTPUT START ---"
+            foreach ($line in $output) { Write-Log $line.ToString() }
+            Write-Log "--- RAW WINSCP OUTPUT END ---"
+        }
+
+        foreach ($line in $output) {
+            $lineStr = $line.ToString()
+
+            # Unix-style listing: permissions + size + date + name
+            # e.g.  drwxr-xr-x   0 Apr 14 21:45:00 2026 SN-RLS08
+            #       -rw-r--r-- 1234 Apr 14 21:45:00 2026 backup.spi
+            if ($lineStr -match '^([d-])') {
+                $isDir = ($Matches[1] -eq 'd')
+
+                # Split on whitespace; name is the last token
+                $parts = $lineStr -split '\s+'
+                $name  = $parts[-1]
+
+                # Skip . and .. entries
+                if ($name -eq '.' -or $name -eq '..') { continue }
+
+                # Normalise folder path
+                $cleanFolder = $ftpFolder.TrimEnd('/')
+                $fullPath    = "$cleanFolder/$name"
+
+                if ($isDir) {
+                    $subFolders += $fullPath
+                } else {
+                    # Only track backup files
+                    if ($name -match '\.(spi|spf|spa)$') {
+                        $allFiles += [PSCustomObject]@{
+                            Name         = $name
+                            RelativePath = $fullPath   # e.g. /SN-RLS08/backup.spi
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch {
+        Write-Log "ERROR listing FTP folder '$ftpFolder': $($_.Exception.Message)" "ERROR"
+        Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
+    }
+
+    # Recurse into each discovered subdirectory
+    foreach ($sub in $subFolders) {
+        Write-Log "  Scanning FTP subfolder: $sub"
+        $subFiles = Get-FtpFileListRecursive -ftpCreds $ftpCreds -ftpFolder $sub
+        $allFiles += $subFiles
+    }
+
+    return $allFiles
+}
+
 function Get-FtpFileList {
     param (
         [hashtable]$ftpCreds
     )
     
     Write-Log "Connecting to FTP server: $($ftpCreds.Server)..."
-    
-    # Create WinSCP script
-    $scriptPath = Join-Path $env:TEMP "winscp_list.txt"
-    
-    $script = @"
-option batch abort
-option confirm off
-open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
-ls
-exit
-"@
-    
-    $script | Out-File -FilePath $scriptPath -Encoding ASCII
-    
-    try {
-        # Run WinSCP
-        $output = & $winscpExe /script=$scriptPath 2>&1
-        
-        # Parse output for files
-        $files = @()
-        $inListing = $false
-        
-        # Log raw output for debugging
-        Write-Log "--- RAW WINSCP OUTPUT START ---"
-        
-        foreach ($line in $output) {
-            $lineStr = $line.ToString()
-            Write-Log $lineStr
-            
-            # Look for file listings (start with date or permissions)
-            if ($lineStr -match '^\d{2}-\d{2}-\d{2}' -or $lineStr -match '^-rw' -or $lineStr -match '^[d-]rwx') {
-                $inListing = $true
-                
-                # Extract filename (last part after spaces)
-                $parts = $lineStr -split '\s+', 9
-                if ($parts.Count -ge 9) {
-                    $fileName = $parts[8]
-                    $fileSize = 0
-                    
-                    # Try to get size (usually 5th column)
-                    if ($parts.Count -ge 5) {
-                        [long]::TryParse($parts[4], [ref]$fileSize) | Out-Null
-                    }
-                    
-                    $files += [PSCustomObject]@{
-                        Name = $fileName
-                        Size = $fileSize
-                    }
-                }
-            }
-        }
-        
-        # Clean up
-        Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
-        
-        Write-Log "--- RAW WINSCP OUTPUT END ---"
-        
-        Write-Log "Retrieved $($files.Count) files from FTP server." "SUCCESS"
-        return $files
-    }
-    catch {
-        Write-Log "ERROR: Failed to list FTP files: $($_.Exception.Message)" "ERROR"
-        Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
-        return @() # Return empty array instead of null to prevent early exit
-    }
+    Write-Log "Scanning FTP server recursively (including all subfolders)..."
+
+    $files = Get-FtpFileListRecursive -ftpCreds $ftpCreds -ftpFolder "/"
+
+    Write-Log "Retrieved $($files.Count) backup file(s) from FTP server (all folders)." "SUCCESS"
+    return $files
 }
 
 function Compare-Files {
@@ -275,10 +303,10 @@ function Compare-Files {
         [array]$ftpFiles
     )
     
-    Write-Log "Scanning local directory for StorageCraft backup files (.spi, .spf, .spa)..."
+    Write-Log "Scanning local directory recursively for StorageCraft backup files (.spi, .spf, .spa)..."
     
-    # PowerShell 4.0 compatible way to filter multiple extensions
-    $localFiles = Get-ChildItem -Path $localPath -File -ErrorAction SilentlyContinue | Where-Object {
+    # PowerShell 4.0 compatible recursive scan
+    $localFiles = Get-ChildItem -Path $localPath -Recurse -File -ErrorAction SilentlyContinue | Where-Object {
         $_.Extension -match '\.(spi|spf|spa)$'
     }
     
@@ -287,24 +315,32 @@ function Compare-Files {
         return @()
     }
     
-    Write-Log "Found $($localFiles.Count) local backup files."
+    Write-Log "Found $($localFiles.Count) local backup file(s) (including subfolders)."
     
     $missingFiles = @()
     
     foreach ($localFile in $localFiles) {
-        $foundOnFtp = $ftpFiles | Where-Object { $_.Name -eq $localFile.Name }
+        # Build the relative path from the local root  (e.g. SN-RLS08\backup.spi)
+        $relativePath = $localFile.FullName.Substring($localPath.Length).TrimStart('\').Replace('\', '/')
+
+        # Check if this relative path exists on the FTP side
+        # Match on RelativePath (strip leading slash for comparison)
+        $foundOnFtp = $ftpFiles | Where-Object {
+            $_.RelativePath.TrimStart('/') -eq $relativePath
+        }
         
         if (-not $foundOnFtp) {
             $missingFiles += [PSCustomObject]@{
-                Name = $localFile.Name
-                Size = $localFile.Length
-                Date = $localFile.LastWriteTime
-                FullPath = $localFile.FullName
+                Name         = $localFile.Name
+                RelativePath = $relativePath          # e.g. SN-RLS08/backup.spi
+                Size         = $localFile.Length
+                Date         = $localFile.LastWriteTime
+                FullPath     = $localFile.FullName
             }
         }
     }
     
-    Write-Log "Found $($missingFiles.Count) files on local but not on FTP."
+    Write-Log "Found $($missingFiles.Count) file(s) on local but not on FTP."
     return $missingFiles
 }
 
@@ -324,7 +360,7 @@ function Show-SyncReport {
     Write-Host "FTP Destination:    " -NoNewline -ForegroundColor Gray
     Write-Host $defaultFtpServer -ForegroundColor White
     Write-Host "Filter:             " -NoNewline -ForegroundColor Gray
-    Write-Host "*.spi, *.spf, *.spa" -ForegroundColor White
+    Write-Host "*.spi, *.spf, *.spa (all subfolders)" -ForegroundColor White
     Write-Host ""
     
     if ($missingFiles.Count -eq 0) {
@@ -348,7 +384,7 @@ function Show-SyncReport {
         $dateStr = $file.Date.ToString("yyyy-MM-dd HH:mm")
         
         Write-Host "[$index] " -NoNewline -ForegroundColor Cyan
-        Write-Host "$($file.Name)" -NoNewline -ForegroundColor White
+        Write-Host "$($file.RelativePath)" -NoNewline -ForegroundColor White
         Write-Host "  ($sizeStr)" -NoNewline -ForegroundColor Gray
         Write-Host "  $dateStr" -ForegroundColor DarkGray
         
@@ -385,7 +421,19 @@ open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
 "@
     
     foreach ($file in $files) {
-        $scriptContent += "`nput `"$($file.FullPath)`""
+        # Determine the FTP destination folder from the relative path
+        $relPath   = $file.RelativePath   # e.g. SN-RLS08/backup.spi  or  backup.spi
+        $slashIdx  = $relPath.LastIndexOf('/')
+
+        if ($slashIdx -gt 0) {
+            # File is inside a subfolder — ensure the folder exists then upload there
+            $ftpSubDir = "/" + $relPath.Substring(0, $slashIdx)   # e.g. /SN-RLS08
+            $scriptContent += "`nmkdir $ftpSubDir"
+            $scriptContent += "`nput `"$($file.FullPath)`" `"$ftpSubDir/`""
+        } else {
+            # File is in the root
+            $scriptContent += "`nput `"$($file.FullPath)`""
+        }
     }
     
     $scriptContent += "`nexit"
@@ -393,7 +441,7 @@ open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/
     $scriptContent | Out-File -FilePath $scriptPath -Encoding ASCII
     
     try {
-        Write-Log "Starting upload of $($files.Count) files..."
+        Write-Log "Starting upload of $($files.Count) files (preserving folder structure)..."
         
         # Run WinSCP
         $output = & $winscpExe /script=$scriptPath /log="$logDirectory\winscp.log" 2>&1
@@ -464,9 +512,9 @@ $ftpCreds = Get-FtpCredentials
 $localPath = Get-LocalPath
 
 Write-Host ""
-Write-Host "Retrieving FTP file list..." -ForegroundColor Yellow
+Write-Host "Retrieving FTP file list (scanning all subfolders)..." -ForegroundColor Yellow
 
-# Get FTP files
+# Get FTP files (recursive)
 $ftpFiles = Get-FtpFileList -ftpCreds $ftpCreds
 
 if ($null -eq $ftpFiles) {
@@ -519,11 +567,14 @@ switch ($choice) {
             $notFoundCount = 0
             
             foreach ($name in $fileNames) {
-                $fullPath = Join-Path $localPath $name
-                if (Test-Path $fullPath -PathType Leaf) {
+                # Search recursively for the filename
+                $found = Get-ChildItem -Path $localPath -Recurse -File -Filter $name -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($found) {
+                    $relPath = $found.FullName.Substring($localPath.Length).TrimStart('\').Replace('\', '/')
                     $manualFiles += [PSCustomObject]@{
-                        Name = $name
-                        FullPath = $fullPath
+                        Name         = $name
+                        RelativePath = $relPath
+                        FullPath     = $found.FullName
                     }
                 } else {
                     Write-Host "File not found locally: $name" -ForegroundColor Red
