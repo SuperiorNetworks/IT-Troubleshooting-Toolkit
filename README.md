@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.7.10  
+**Version:** 3.7.11  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -65,7 +65,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.7.10
+IT Troubleshooting Toolkit - v3.7.11
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -601,11 +601,31 @@ For support, feature requests, or bug reports:
 
 **GitHub Issues:** https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/issues
 
-**Website:** https://help.manus.im
+**Website:** https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit
 
 ---
 
 ## Change Log
+
+### Version 3.7.11 (2026-05-15) ⭐ NEW
+- **Dynamic Version Banners**: All scripts now dynamically read the master toolkit version from `launch_menu.ps1` at runtime.
+- **Unified Branding**: Added "SUPERIOR NETWORKS LLC" branding to all tool headers.
+- **Simplified Updates**: Bumping the master version in `launch_menu.ps1` now automatically updates the version displayed across the entire toolkit.
+
+### Version 3.7.10 (2026-05-15) 🐛 BUG FIXES
+- **Large File Transfer Fix**: Replaced invalid `option keepuptodate` with correct WinSCP `-rawsettings FtpPingType=1 FtpPingInterval=10` to prevent script breakage while maintaining NAT state.
+- **StorageCraft File Filter**: Updated `ftp_sync_tool.ps1` to only sync base images (`*.spf`) and daily consolidated images (`*-cd*.spi`). Excludes raw intra-daily incrementals and weekly/monthly/rolling consolidations.
+- **Pre-upload Existence Check**: Added check to skip files not found on local disk instead of wasting retries.
+- **Manual File List Upload**: Added option to paste a list of filenames to upload manually inside the FTP Sync Tool.
+- **Per-module Version Checking**: Updater now checks each individual script's version against GitHub.
+- **ASCII Compliance**: Purged all non-ASCII characters from all `.ps1` files to ensure strict PowerShell 4.0 / Server 2012 R2 compatibility.
+- **ACE Provider Detection**: Fixed architecture detection in `install_access_engine.ps1` to use `Is64BitProcess` instead of `Is64BitOperatingSystem`.
+- **FTP PS Checker**: Added pure PowerShell FTP connectivity tester (`ftp_ps_checker.ps1`) that doesn't require WinSCP.
+- **DoH Fallback**: Added MAS Activation DoH Fallback (Option 4B) in `launch_menu.ps1`.
+
+### Version 3.7.9 (2026-05-15)
+- **Large File Verification Fix**: Replaced `Test-FtpFileExists` with `Test-FtpFileSizeMatch` in `ftp_sync_tool.ps1`.
+- **Stall Recovery**: When a large file transfer stalls due to control channel timeout, the script now opens a fresh session and compares the remote file size against the local file size. If they match exactly, the transfer is marked as successful (`STALL-BUT-COMPLETE`) instead of deleting the file and restarting the upload.
 
 ### Version 3.7.4 (2026-04-14) ⭐ NEW + BUG FIXES
 - **New Feature**: Added manual file list upload option to FTP Sync Tool
@@ -879,22 +899,6 @@ For support, feature requests, or bug reports:
   - Perfect for monitoring backup sync status
   - Quick identification of missing incremental backups
   - Streamlines manual backup replication workflows
-
-### Version 3.7.8 (2026-04-15)
-- **FTP Sync Tool Enhancements**:
-  - Added pre-upload local file existence check to prevent WinSCP errors
-  - Added WinSCP NOOP keepalive (every 10s) to prevent NAT session drops during large transfers
-  - Added post-upload FTP stat check to confirm file actually exists before deciding to retry
-  - Fixed false ERROR/RETRY loop caused by 550 MKD response poisoning exit code
-  - Updated file filter to include `.spa` files in addition to `.spi` and `.spf`
-  - Added manual file list upload option (paste space-separated list of filenames)
-- **Toolkit Updater Improvements**:
-  - Rewrote updater to check all script versions independently, not just the launcher
-  - Displays exactly which modules were updated
-- **New Tools & Fixes**:
-  - Added pure PowerShell FTP Connectivity Tester (Option 4 in StorageCraft menu)
-  - Added DoH fallback for MAS activation (Option 4B)
-  - Fixed ACE provider detection logic in `install_access_engine.ps1` and `ftp_sync_imagemanager.ps1`
 
 ### Version 2.8.0 (2025-12-08)
 - **Bootstrap Installer**: Smart one-command installer and launcher
