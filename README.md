@@ -115,6 +115,20 @@ Utilities:
 
 ---
 
+## Large File Transfer Fix Guide (18GB+ Stalls)
+
+If you are experiencing FTP transfer stalls with very large files (e.g., 18GB+ StorageCraft full backups), this is a known limitation of the FTP protocol over NAT firewalls. The control connection times out while the data connection is busy.
+
+A comprehensive four-layer fix guide has been added to the toolkit to permanently resolve this issue. It covers:
+1. **Client-Side Script Improvements** (Already implemented in v3.7.10)
+2. **FileZilla Server Settings** (Timeouts and Passive Ports)
+3. **UDM Firewall Tuning** (Port Forwarding)
+4. **SFTP Migration** (The permanent fix using OpenSSH)
+
+Please refer to the `Large_File_Transfer_Fix_Guide.md` file in the repository for the complete step-by-step instructions.
+
+---
+
 ## Feature Details
 
 ### 1. Upload Single File (PowerShell FTP)

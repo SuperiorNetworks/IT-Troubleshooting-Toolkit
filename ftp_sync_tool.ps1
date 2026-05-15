@@ -239,7 +239,7 @@ function Get-FtpFileList {
     $script = @"
 option batch abort
 option confirm off
-open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10
+open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10 SendBuf=0 SshSimple=0
 ls -R /
 exit
 "@
@@ -423,7 +423,7 @@ function Test-FtpFileExists {
 option batch abort
 option confirm off
 
-open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10
+open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10 SendBuf=0 SshSimple=0
 stat "$ftpFullPath"
 exit
 "@
@@ -452,7 +452,7 @@ option batch continue
 option confirm off
 option transfer binary
 option transfer stall 120
-open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10
+open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10 SendBuf=0 SshSimple=0
 "@
 
     # Ensure subfolder exists (silently ignore if already present)
