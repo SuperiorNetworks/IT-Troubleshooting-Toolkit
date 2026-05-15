@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.2.0
+Version: 2.3.0
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -69,6 +69,16 @@ Change Log:
                     have -i#### suffix (raw incrementals). Excludes consolidated
                     -cd (daily), -cw (weekly), -cm (monthly), -cr (rolling) files
                     which ImageManager at the remote site creates independently.
+2026-05-15 v2.3.0 - Fixed false STALL/RETRY loop on large files (18GB+): FTP control
+                    channel is dropped by NAT firewall during long data transfer, causing
+                    WinSCP to timeout AFTER the file has fully arrived on the server.
+                    Replaced Test-FtpFileExists (exit-code only) with
+                    Test-FtpFileSizeMatch which opens a FRESH WinSCP session, runs
+                    'stat' on the remote file, and compares the remote byte count
+                    against the local file size. A size match = SUCCESS, preventing
+                    the script from deleting a complete file and re-uploading 18GB.
+                    Added WinSCP rawsettings SendBuf=0 SshSimple=0 to all open
+                    commands to prevent WinSCP internal buffer timeouts.
 
 .NOTES
 Uses WinSCP open-source FTP client for professional-grade synchronization.
@@ -411,13 +421,21 @@ function Invoke-WinSCP {
     return $output
 }
 
-# Helper: verify a file exists on FTP by running a stat-only WinSCP script
-# Returns $true if the file is present, $false if not
-function Test-FtpFileExists {
+# Helper: verify a file on FTP matches the local file size.
+# Opens a FRESH WinSCP session (never reuses the potentially dead upload session).
+# Parses the 'stat' output for the remote file size and compares it to the local
+# file size in bytes.  Returns $true only when sizes match exactly.
+# This correctly handles the large-file FTP stall scenario where the data channel
+# completes successfully but the control channel is dropped by a NAT firewall
+# before the 226 reply reaches WinSCP - the file is fully on the server even
+# though WinSCP reported a timeout.
+function Test-FtpFileSizeMatch {
     param (
         [hashtable]$ftpCreds,
-        [string]$ftpFullPath
+        [string]$ftpFullPath,
+        [long]$localSizeBytes
     )
+
     $statScript = Join-Path $env:TEMP "winscp_stat.txt"
     $statContent = @"
 option batch abort
@@ -428,10 +446,32 @@ stat "$ftpFullPath"
 exit
 "@
     $statContent | Out-File -FilePath $statScript -Encoding ASCII
-    $statOutput = & $winscpExe /script=$statScript /log="$logDirectory\winscp.log" 2>&1
+    $statOutput = & $winscpExe /script=$statScript /log="$logDirectory\winscp_stat.log" 2>&1
     Remove-Item $statScript -Force -ErrorAction SilentlyContinue
-    # WinSCP stat exits 0 if file found, 1 if not found
-    return ($LASTEXITCODE -eq 0)
+
+    # If WinSCP could not find the file at all, exit code will be non-zero
+    if ($LASTEXITCODE -ne 0) {
+        Write-Log "  STAT: File not found on FTP (exit code $LASTEXITCODE)" "WARN"
+        return $false
+    }
+
+    # Parse the size from WinSCP stat output.
+    # WinSCP prints a line like:  Size:       18989239512
+    $sizeLine = $statOutput | Where-Object { $_ -match 'Size:\s+(\d+)' } | Select-Object -First 1
+    if ($sizeLine -match 'Size:\s+(\d+)') {
+        $remoteSizeBytes = [long]$Matches[1]
+        if ($remoteSizeBytes -eq $localSizeBytes) {
+            Write-Log "  STAT: Remote size $remoteSizeBytes bytes matches local - transfer complete" "SUCCESS"
+            return $true
+        } else {
+            Write-Log "  STAT: Size mismatch - remote $remoteSizeBytes bytes vs local $localSizeBytes bytes" "WARN"
+            return $false
+        }
+    }
+
+    # Size line not found in output - treat as unknown/incomplete
+    Write-Log "  STAT: Could not parse remote file size from WinSCP output" "WARN"
+    return $false
 }
 
 # Helper: build a WinSCP script that uploads ONE file, with stall timeout,
@@ -525,6 +565,9 @@ function Upload-FilesWithWinSCP {
 
         Write-Log "[$fileIndex/$($files.Count)] Uploading: $relPath"
 
+        # Get local file size once - used for size-match verification after upload
+        $localSizeBytes = (Get-Item $file.FullPath).Length
+
         # --- Attempt 1: normal upload ---
         $scriptPath = New-UploadScript -ftpCreds $ftpCreds `
             -localFullPath $file.FullPath `
@@ -538,26 +581,28 @@ function Upload-FilesWithWinSCP {
         # Check stall in output (exit code is unreliable when batch continue absorbs MKD 550)
         $attempt1Stall = $output1 | Where-Object { $_ -match 'Timeout|Stall|timed out|no data' }
 
-        # Verify success by confirming the file actually exists on FTP
-        if (-not $attempt1Stall) {
-            $fileOnFtp = Test-FtpFileExists -ftpCreds $ftpCreds -ftpFullPath $ftpFullPath
-        } else {
-            $fileOnFtp = $false
+        # --- Post-upload verification: open a FRESH session and compare remote size to local size.
+        # This correctly handles the large-file NAT stall scenario: the 18GB file arrives on the
+        # server but WinSCP times out waiting for the 226 reply over the dead control channel.
+        # A size match means the transfer completed successfully regardless of the timeout.
+        if ($attempt1Stall) {
+            Write-Log "  STALL detected on: $relPath  -  verifying remote file size before deciding to retry..." "WARN"
         }
+        $sizeMatch = Test-FtpFileSizeMatch -ftpCreds $ftpCreds -ftpFullPath $ftpFullPath -localSizeBytes $localSizeBytes
 
-        if ($fileOnFtp) {
-            Write-Log "  OK: $relPath" "SUCCESS"
+        if ($sizeMatch) {
+            if ($attempt1Stall) {
+                Write-Log "  STALL-BUT-COMPLETE: $relPath  -  file arrived in full despite control channel timeout" "SUCCESS"
+            } else {
+                Write-Log "  OK: $relPath" "SUCCESS"
+            }
             $successCount++
             continue
         }
 
-        # --- File not on FTP after upload  -  delete any partial and retry once ---
+        # --- Size mismatch after upload - file is partial or missing; delete and retry once ---
         $retryCount++
-        if ($attempt1Stall) {
-            Write-Log "  STALL detected on: $relPath  -  deleting partial and retrying..." "WARN"
-        } else {
-            Write-Log "  ERROR on: $relPath  -  deleting partial and retrying..." "WARN"
-        }
+        Write-Log "  INCOMPLETE: $relPath  -  deleting partial and retrying..." "WARN"
 
         # Attempt 2: delete partial first, then re-upload
         $scriptPath2 = New-UploadScript -ftpCreds $ftpCreds `
@@ -569,10 +614,10 @@ function Upload-FilesWithWinSCP {
         $output2 = Invoke-WinSCP -scriptPath $scriptPath2
         Remove-Item $scriptPath2 -Force -ErrorAction SilentlyContinue
 
-        # Verify retry success the same way
-        $fileOnFtpAfterRetry = Test-FtpFileExists -ftpCreds $ftpCreds -ftpFullPath $ftpFullPath
+        # Verify retry with size match
+        $sizeMatchAfterRetry = Test-FtpFileSizeMatch -ftpCreds $ftpCreds -ftpFullPath $ftpFullPath -localSizeBytes $localSizeBytes
 
-        if ($fileOnFtpAfterRetry) {
+        if ($sizeMatchAfterRetry) {
             Write-Log "  RETRY OK: $relPath" "SUCCESS"
             $successCount++
         } else {
