@@ -4,7 +4,7 @@ ImageManager Database Diagnostic Tool
 
 .DESCRIPTION
 Name: diagnostic_imagemanager_db.ps1
-Version: 1.0.0
+Version: 3.7.12
 Purpose: Dump contents of ImageManager FTP queue tables for analysis
 Path: /scripts/diagnostic_imagemanager_db.ps1
 Copyright: 2025

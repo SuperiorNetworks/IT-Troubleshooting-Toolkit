@@ -4,7 +4,7 @@ FTP PS Checker - Pure PowerShell FTP Connectivity Tester
 
 .DESCRIPTION
 Name: ftp_ps_checker.ps1
-Version: 1.0.0
+Version: 3.7.12
 Purpose: Tests FTP connectivity, authentication, and directory listing using pure PowerShell
          without relying on external tools like WinSCP. Useful for isolating network/firewall issues.
 Path: C:\ITTools\Scripts\ftp_ps_checker.ps1

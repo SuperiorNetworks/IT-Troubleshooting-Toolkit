@@ -4,7 +4,7 @@ Manual FTP Tool - Enhanced interactive file uploader with retry logic and resume
 
 .DESCRIPTION
 Name: ftp_troubleshooter_tool.ps1
-Version: 2.0.2
+Version: 3.7.12
 Purpose: Manual FTP file upload utility with persistent connections, auto-retry, resume support,
          and detailed status reporting. Designed as a robust backup solution when automated 
          transfer systems experience issues.

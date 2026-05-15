@@ -6,7 +6,7 @@
     required for reading ImageManager.mdb files. Includes verbose troubleshooting,
     comprehensive logging, and support for all Windows versions.
 .NOTES
-    Version: 1.0.1
+    Version: 3.7.12
     Author: Superior Networks LLC
     Requires: PowerShell 4.0+, Administrator privileges
 #>
@@ -21,7 +21,7 @@ $ErrorActionPreference = "Stop"
 $VerbosePreference = "Continue"
 
 # Script version
-$ScriptVersion = "1.0.1"
+$ScriptVersion = "3.7.12"
 
 # Read master toolkit version dynamically from launch_menu.ps1
 $toolkitVersion = "Unknown"

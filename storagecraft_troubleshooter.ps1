@@ -4,7 +4,7 @@ StorageCraft Troubleshooter - Submenu for StorageCraft backup tools
 
 .DESCRIPTION
 Name: storagecraft_troubleshooter.ps1
-Version: 1.8.0
+Version: 3.7.12
 Purpose: Centralized submenu for StorageCraft backup troubleshooting tools.
          Provides access to Manual FTP Tool, FTP Sync, and ImageManager service management.
 Path: /scripts/storagecraft_troubleshooter.ps1

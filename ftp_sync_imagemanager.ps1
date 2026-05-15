@@ -4,7 +4,7 @@ FTP Sync with ImageManager Integration
 
 .DESCRIPTION
 Name: ftp_sync_imagemanager.ps1
-Version: 1.3.1
+Version: 3.7.12
 Purpose: Query ImageManager replication queue and upload queued files via FTP using WinSCP
 Path: /scripts/ftp_sync_imagemanager.ps1
 Copyright: 2025

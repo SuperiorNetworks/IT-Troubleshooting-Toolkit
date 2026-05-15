@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 2.3.0
+Version: 3.7.12
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -39,7 +39,9 @@ Dependencies:
 - Internet access (for WinSCP download if needed)
 - Network access to FTP server
 
-Change Log:
+P26-05-15 v3.7.12 - Unified versioning: removed individual script version
+                    numbers across all toolkit scripts. All scripts now use
+                    the single master toolkit version from launch_menu.ps1.
 2025-12-08 v2.0.0 - Rewritten to use WinSCP for reliability
 2026-04-14 v2.0.1 - Updated filter to include all StorageCraft backup types (.spi, .spf, .spa)
 2026-04-14 v2.0.2 - Added manual file list upload option

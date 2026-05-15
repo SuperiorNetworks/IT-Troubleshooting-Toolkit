@@ -607,6 +607,10 @@ For support, feature requests, or bug reports:
 
 ## Change Log
 
+### Version 3.7.12 (2026-05-15) - MAINTENANCE
+- **Unified Versioning**: Removed all individual per-script version numbers. Every script in the toolkit now uses the single master toolkit version from `launch_menu.ps1`. One version number, one place to update.
+- **Rule going forward**: Any change to any script = bump `launch_menu.ps1` version = all banners and headers update automatically.
+
 ### Version 3.7.11 (2026-05-15) ⭐ NEW
 - **Dynamic Version Banners**: All scripts now dynamically read the master toolkit version from `launch_menu.ps1` at runtime.
 - **Unified Branding**: Added "SUPERIOR NETWORKS LLC" branding to all tool headers.
