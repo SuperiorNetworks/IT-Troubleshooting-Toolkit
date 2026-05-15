@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 3.7.12
+Version: 3.7.13
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -39,7 +39,12 @@ Dependencies:
 - Internet access (for WinSCP download if needed)
 - Network access to FTP server
 
-P26-05-15 v3.7.12 - Unified versioning: removed individual script version
+2026-05-15 v3.7.13 - Fixed 'Retrieved 0 backup file(s)': WinSCP scripting mode
+                    does not support 'ls -R'. Replaced with multi-pass ls that
+                    lists root, then each L1 subfolder, then L2 (Incrementals),
+                    then L3 - up to 3 levels deep. Temp files now written to
+                    C:\ITTools\Scripts\Logs instead of $env:TEMP.
+2026-05-15 v3.7.12 - Unified versioning: removed individual script version
                     numbers across all toolkit scripts. All scripts now use
                     the single master toolkit version from launch_menu.ps1.
 2025-12-08 v2.0.0 - Rewritten to use WinSCP for reliability
@@ -252,69 +257,117 @@ function Get-FtpFileList {
     param (
         [hashtable]$ftpCreds
     )
-    
-    Write-Log "Connecting to FTP server: $($ftpCreds.Server)..."
-    Write-Log "Scanning FTP server recursively (including all subfolders)..."
-    
-    $scriptPath = Join-Path $env:TEMP "winscp_list.txt"
-    
-    # Build a WinSCP script that lists the root folder recursively
-    $script = @"
+
+    # ------------------------------------------------------------------
+    # WinSCP scripting mode does NOT support 'ls -R'.  Instead we use a
+    # helper that lists one directory at a time and recurses into every
+    # subfolder it finds - up to 3 levels deep (root / L1 / L2).
+    # This covers the structure:
+    #   /SERVER-02/file.spi
+    #   /SERVER-02/Incrementals/file.spi
+    #   /VSN-SERVER22/file.spi  etc.
+    # ------------------------------------------------------------------
+
+    $logDir   = "C:\ITTools\Scripts\Logs"
+    $allFiles = @()
+
+    # Inner helper: run a single 'ls <dir>' via WinSCP and return raw lines
+    function Invoke-WinScpLs {
+        param ([string]$remoteDir, [hashtable]$creds)
+        $tmpScript = "$logDir\winscp_ls_tmp.txt"
+        $script = @"
 option batch abort
 option confirm off
-open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10 SendBuf=0 SshSimple=0
-ls -R /
+open ftp://$($creds.User):$($creds.Pass)@$($creds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10 SendBuf=0 SshSimple=0
+ls $remoteDir
 exit
 "@
-    $script | Out-File -FilePath $scriptPath -Encoding ASCII
-    
-    $allFiles = @()
-    
-    try {
-        $output = & $winscpExe /script=$scriptPath 2>&1
-        Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
-        
-        Write-Log "--- RAW WINSCP OUTPUT START ---"
-        foreach ($line in $output) { Write-Log $line.ToString() }
-        Write-Log "--- RAW WINSCP OUTPUT END ---"
-        
-        $currentDir = ""
-        foreach ($line in $output) {
-            $lineStr = $line.ToString()
-            
-            # Track directory headers in recursive ls output
-            if ($lineStr -match '^Directory of (.*)$') {
-                $currentDir = $matches[1].Trim()
-                if ($currentDir -eq "/") { $currentDir = "" }
-                continue
-            }
-            
-            # Match standard WinSCP ls output
-            if ($lineStr -match '^([d-])') {
-                $isDir = ($Matches[1] -eq 'd')
-                $parts = $lineStr -split '\s+'
+        $script | Out-File -FilePath $tmpScript -Encoding ASCII
+        $out = & $winscpExe /script=$tmpScript 2>&1
+        Remove-Item $tmpScript -Force -ErrorAction SilentlyContinue
+        return $out
+    }
+
+    # Parse WinSCP ls output: return hashtable with 'files' and 'dirs' arrays
+    function Parse-LsOutput {
+        param ([array]$lines, [string]$parentDir)
+        $result = @{ files = @(); dirs = @() }
+        foreach ($line in $lines) {
+            $s = $line.ToString()
+            if ($s -match '^([d-][rwx-]{9})') {
+                $parts = $s -split '\s+'
                 $name  = $parts[-1]
-                
                 if ($name -eq '.' -or $name -eq '..') { continue }
-                
-                if (-not $isDir) {
-                    # Only track backup files
-                    if ($name -match '\.(spi|spf)$' -and $name -notmatch '.*-i\d+\.spi$') {
-                        $fullPath = if ($currentDir -eq "") { "/$name" } else { "$currentDir/$name" }
-                        $allFiles += [PSCustomObject]@{
-                            Name         = $name
-                            RelativePath = $fullPath
-                        }
+                $isDir = ($s[0] -eq 'd')
+                $fullPath = $parentDir.TrimEnd('/') + '/' + $name
+                if ($isDir) {
+                    $result.dirs  += $fullPath
+                } else {
+                    $result.files += $fullPath
+                }
+            }
+        }
+        return $result
+    }
+
+    Write-Log "Connecting to FTP server: $($ftpCreds.Server)..."
+    Write-Log "Scanning FTP server recursively (multi-pass ls, up to 3 levels)..."
+
+    # --- Level 0: list root ---
+    Write-Log "  Listing FTP root /..."
+    $rootOut    = Invoke-WinScpLs -remoteDir '/' -creds $ftpCreds
+    $rootParsed = Parse-LsOutput -lines $rootOut -parentDir '/'
+
+    # Collect any backup files sitting directly in root (unusual but handle it)
+    foreach ($f in $rootParsed.files) {
+        $fname = $f.Split('/')[-1]
+        if ($fname -match '\.(spi|spf)$' -and $fname -notmatch '-i\d+\.spi$') {
+            $allFiles += [PSCustomObject]@{ Name = $fname; RelativePath = $f }
+        }
+    }
+
+    # --- Level 1: list each top-level subfolder (SERVER-02, VSN-*, SQL, etc.) ---
+    foreach ($l1Dir in $rootParsed.dirs) {
+        $l1Name = $l1Dir.TrimStart('/')
+        Write-Log "  Listing $l1Dir ..."
+        $l1Out    = Invoke-WinScpLs -remoteDir $l1Dir -creds $ftpCreds
+        $l1Parsed = Parse-LsOutput -lines $l1Out -parentDir $l1Dir
+
+        foreach ($f in $l1Parsed.files) {
+            $fname = $f.Split('/')[-1]
+            if ($fname -match '\.(spi|spf)$' -and $fname -notmatch '-i\d+\.spi$') {
+                $allFiles += [PSCustomObject]@{ Name = $fname; RelativePath = $f }
+            }
+        }
+
+        # --- Level 2: list subfolders inside L1 (e.g. Incrementals) ---
+        foreach ($l2Dir in $l1Parsed.dirs) {
+            Write-Log "  Listing $l2Dir ..."
+            $l2Out    = Invoke-WinScpLs -remoteDir $l2Dir -creds $ftpCreds
+            $l2Parsed = Parse-LsOutput -lines $l2Out -parentDir $l2Dir
+
+            foreach ($f in $l2Parsed.files) {
+                $fname = $f.Split('/')[-1]
+                if ($fname -match '\.(spi|spf)$' -and $fname -notmatch '-i\d+\.spi$') {
+                    $allFiles += [PSCustomObject]@{ Name = $fname; RelativePath = $f }
+                }
+            }
+
+            # --- Level 3: one more level deep just in case ---
+            foreach ($l3Dir in $l2Parsed.dirs) {
+                Write-Log "  Listing $l3Dir ..."
+                $l3Out    = Invoke-WinScpLs -remoteDir $l3Dir -creds $ftpCreds
+                $l3Parsed = Parse-LsOutput -lines $l3Out -parentDir $l3Dir
+                foreach ($f in $l3Parsed.files) {
+                    $fname = $f.Split('/')[-1]
+                    if ($fname -match '\.(spi|spf)$' -and $fname -notmatch '-i\d+\.spi$') {
+                        $allFiles += [PSCustomObject]@{ Name = $fname; RelativePath = $f }
                     }
                 }
             }
         }
     }
-    catch {
-        Write-Log "ERROR listing FTP directory: $($_.Exception.Message)" "ERROR"
-        Remove-Item $scriptPath -Force -ErrorAction SilentlyContinue
-    }
-    
+
     Write-Log "Retrieved $($allFiles.Count) backup file(s) from FTP server (all folders)." "SUCCESS"
     return $allFiles
 }
