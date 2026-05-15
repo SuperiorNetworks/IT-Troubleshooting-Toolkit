@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 3.7.13
+Version: 3.7.14
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -39,6 +39,10 @@ Dependencies:
 - Internet access (for WinSCP download if needed)
 - Network access to FTP server
 
+2026-05-15 v3.7.14 - Fixed Test-FtpFileSizeMatch to parse both WinSCP stat output
+                    formats: Format A (newer WinSCP block format "Size: 12345") and
+                    Format B (older WinSCP ls-style "---------- 0 5710848 ..."). Fixed
+                    stat temp file path from $env:TEMP to C:\ITTools\Scripts\Logs.
 2026-05-15 v3.7.13 - Fixed 'Retrieved 0 backup file(s)': WinSCP scripting mode
                     does not support 'ls -R'. Replaced with multi-pass ls that
                     lists root, then each L1 subfolder, then L2 (Incrementals),
@@ -502,7 +506,7 @@ function Test-FtpFileSizeMatch {
         [long]$localSizeBytes
     )
 
-    $statScript = Join-Path $env:TEMP "winscp_stat.txt"
+    $statScript = "C:\ITTools\Scripts\Logs\winscp_stat.txt"
     $statContent = @"
 option batch abort
 option confirm off
@@ -526,14 +530,37 @@ exit
     # reliable signal is whether we can parse a size from the output.
 
     # Parse the size from WinSCP stat output.
-    # WinSCP scripting mode prints a block like:
+    # Two formats exist depending on WinSCP version:
+    #
+    # FORMAT A (newer WinSCP - block/stat format):
     #   /path/to/file.spi
     #     Type:       Regular file
     #     Size:       18989239512
-    # Match any line containing 'Size:' followed by digits.
+    #
+    # FORMAT B (older WinSCP - ls listing format):
+    #   ----------   0    5710848 May 12 16:01:09 2026 filename.spi
+    #   (permissions)(links)(size)(month)(day)(time)(year)(name)
+    #
+    $remoteSizeBytes = $null
+
+    # Try Format A: 'Size:' label followed by digits
     $sizeLine = $statOutput | Where-Object { $_.ToString() -match 'Size:\s+(\d+)' } | Select-Object -First 1
     if ($sizeLine -match 'Size:\s+(\d+)') {
         $remoteSizeBytes = [long]$Matches[1]
+        Write-Log "  STAT: Parsed size via Format A (block): $remoteSizeBytes bytes"
+    }
+
+    # Try Format B: ls-style line starting with permissions (---------- or drwxr-xr-x)
+    # Columns: permissions  links  size  month  day  time  year  name
+    if ($null -eq $remoteSizeBytes) {
+        $lsLine = $statOutput | Where-Object { $_.ToString() -match '^[-d][-rwx]{9}\s+\d+\s+(\d+)\s+' } | Select-Object -First 1
+        if ($lsLine -match '^[-d][-rwx]{9}\s+\d+\s+(\d+)\s+') {
+            $remoteSizeBytes = [long]$Matches[1]
+            Write-Log "  STAT: Parsed size via Format B (ls-style): $remoteSizeBytes bytes"
+        }
+    }
+
+    if ($null -ne $remoteSizeBytes) {
         if ($remoteSizeBytes -eq $localSizeBytes) {
             Write-Log "  STAT: Remote size $remoteSizeBytes bytes matches local - transfer complete" "SUCCESS"
             return $true
@@ -543,7 +570,7 @@ exit
         }
     }
 
-    # Size line not found - could not verify. Treat as UNKNOWN (not failed).
+    # Size line not found in either format - could not verify.
     # Return $null to signal the caller that verification was inconclusive.
     Write-Log "  STAT: Could not parse remote file size from WinSCP output - treating as unknown" "WARN"
     return $null
