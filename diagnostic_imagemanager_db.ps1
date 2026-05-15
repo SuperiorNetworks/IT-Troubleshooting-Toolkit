@@ -24,10 +24,21 @@ if (-not (Test-Path $logDirectory)) {
     New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
 }
 
+# Read master toolkit version dynamically from launch_menu.ps1
+$toolkitVersion = "Unknown"
+$launcherPath = "C:\ITTools\Scripts\launch_menu.ps1"
+if (Test-Path $launcherPath) {
+    $launcherContent = Get-Content $launcherPath -Raw
+    if ($launcherContent -match 'Version:\s*(\d+\.\d+\.\d+)') {
+        $toolkitVersion = $matches[1]
+    }
+}
+
 Write-Host ""
-Write-Host "=================================================================" -ForegroundColor Cyan
-Write-Host "           ImageManager Database Diagnostic Tool                " -ForegroundColor White
-Write-Host "=================================================================" -ForegroundColor Cyan
+Write-Host "================================================================="  -ForegroundColor Cyan
+Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
+Write-Host "      ImageManager Database Diagnostic - Toolkit v$toolkitVersion        " -ForegroundColor Cyan
+Write-Host "================================================================="  -ForegroundColor Cyan
 Write-Host ""
 
 # Check if database exists

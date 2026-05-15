@@ -62,10 +62,19 @@ function Show-StorageCraftMenu {
     Clear-Host
     
     # StorageCraft Troubleshooter Header
+    # Read master toolkit version dynamically from launch_menu.ps1
+    $toolkitVersion = "Unknown"
+    $launcherPath = Join-Path $installPath "launch_menu.ps1"
+    if (Test-Path $launcherPath) {
+        $launcherContent = Get-Content $launcherPath -Raw
+        if ($launcherContent -match 'Version:\s*(\d+\.\d+\.\d+)') {
+            $toolkitVersion = $matches[1]
+        }
+    }
     Write-Host ""
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host "                     SUPERIOR NETWORKS LLC                        " -ForegroundColor White
-    Write-Host "              StorageCraft Troubleshooter - v1.8.0                " -ForegroundColor Cyan
+    Write-Host "         StorageCraft Troubleshooter - Toolkit v$toolkitVersion              " -ForegroundColor Cyan
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Manual Tools:" -ForegroundColor White
