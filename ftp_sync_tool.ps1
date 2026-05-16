@@ -4,7 +4,7 @@ FTP Sync - WinSCP-based backup synchronization tool
 
 .DESCRIPTION
 Name: ftp_sync_tool.ps1
-Version: 3.7.14
+Version: 3.7.15
 Purpose: Compare local backup directory with FTP server using WinSCP.
          Automatically downloads WinSCP portable if not present.
          Pre-configured for ftp.sndayton.com with StorageCraft file filtering.
@@ -23,6 +23,7 @@ Key Features:
 - Failed file list displayed at end of upload session
 - Manual file list upload option
 - Professional WinSCP synchronization engine
+- SFTP support: select protocol at runtime (FTP port 21 or SFTP port 22 via OpenSSH)
 - Comprehensive logging
 
 Input:
@@ -39,6 +40,13 @@ Dependencies:
 - Internet access (for WinSCP download if needed)
 - Network access to FTP server
 
+2026-05-15 v3.7.15 - Added SFTP protocol support alongside FTP. Protocol selector
+                    prompts at runtime: press Enter for FTP (default) or enter 2
+                    for SFTP. Build-OpenString helper generates the correct WinSCP
+                    open command for each protocol. SFTP uses a single encrypted
+                    TCP channel - permanently eliminates NAT firewall idle stalls
+                    on large file transfers. Requires OpenSSH on server (port 22).
+                    FTP path unchanged for backward compatibility.
 2026-05-15 v3.7.14 - Fixed Test-FtpFileSizeMatch to parse both WinSCP stat output
                     formats: Format A (newer WinSCP block format "Size: 12345") and
                     Format B (older WinSCP ls-style "---------- 0 5710848 ..."). Fixed
@@ -108,7 +116,9 @@ WinSCP: https://winscp.net/
 #>
 
 # --- Configuration ---
-$defaultFtpServer = "ftp.sndayton.com"
+$defaultFtpServer  = "ftp.sndayton.com"   # FTP server hostname (port 21)
+$defaultSftpServer = "ftp.sndayton.com"   # SFTP server hostname (port 22, same host)
+$defaultSftpPort   = 22                    # OpenSSH default port
 $logDirectory = "C:\ITTools\Scripts\Logs"
 $logFile = Join-Path $logDirectory "ftp_sync_log.txt"
 $winscpDirectory = "C:\ITTools\WinSCP"
@@ -212,25 +222,58 @@ function Download-WinSCP {
 
 function Get-FtpCredentials {
     Write-Host ""
-    Write-Host "FTP Server: $defaultFtpServer" -ForegroundColor Cyan
+    Write-Host "Transfer Protocol:" -ForegroundColor Cyan
+    Write-Host "  1. FTP  (plain text, port 21)  - current default" -ForegroundColor White
+    Write-Host "  2. SFTP (encrypted, port 22)   - requires OpenSSH on server" -ForegroundColor Green
     Write-Host ""
-    
-    $ftpUser = Read-Host "Enter FTP username"
+    $protoChoice = Read-Host "Select protocol [1/2] (default: 1, press Enter for FTP)"
+    if ($protoChoice -eq "2") {
+        $protocol = "sftp"
+        $serverHost = $defaultSftpServer
+        $serverPort = $defaultSftpPort
+        Write-Host "  Using SFTP (encrypted) on port $serverPort" -ForegroundColor Green
+    } else {
+        $protocol = "ftp"
+        $serverHost = $defaultFtpServer
+        $serverPort = 21
+        Write-Host "  Using FTP (plain text) on port $serverPort" -ForegroundColor Yellow
+    }
+    Write-Host ""
+    Write-Host "Server: $serverHost" -ForegroundColor Cyan
+    Write-Host ""
+
+    $ftpUser = Read-Host "Enter username"
     if ([string]::IsNullOrWhiteSpace($ftpUser)) {
-        Write-Log "ERROR: FTP username cannot be empty." "ERROR"
+        Write-Log "ERROR: Username cannot be empty." "ERROR"
         Write-Host "`nPress any key to exit..." -ForegroundColor Gray
         $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
         exit 1
     }
-    
-    $ftpPass = Read-Host "Enter FTP password" -AsSecureString
+
+    $ftpPass = Read-Host "Enter password" -AsSecureString
     $plainPass = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
         [Runtime.InteropServices.Marshal]::SecureStringToBSTR($ftpPass))
-    
+
     return @{
-        Server = $defaultFtpServer
-        User = $ftpUser
-        Pass = $plainPass
+        Server   = $serverHost
+        Port     = $serverPort
+        Protocol = $protocol
+        User     = $ftpUser
+        Pass     = $plainPass
+    }
+}
+
+# Helper: build the WinSCP 'open' command string for either FTP or SFTP.
+# FTP  uses keepalive rawsettings to prevent NAT firewall idle drops.
+# SFTP uses a single encrypted channel - no keepalive hack needed.
+# -hostkey="*" accepts any server host key; replace with the actual
+# fingerprint (shown on first connect) for production hardening.
+function Build-OpenString {
+    param ([hashtable]$creds)
+    if ($creds.Protocol -eq "sftp") {
+        return "open sftp://$($creds.User):$($creds.Pass)@$($creds.Server)/ -hostkey=`"*`" -rawsettings SendBuf=0"
+    } else {
+        return "open ftp://$($creds.User):$($creds.Pass)@$($creds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10 SendBuf=0 SshSimple=0"
     }
 }
 
@@ -282,7 +325,7 @@ function Get-FtpFileList {
         $script = @"
 option batch abort
 option confirm off
-open ftp://$($creds.User):$($creds.Pass)@$($creds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10 SendBuf=0 SshSimple=0
+$(Build-OpenString -creds $creds)
 ls $remoteDir
 exit
 "@
@@ -510,7 +553,7 @@ function Test-FtpFileSizeMatch {
     $statContent = @"
 option batch abort
 option confirm off
-open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10 SendBuf=0 SshSimple=0
+$(Build-OpenString -creds $ftpCreds)
 stat "$ftpFullPath"
 exit
 "@
@@ -594,7 +637,7 @@ option batch continue
 option confirm off
 option transfer binary
 option transfer stall 120
-open ftp://$($ftpCreds.User):$($ftpCreds.Pass)@$($ftpCreds.Server)/ -rawsettings FtpPingType=1 FtpPingInterval=10 SendBuf=0 SshSimple=0
+$(Build-OpenString -creds $ftpCreds)
 "@
 
     # Ensure subfolder exists (silently ignore if already present)

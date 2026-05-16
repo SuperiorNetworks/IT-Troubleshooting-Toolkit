@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.7.11  
+**Version:** 3.7.15  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -65,7 +65,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.7.11
+IT Troubleshooting Toolkit - v3.7.15
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -89,7 +89,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - v1.8.0
+StorageCraft Troubleshooter - Toolkit v3.7.15
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -606,6 +606,22 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.7.15 (2026-05-15) - SFTP MIGRATION + OPENSSH GUIDE
+
+**New Feature:** Added SFTP protocol support to `ftp_sync_tool.ps1`. At the credential prompt, select `2` for SFTP (encrypted, port 22) or press Enter to keep FTP (plain text, port 21). SFTP uses a single encrypted TCP connection and permanently eliminates the NAT firewall idle stall that causes large file transfers to hang at 0.0 bytes/s.
+
+**New File:** `OpenSSH_Deployment_Guide.md` — step-by-step instructions for installing Win32-OpenSSH on Windows Server 2012 R2, including Windows Firewall rules and UDM port forwarding.
+
+**Technical Detail:** The `Build-OpenString` helper function generates the correct WinSCP `open` command for each protocol. FTP uses `FtpPingType=1 FtpPingInterval=10` keepalive rawsettings. SFTP uses `-hostkey="*"` to accept any server host key (replace with the actual fingerprint for production hardening).
+
+### Version 3.7.14 (2026-05-15) - STAT PARSER FIX
+
+**Bug Fix:** Fixed `Test-FtpFileSizeMatch` to correctly parse WinSCP stat output across two different formats that exist depending on WinSCP version installed. Format A (newer WinSCP): `Size: 18989239512` block format. Format B (older WinSCP): `---------- 0 5710848 May 12 ...` ls-style format. Both formats are now detected and the size extracted correctly. Fixed stat temp file path from `$env:TEMP` to `C:\ITTools\Scripts\Logs`.
+
+### Version 3.7.13 (2026-05-15) - FTP SCAN FIX
+
+**Bug Fix:** Fixed `Retrieved 0 backup file(s)` error. WinSCP scripting mode does not support `ls -R`. Replaced with a multi-pass approach that lists the root directory, then each Level 1 subfolder, then Level 2 subfolders (e.g., `Incrementals`), up to 3 levels deep. This correctly maps the full directory structure: `/SERVER-02/`, `/SQL/`, `/VSN-SERVER22/`, etc. and all files within each.
 
 ### Version 3.7.12 (2026-05-15) - MAINTENANCE
 - **Unified Versioning**: Removed all individual per-script version numbers. Every script in the toolkit now uses the single master toolkit version from `launch_menu.ps1`. One version number, one place to update.
