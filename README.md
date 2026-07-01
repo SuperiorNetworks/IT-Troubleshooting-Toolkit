@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.8.2  
+**Version:** 3.8.3  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -65,7 +65,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.8.2
+IT Troubleshooting Toolkit - v3.8.3
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -90,7 +90,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.8.2
+StorageCraft Troubleshooter - Toolkit v3.8.3
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -607,6 +607,11 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.8.3 (2026-07-01) - WORKFLOW REORDER
+- **UX Fix**: Reordered ConnectWise RMM Troubleshooter submenu into logical repair workflow order
+  - **Option 1**: Repair ScreenConnect (Uninstall/Cleanup) — run this first to remove the broken client
+  - **Option 2**: Repair ConnectWise RMM (Platform Watchdog) — run this second to redeploy via healthcheckandrestore
 
 ### Version 3.8.2 (2026-07-01) - PATH FIX
 - **Bug Fix**: Corrected download directory from `C:\ITStuff\Downloads\CWRMM` to `C:\ITTools\Downloads\CWRMM` in `connectwise_rmm_repair.ps1` and `cwrmm_troubleshooter.ps1` to stay consistent with the `C:\ITTools` base path used across the entire toolkit

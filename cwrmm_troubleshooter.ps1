@@ -37,6 +37,8 @@ Change Log:
                     Standalone submenu for CW RMM and ScreenConnect repair tools.
                     Moved from nested position inside StorageCraft Troubleshooter to
                     its own top-level entry on the main menu.
+2026-07-01 v1.0.1 - Reordered menu: ScreenConnect Cleanup is now Option 1 (run first),
+                    CW RMM Repair is now Option 2 (run second to redeploy).
 #>
 
 $ErrorActionPreference = "SilentlyContinue"
@@ -100,17 +102,17 @@ function Show-CWRMMMenu {
     Write-Host "  Use these utilities to fix stuck or broken ConnectWise RMM agents" -ForegroundColor Gray
     Write-Host "  and ScreenConnect installations (e.g., 'Installation Pending')." -ForegroundColor Gray
     Write-Host ""
-    Write-Host "  ConnectWise RMM Agent Repair:" -ForegroundColor White
-    Write-Host "    1. Repair ConnectWise RMM (Platform Watchdog)" -ForegroundColor Magenta
-    Write-Host "       Downloads and runs the official CW RMM repair utility." -ForegroundColor DarkGray
-    Write-Host "       Actions: healthcheck, healthcheckandrestore, uninstall," -ForegroundColor DarkGray
-    Write-Host "       autoupdatecleanup. Download to: C:\ITTools\Downloads\CWRMM" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "  ScreenConnect Repair:" -ForegroundColor White
-    Write-Host "    2. Repair ScreenConnect (Uninstall/Cleanup)" -ForegroundColor Magenta
+    Write-Host "  Step 1 - ScreenConnect Cleanup:" -ForegroundColor White
+    Write-Host "    1. Repair ScreenConnect (Uninstall/Cleanup)" -ForegroundColor Magenta
     Write-Host "       Detects and removes all ScreenConnect Client instances via" -ForegroundColor DarkGray
     Write-Host "       PackageManagement and WMI. Cleans up leftover services." -ForegroundColor DarkGray
-    Write-Host "       Run this BEFORE Option 1 to clear a stuck installation." -ForegroundColor DarkGray
+    Write-Host "       Run this FIRST to clear a stuck or broken installation." -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  Step 2 - ConnectWise RMM Agent Repair (Redeploy):" -ForegroundColor White
+    Write-Host "    2. Repair ConnectWise RMM (Platform Watchdog)" -ForegroundColor Magenta
+    Write-Host "       Downloads and runs the official CW RMM repair utility." -ForegroundColor DarkGray
+    Write-Host "       Use healthcheckandrestore to redeploy ScreenConnect after cleanup." -ForegroundColor DarkGray
+    Write-Host "       Download to: C:\ITTools\Downloads\CWRMM" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "    B. Back to Main Menu" -ForegroundColor Gray
     Write-Host ""
@@ -171,19 +173,19 @@ do {
 
     switch ($choice.ToUpper()) {
         '1' {
-            Write-AuditLog -action "Menu Selection" -details "Option 1: Repair ConnectWise RMM"
-            try {
-                Run-CWRMMRepair
-            } catch {
-                Write-AuditLog -action "CW RMM Repair" -level "ERROR" -errorMessage $_.Exception.Message
-            }
-        }
-        '2' {
-            Write-AuditLog -action "Menu Selection" -details "Option 2: Repair ScreenConnect"
+            Write-AuditLog -action "Menu Selection" -details "Option 1: Repair ScreenConnect (Cleanup)"
             try {
                 Run-ScreenConnectRepair
             } catch {
                 Write-AuditLog -action "ScreenConnect Repair" -level "ERROR" -errorMessage $_.Exception.Message
+            }
+        }
+        '2' {
+            Write-AuditLog -action "Menu Selection" -details "Option 2: Repair ConnectWise RMM (Platform Watchdog)"
+            try {
+                Run-CWRMMRepair
+            } catch {
+                Write-AuditLog -action "CW RMM Repair" -level "ERROR" -errorMessage $_.Exception.Message
             }
         }
         'B' {
