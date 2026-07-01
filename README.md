@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.8.0  
+**Version:** 3.8.1  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -65,7 +65,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.8.0
+IT Troubleshooting Toolkit - v3.8.1
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -73,10 +73,11 @@ Toolkit Management:
 
 Troubleshooting Tools:
   3. StorageCraft Troubleshooter
+  4. ConnectWise RMM Troubleshooter
 
 Windows/Office Activation:
-  4. Run MassGrave Activation Scripts (MAS)
-  4B. Run MAS (Alternative DoH Method)
+  5. Run MassGrave Activation Scripts (MAS)
+  5B. Run MAS (Alternative DoH Method)
 
   Q. Quit
 ```
@@ -89,7 +90,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.8.0
+StorageCraft Troubleshooter - Toolkit v3.8.1
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -607,10 +608,14 @@ For support, feature requests, or bug reports:
 
 ## Change Log
 
+### Version 3.8.1 (2026-07-01) - MENU RESTRUCTURE
+- **Menu Fix**: Moved ConnectWise RMM Troubleshooter out of StorageCraft submenu and onto the main menu as its own **Option 4**
+- **New Script**: `cwrmm_troubleshooter.ps1` — standalone submenu for CW RMM and ScreenConnect repair
+- **Renumbered**: MAS Activation moved from Option 4/4B to **Option 5/5B**
+
 ### Version 3.8.0 (2026-07-01) - RMM REPAIR TOOLS
-- **New Feature**: Added ConnectWise RMM Agent Repair Utility (downloads and runs platform-watchdog.exe)
-- **New Feature**: Added ScreenConnect Repair Utility (detects and uninstalls instances via Get-Package and WMI, cleans up services)
-- **Menu Update**: Added "RMM & Remote Access Repair" section to the StorageCraft Troubleshooter submenu
+- **New Feature**: Added ConnectWise RMM Agent Repair Utility (`connectwise_rmm_repair.ps1`) — downloads and runs the official `platform-watchdog.exe` with actions: healthcheck, healthcheckandrestore, uninstall, autoupdatecleanup
+- **New Feature**: Added ScreenConnect Repair Utility (`screenconnect_repair.ps1`) — detects and uninstalls all ScreenConnect Client instances via PackageManagement and WMI; cleans up leftover services
 
 ### Version 3.7.15 (2026-05-15) - SFTP MIGRATION + OPENSSH GUIDE
 

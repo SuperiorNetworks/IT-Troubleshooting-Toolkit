@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.8.0
+Version: 3.8.1
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -79,6 +79,9 @@ Change Log:
                     is now correctly marked STALL-BUT-COMPLETE instead of triggering
                     a full re-upload. RULE: any script change bumps this master version.
 2026-07-01 v3.8.0 - Added ConnectWise RMM Repair and ScreenConnect Repair utilities
+2026-07-01 v3.8.1 - Moved CW RMM Troubleshooter to main menu as Option 4 (standalone);
+                    renumbered MAS Activation to Options 5 and 5B;
+                    created cwrmm_troubleshooter.ps1 submenu
 
 .RELEASE_NOTES
 v2.5.0:
@@ -197,7 +200,7 @@ function Show-Menu {
     Clear-Host
     
     # Get version dynamically from script header
-    $scriptVersion = "3.8.0"
+    $scriptVersion = "3.8.1"
     $scriptPath = $PSCommandPath
     if (Test-Path $scriptPath) {
         $content = Get-Content $scriptPath -Raw
@@ -219,10 +222,11 @@ function Show-Menu {
     Write-Host ""
     Write-Host "  Troubleshooting Tools:" -ForegroundColor White
     Write-Host "    3. StorageCraft Troubleshooter" -ForegroundColor Cyan
+    Write-Host "    4. ConnectWise RMM Troubleshooter" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Windows/Office Activation:" -ForegroundColor White
-    Write-Host "    4. Run MassGrave Activation Scripts (MAS)" -ForegroundColor Magenta
-    Write-Host "    4B. Run MAS (Alternative DoH Method)" -ForegroundColor Magenta
+    Write-Host "    5. Run MassGrave Activation Scripts (MAS)" -ForegroundColor Magenta
+    Write-Host "    5B. Run MAS (Alternative DoH Method)" -ForegroundColor Magenta
     Write-Host ""
     Write-Host "    Q. Quit" -ForegroundColor Red
     Write-Host ""
@@ -579,6 +583,33 @@ function Run-StorageCraftTroubleshooter {
     }
 }
 
+function Run-CWRMMTroubleshooter {
+    Write-Host "`n=== Launching ConnectWise RMM Troubleshooter ===" -ForegroundColor Cyan
+    
+    $cwScriptName = "cwrmm_troubleshooter.ps1"
+    $scriptPath = Join-Path $installPath $cwScriptName
+    
+    if (Test-Path $scriptPath) {
+        Write-Host "Starting ConnectWise RMM Troubleshooter..." -ForegroundColor Green
+        Write-Host ""
+        
+        Write-AuditLog -action "CW RMM Troubleshooter" -details "Launched submenu script: $cwScriptName"
+        
+        & $scriptPath
+        
+    }
+    else {
+        Write-Host "`nError: ConnectWise RMM Troubleshooter not found!" -ForegroundColor Red
+        Write-Host "Expected location: $scriptPath" -ForegroundColor Yellow
+        Write-Host "`nPlease use Option 1 to download and install first." -ForegroundColor Yellow
+        
+        Write-AuditLog -action "CW RMM Troubleshooter" -level "ERROR" -errorMessage "Script not found: $scriptPath"
+        
+        Write-Host "`nPress any key to return to menu..."
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
+}
+
 function Show-ToolkitLogs {
     do {
         Clear-Host
@@ -736,7 +767,7 @@ Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Lau
 # Main menu loop
 do {
     Show-Menu
-    Write-Host "  Select an option (1-4 or Q): " -NoNewline -ForegroundColor White
+    Write-Host "  Select an option (1-5 or Q): " -NoNewline -ForegroundColor White
     $choice = Read-Host
     
     switch ($choice.ToUpper()) {
@@ -768,7 +799,16 @@ do {
             }
         }
         '4' {
-            Write-AuditLog -action "Menu Selection" -details "Option 4: Run MassGrave Activation Scripts"
+            Write-AuditLog -action "Menu Selection" -details "Option 4: ConnectWise RMM Troubleshooter"
+            try {
+                Run-CWRMMTroubleshooter
+            } catch {
+                Write-AuditLog -action "ConnectWise RMM Troubleshooter" -level "ERROR" -errorMessage $_.Exception.Message
+                throw
+            }
+        }
+        '5' {
+            Write-AuditLog -action "Menu Selection" -details "Option 5: Run MassGrave Activation Scripts"
             try {
                 Run-MassGraveActivation -UseDoH $false
             } catch {
@@ -776,8 +816,8 @@ do {
                 throw
             }
         }
-        '4B' {
-            Write-AuditLog -action "Menu Selection" -details "Option 4B: Run MassGrave Activation Scripts (DoH Fallback)"
+        '5B' {
+            Write-AuditLog -action "Menu Selection" -details "Option 5B: Run MassGrave Activation Scripts (DoH Fallback)"
             try {
                 Run-MassGraveActivation -UseDoH $true
             } catch {
@@ -792,7 +832,7 @@ do {
         }
         default {
             Write-AuditLog -action "Invalid Menu Selection" -level "WARN" -details "User entered: $choice"
-            Write-Host "`nInvalid selection. Please choose 1-4 or Q." -ForegroundColor Red
+            Write-Host "`nInvalid selection. Please choose 1-5 or Q." -ForegroundColor Red
             Start-Sleep -Seconds 2
         }
     }

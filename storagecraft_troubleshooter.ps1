@@ -86,22 +86,18 @@ function Show-StorageCraftMenu {
     Write-Host "    3. Upload ImageManager Queue (WinSCP)" -ForegroundColor Yellow
     Write-Host "    4. Test FTP Connectivity (PS Checker)" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "  RMM & Remote Access Repair:" -ForegroundColor White
-    Write-Host "    5. Repair ConnectWise RMM (Platform Watchdog)" -ForegroundColor Magenta
-    Write-Host "    6. Repair ScreenConnect (Uninstall/Cleanup)" -ForegroundColor Magenta
-    Write-Host ""
     Write-Host "  ImageManager Service Management:" -ForegroundColor White
-    Write-Host "    7. Start ImageManager Service" -ForegroundColor Green
-    Write-Host "    8. Stop ImageManager Service" -ForegroundColor Red
-    Write-Host "    9. Restart ImageManager Service" -ForegroundColor Yellow
-    Write-Host "   10. Check ImageManager Service Status" -ForegroundColor Cyan
+    Write-Host "    5. Start ImageManager Service" -ForegroundColor Green
+    Write-Host "    6. Stop ImageManager Service" -ForegroundColor Red
+    Write-Host "    7. Restart ImageManager Service" -ForegroundColor Yellow
+    Write-Host "    8. Check ImageManager Service Status" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Logs and Diagnostics:" -ForegroundColor White
-    Write-Host "   11. View FTP Upload Logs" -ForegroundColor Magenta
+    Write-Host "    9. View FTP Upload Logs" -ForegroundColor Magenta
     Write-Host ""
     Write-Host "  Utilities:" -ForegroundColor White
-    Write-Host "   12. Download/Install WinSCP" -ForegroundColor Cyan
-    Write-Host "   13. Install Access Database Engine" -ForegroundColor Cyan
+    Write-Host "   10. Download/Install WinSCP" -ForegroundColor Cyan
+    Write-Host "   11. Install Access Database Engine" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "    B. Back to Main Menu" -ForegroundColor Gray
     Write-Host ""
@@ -578,7 +574,7 @@ function Install-AccessEngine {
 # Main menu loop
 do {
     Show-StorageCraftMenu
-    Write-Host "  Select an option (1-13 or B): " -NoNewline -ForegroundColor White
+    Write-Host "  Select an option (1-11 or B): " -NoNewline -ForegroundColor White
     $choice = Read-Host
     
     switch ($choice.ToUpper()) {
@@ -595,30 +591,24 @@ do {
             Run-FTPPSChecker
         }
         '5' {
-            Run-CWRMMRepair
-        }
-        '6' {
-            Run-ScreenConnectRepair
-        }
-        '7' {
             Start-ImageManagerService
         }
-        '8' {
+        '6' {
             Stop-ImageManagerService
         }
-        '9' {
+        '7' {
             Restart-ImageManagerService
         }
-        '10' {
+        '8' {
             Get-ImageManagerServiceStatus
         }
-        '11' {
+        '9' {
             View-FTPUploadLogs
         }
-        '12' {
+        '10' {
             Install-WinSCP
         }
-        '13' {
+        '11' {
             Install-AccessEngine
         }
         'B' {
@@ -626,7 +616,7 @@ do {
             exit 0
         }
         default {
-            Write-Host "`nInvalid selection. Please choose 1-13 or B." -ForegroundColor Red
+            Write-Host "`nInvalid selection. Please choose 1-11 or B." -ForegroundColor Red
             Start-Sleep -Seconds 2
         }
     }
