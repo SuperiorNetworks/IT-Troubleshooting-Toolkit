@@ -15,6 +15,7 @@ The **IT Troubleshooting Toolkit** is a comprehensive PowerShell-based solution 
 ### Key Capabilities
 
 - **StorageCraft Backup Management** - Complete toolset for managing ShadowProtect backups
+- **ConnectWise RMM Repair** - Automated utilities to clear stuck ScreenConnect agents and redeploy RMM agents
 - **FTP Synchronization** - Multiple methods to sync backups to offsite FTP servers
 - **ImageManager Integration** - Query replication queue and manage backup jobs
 - **Service Management** - Control ImageManager service (start/stop/restart/status)
@@ -81,6 +82,43 @@ Windows/Office Activation:
 
   Q. Quit
 ```
+
+---
+
+## ConnectWise RMM Troubleshooter
+
+The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated repair utilities to resolve stuck agent installations (such as the "ScreenConnect Installation Pending" error) and restore full remote access.
+
+```
+SUPERIOR NETWORKS LLC
+ConnectWise RMM Troubleshooter - Toolkit v3.8.3
+
+Step 1 - ScreenConnect Cleanup:
+  1. Repair ScreenConnect (Uninstall/Cleanup)
+     Detects and removes all ScreenConnect Client instances via
+     PackageManagement and WMI. Cleans up leftover services.
+     Run this FIRST to clear a stuck or broken installation.
+
+Step 2 - ConnectWise RMM Agent Repair (Redeploy):
+  2. Repair ConnectWise RMM (Platform Watchdog)
+     Downloads and runs the official CW RMM repair utility.
+     Use healthcheckandrestore to redeploy ScreenConnect after cleanup.
+     Download to: C:\ITTools\Downloads\CWRMM
+
+  B. Back to Main Menu
+```
+
+### Repair Workflow
+
+When an endpoint shows **"ScreenConnect Installation Pending"** or the agent is unresponsive, follow this exact workflow:
+
+1. **Run Option 1 (ScreenConnect Cleanup)**: This script aggressively hunts down orphaned ScreenConnect installations using WMI and PowerShell PackageManagement, force-uninstalls them, and deletes any leftover `sc` services blocking a fresh install.
+2. **Run Option 2 (ConnectWise RMM Repair)**: Select the `healthcheckandrestore` action. The toolkit downloads the official `platform-watchdog.exe` utility from ConnectWise. The watchdog will detect that ScreenConnect is missing and **automatically push a fresh installation** from the RMM platform to the endpoint.
+
+**Files:**
+- `cwrmm_troubleshooter.ps1` - Main submenu
+- `screenconnect_repair.ps1` - Cleanup utility
+- `connectwise_rmm_repair.ps1` - Watchdog utility
 
 ---
 
@@ -356,6 +394,55 @@ Please refer to the `Large_File_Transfer_Fix_Guide.md` file in the repository fo
 
 ---
 
+### ConnectWise RMM Troubleshooter (Option 4)
+
+#### Option 1 — Repair ScreenConnect (Uninstall/Cleanup)
+
+**Purpose:** Remove all stuck, broken, or orphaned ScreenConnect Client installations from an endpoint.
+
+**Features:**
+- Detects all installed ScreenConnect Client packages via PowerShell `Get-Package` (PackageManagement)
+- Secondary detection via WMI `Win32_Product` for instances not visible to PackageManagement
+- Force-uninstalls all discovered instances
+- Stops and removes leftover `ScreenConnect Client*` Windows services via `sc.exe delete`
+- Verbose on-screen output and full logging to `screenconnect_repair_log.txt`
+- Administrator privilege enforcement
+
+**When to Use:** Run this first when the RMM dashboard shows "ScreenConnect Installation Pending" or when a ScreenConnect agent is stuck and cannot be reinstalled over the top of an existing broken install.
+
+**File:** `screenconnect_repair.ps1`
+
+---
+
+#### Option 2 — Repair ConnectWise RMM (Platform Watchdog)
+
+**Purpose:** Download and run the official ConnectWise RMM Platform Watchdog repair utility to diagnose, restore, or cleanly remove the RMM agent.
+
+**Features:**
+- Downloads `platform-watchdog.exe` from the official ConnectWise source to `C:\ITTools\Downloads\CWRMM`
+- Skips re-download if the file already exists
+- Presents four repair actions via an interactive sub-menu
+- Verbose on-screen output and full logging to `cw_rmm_repair_log.txt`
+- TLS 1.2 enforced for compatibility with Windows Server 2012 R2
+- Administrator privilege enforcement
+
+**Available Actions:**
+
+| Action | Flag | Description |
+|---|---|---|
+| Health Check | `-action=healthcheck -display=yes` | Scans agent components and reports health status without making changes |
+| Health Check and Restore | `-action=healthcheckandrestore -display=yes` | Scans and automatically repairs or redeploys missing components including ScreenConnect |
+| Uninstall | `-action=uninstall -display=yes` | Completely removes the ConnectWise RMM agent from the endpoint |
+| Auto Update Cleanup | `-action=autoupdatecleanup -display=yes` | Clears cached update files that may be causing agent update failures |
+
+**When to Use:** Run this second, after the ScreenConnect Cleanup (Option 1). Select **Health Check and Restore** to trigger an automatic redeployment of ScreenConnect from the RMM platform.
+
+**Download Source:** `https://prod.setup.itsupport247.net/windows/RepairUtility/32/Platform-Watchdog/EXE/utility`
+
+**File:** `connectwise_rmm_repair.ps1`
+
+---
+
 ### Windows/Office Activation (MAS)
 
 **Purpose:** Activate Windows and Office using MassGrave Activation Scripts
@@ -378,6 +465,9 @@ Please refer to the `Large_File_Transfer_Fix_Guide.md` file in the repository fo
 C:\ITTools\
 ├── Scripts\                    # Main installation directory
 │   ├── launch_menu.ps1        # Main launcher
+│   ├── cwrmm_troubleshooter.ps1
+│   ├── connectwise_rmm_repair.ps1
+│   ├── screenconnect_repair.ps1
 │   ├── storagecraft_troubleshooter.ps1
 │   ├── ftp_troubleshooter_tool.ps1
 │   ├── ftp_sync_tool.ps1
@@ -390,7 +480,12 @@ C:\ITTools\
 │       ├── master_audit_log.txt
 │       ├── ftp_upload_log.txt
 │       ├── ftp_sync_log.txt
-│       └── ftp_sync_imagemanager_log.txt
+│       ├── ftp_sync_imagemanager_log.txt
+│       ├── cw_rmm_repair_log.txt
+│       └── screenconnect_repair_log.txt
+├── Downloads\
+│   └── CWRMM\                 # ConnectWise RMM repair utility download
+│       └── platform-watchdog.exe
 ├── WinSCP\                    # WinSCP portable installation
 │   ├── WinSCP.com
 │   ├── WinSCP.exe
@@ -528,6 +623,17 @@ Credentials are **not stored** - you must enter them each time for security.
 **Issue:** "Administrator privileges required"
 - **Solution:** Right-click PowerShell and select "Run as Administrator"
 
+**Issue:** "ScreenConnect Installation Pending" in ConnectWise RMM dashboard
+- **Solution:** Use Option 4 (ConnectWise RMM Troubleshooter) from the main menu
+  1. Run Option 1 (ScreenConnect Cleanup) to remove the broken client
+  2. Run Option 2 (CW RMM Repair) and select Health Check and Restore
+
+**Issue:** `platform-watchdog.exe` download fails
+- **Solution:** Download manually from `https://prod.setup.itsupport247.net/windows/RepairUtility/32/Platform-Watchdog/EXE/utility` and place in `C:\ITTools\Downloads\CWRMM\platform-watchdog.exe`
+
+**Issue:** ScreenConnect cleanup finds no packages but agent is still stuck
+- **Solution:** Manually check Add/Remove Programs for any entry matching `ScreenConnect Client (xxxxxxxxxxxxxxxx)` and remove it, then re-run Option 2 (Health Check and Restore)
+
 **Issue:** "Service not found: StorageCraft ImageManager"
 - **Solution:** Install StorageCraft ImageManager
 
@@ -593,6 +699,7 @@ This software is provided as-is without warranty of any kind.
 **Third-Party Components:**
 - **WinSCP** - https://winscp.net/ (GNU GPL)
 - **MassGrave Activation Scripts** - https://github.com/massgravel/Microsoft-Activation-Scripts (GNU GPL)
+- **ConnectWise Platform Watchdog** - https://docs.connectwise.com/ConnectWise_RMM/Agents/Agent_Repair_Utility (ConnectWise LLC)
 
 ---
 
