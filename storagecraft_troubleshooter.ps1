@@ -4,7 +4,7 @@ StorageCraft Troubleshooter - Submenu for StorageCraft backup tools
 
 .DESCRIPTION
 Name: storagecraft_troubleshooter.ps1
-Version: 3.7.12
+Version: 3.8.0
 Purpose: Centralized submenu for StorageCraft backup troubleshooting tools.
          Provides access to Manual FTP Tool, FTP Sync, and ImageManager service management.
 Path: /scripts/storagecraft_troubleshooter.ps1
@@ -37,6 +37,7 @@ Change Log:
 2025-12-08 v1.1.1 - Fixed version display; Fixed Manual FTP Tool launch to wait for completion
 2025-12-08 v1.2.0 - Added FTP Sync tool for comparing local backups with FTP destination
 2026-04-14 v1.8.0 - Added FTP PS Checker tool to menu
+2026-07-01 v3.8.0 - Added ConnectWise RMM Repair and ScreenConnect Repair utilities
 
 .NOTES
 This submenu provides focused access to StorageCraft backup troubleshooting tools.
@@ -50,6 +51,8 @@ $ftpSyncScriptName = "ftp_sync_tool.ps1"
 $ftpSyncImageManagerScriptName = "ftp_sync_imagemanager.ps1"
 $ftpPsCheckerScriptName = "ftp_ps_checker.ps1"
 $aceInstallerScriptName = "install_access_engine.ps1"
+$cwRmmRepairScriptName = "connectwise_rmm_repair.ps1"
+$scRepairScriptName = "screenconnect_repair.ps1"
 $serviceName = "StorageCraft ImageManager"
 
 function Test-Administrator {
@@ -83,18 +86,22 @@ function Show-StorageCraftMenu {
     Write-Host "    3. Upload ImageManager Queue (WinSCP)" -ForegroundColor Yellow
     Write-Host "    4. Test FTP Connectivity (PS Checker)" -ForegroundColor Yellow
     Write-Host ""
+    Write-Host "  RMM & Remote Access Repair:" -ForegroundColor White
+    Write-Host "    5. Repair ConnectWise RMM (Platform Watchdog)" -ForegroundColor Magenta
+    Write-Host "    6. Repair ScreenConnect (Uninstall/Cleanup)" -ForegroundColor Magenta
+    Write-Host ""
     Write-Host "  ImageManager Service Management:" -ForegroundColor White
-    Write-Host "    5. Start ImageManager Service" -ForegroundColor Green
-    Write-Host "    6. Stop ImageManager Service" -ForegroundColor Red
-    Write-Host "    7. Restart ImageManager Service" -ForegroundColor Yellow
-    Write-Host "    8. Check ImageManager Service Status" -ForegroundColor Cyan
+    Write-Host "    7. Start ImageManager Service" -ForegroundColor Green
+    Write-Host "    8. Stop ImageManager Service" -ForegroundColor Red
+    Write-Host "    9. Restart ImageManager Service" -ForegroundColor Yellow
+    Write-Host "   10. Check ImageManager Service Status" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Logs and Diagnostics:" -ForegroundColor White
-    Write-Host "    9. View FTP Upload Logs" -ForegroundColor Magenta
+    Write-Host "   11. View FTP Upload Logs" -ForegroundColor Magenta
     Write-Host ""
     Write-Host "  Utilities:" -ForegroundColor White
-    Write-Host "   10. Download/Install WinSCP" -ForegroundColor Cyan
-    Write-Host "   11. Install Access Database Engine" -ForegroundColor Cyan
+    Write-Host "   12. Download/Install WinSCP" -ForegroundColor Cyan
+    Write-Host "   13. Install Access Database Engine" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "    B. Back to Main Menu" -ForegroundColor Gray
     Write-Host ""
@@ -204,6 +211,48 @@ function Run-ManualFTPTool {
     }
     else {
         Write-Host "`nError: Manual FTP Tool not found!" -ForegroundColor Red
+        Write-Host "Expected location: $scriptPath" -ForegroundColor Yellow
+        Write-Host "`nPlease use the main menu to download and install the toolkit first." -ForegroundColor Yellow
+        Write-Host "`nPress any key to return to menu..."
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
+}
+
+function Run-CWRMMRepair {
+    Write-Host "`n=== Launching ConnectWise RMM Repair ===" -ForegroundColor Cyan
+    
+    $scriptPath = Join-Path $installPath $cwRmmRepairScriptName
+    
+    if (Test-Path $scriptPath) {
+        Write-Host "Starting ConnectWise RMM Repair Utility..." -ForegroundColor Green
+        Write-Host "Script location: $scriptPath" -ForegroundColor Gray
+        Write-Host ""
+        
+        & $scriptPath
+    }
+    else {
+        Write-Host "`nError: ConnectWise RMM Repair Tool not found!" -ForegroundColor Red
+        Write-Host "Expected location: $scriptPath" -ForegroundColor Yellow
+        Write-Host "`nPlease use the main menu to download and install the toolkit first." -ForegroundColor Yellow
+        Write-Host "`nPress any key to return to menu..."
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
+}
+
+function Run-ScreenConnectRepair {
+    Write-Host "`n=== Launching ScreenConnect Repair ===" -ForegroundColor Cyan
+    
+    $scriptPath = Join-Path $installPath $scRepairScriptName
+    
+    if (Test-Path $scriptPath) {
+        Write-Host "Starting ScreenConnect Repair Utility..." -ForegroundColor Green
+        Write-Host "Script location: $scriptPath" -ForegroundColor Gray
+        Write-Host ""
+        
+        & $scriptPath
+    }
+    else {
+        Write-Host "`nError: ScreenConnect Repair Tool not found!" -ForegroundColor Red
         Write-Host "Expected location: $scriptPath" -ForegroundColor Yellow
         Write-Host "`nPlease use the main menu to download and install the toolkit first." -ForegroundColor Yellow
         Write-Host "`nPress any key to return to menu..."
@@ -529,7 +578,7 @@ function Install-AccessEngine {
 # Main menu loop
 do {
     Show-StorageCraftMenu
-    Write-Host "  Select an option (1-11 or B): " -NoNewline -ForegroundColor White
+    Write-Host "  Select an option (1-13 or B): " -NoNewline -ForegroundColor White
     $choice = Read-Host
     
     switch ($choice.ToUpper()) {
@@ -546,24 +595,30 @@ do {
             Run-FTPPSChecker
         }
         '5' {
-            Start-ImageManagerService
+            Run-CWRMMRepair
         }
         '6' {
-            Stop-ImageManagerService
+            Run-ScreenConnectRepair
         }
         '7' {
-            Restart-ImageManagerService
+            Start-ImageManagerService
         }
         '8' {
-            Get-ImageManagerServiceStatus
+            Stop-ImageManagerService
         }
         '9' {
-            View-FTPUploadLogs
+            Restart-ImageManagerService
         }
         '10' {
-            Install-WinSCP
+            Get-ImageManagerServiceStatus
         }
         '11' {
+            View-FTPUploadLogs
+        }
+        '12' {
+            Install-WinSCP
+        }
+        '13' {
             Install-AccessEngine
         }
         'B' {
@@ -571,7 +626,7 @@ do {
             exit 0
         }
         default {
-            Write-Host "`nInvalid selection. Please choose 1-11 or B." -ForegroundColor Red
+            Write-Host "`nInvalid selection. Please choose 1-13 or B." -ForegroundColor Red
             Start-Sleep -Seconds 2
         }
     }

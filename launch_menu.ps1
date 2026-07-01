@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.7.15
+Version: 3.8.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -78,6 +78,7 @@ Change Log:
                     size comparison; file fully on server after NAT control channel drop
                     is now correctly marked STALL-BUT-COMPLETE instead of triggering
                     a full re-upload. RULE: any script change bumps this master version.
+2026-07-01 v3.8.0 - Added ConnectWise RMM Repair and ScreenConnect Repair utilities
 
 .RELEASE_NOTES
 v2.5.0:
@@ -196,7 +197,7 @@ function Show-Menu {
     Clear-Host
     
     # Get version dynamically from script header
-    $scriptVersion = "Unknown"
+    $scriptVersion = "3.8.0"
     $scriptPath = $PSCommandPath
     if (Test-Path $scriptPath) {
         $content = Get-Content $scriptPath -Raw

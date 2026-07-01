@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.7.15  
+**Version:** 3.8.0  
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -65,7 +65,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.7.15
+IT Troubleshooting Toolkit - v3.8.0
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -89,7 +89,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.7.15
+StorageCraft Troubleshooter - Toolkit v3.8.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -606,6 +606,11 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.8.0 (2026-07-01) - RMM REPAIR TOOLS
+- **New Feature**: Added ConnectWise RMM Agent Repair Utility (downloads and runs platform-watchdog.exe)
+- **New Feature**: Added ScreenConnect Repair Utility (detects and uninstalls instances via Get-Package and WMI, cleans up services)
+- **Menu Update**: Added "RMM & Remote Access Repair" section to the StorageCraft Troubleshooter submenu
 
 ### Version 3.7.15 (2026-05-15) - SFTP MIGRATION + OPENSSH GUIDE
 
