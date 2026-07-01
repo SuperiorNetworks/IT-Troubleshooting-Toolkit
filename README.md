@@ -634,6 +634,21 @@ Credentials are **not stored** - you must enter them each time for security.
 **Issue:** ScreenConnect cleanup finds no packages but agent is still stuck
 - **Solution:** Manually check Add/Remove Programs for any entry matching `ScreenConnect Client (xxxxxxxxxxxxxxxx)` and remove it, then re-run Option 2 (Health Check and Restore)
 
+---
+
+### Do I Need to Remove the Device from the ConnectWise RMM Portal Before Reinstalling?
+
+This depends on the scenario. The table below covers the most common situations a tech will encounter:
+
+| Scenario | Remove from Portal First? | Notes |
+|---|---|---|
+| Reinstalling on the same machine (broken agent) | **No** | Use `healthcheckandrestore` — the agent repairs in place and the portal record stays intact |
+| ScreenConnect stuck / "Installation Pending" | **No** | Run Option 1 (Cleanup) then Option 2 (Health Check and Restore) — portal updates automatically |
+| Replacing a machine with new hardware | **Yes** | Delete the old device record from the portal to avoid a stale ghost entry consuming a license seat |
+| Duplicate device records appear after reinstall | **No** | Delete the offline/stale duplicate from the portal; keep the record showing Online |
+
+**For the standard "ScreenConnect Installation Pending" fix, you never need to touch the portal.** The `healthcheckandrestore` action re-registers the agent and clears the pending status automatically. Log into the ConnectWise RMM portal after running the repair to confirm the device returns to **Online** status and the ScreenConnect indicator is green.
+
 **Issue:** "Service not found: StorageCraft ImageManager"
 - **Solution:** Install StorageCraft ImageManager
 
