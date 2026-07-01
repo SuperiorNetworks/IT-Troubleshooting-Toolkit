@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.8.1
+Version: 3.8.2
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -82,6 +82,7 @@ Change Log:
 2026-07-01 v3.8.1 - Moved CW RMM Troubleshooter to main menu as Option 4 (standalone);
                     renumbered MAS Activation to Options 5 and 5B;
                     created cwrmm_troubleshooter.ps1 submenu
+2026-07-01 v3.8.2 - Fixed download path from C:\ITStuff to C:\ITTools\Downloads\CWRMM
 
 .RELEASE_NOTES
 v2.5.0:
@@ -200,7 +201,7 @@ function Show-Menu {
     Clear-Host
     
     # Get version dynamically from script header
-    $scriptVersion = "3.8.1"
+    $scriptVersion = "3.8.2"
     $scriptPath = $PSCommandPath
     if (Test-Path $scriptPath) {
         $content = Get-Content $scriptPath -Raw

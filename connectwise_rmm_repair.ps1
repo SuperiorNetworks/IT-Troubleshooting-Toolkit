@@ -33,7 +33,7 @@ $ErrorActionPreference = "Stop"
 
 # Configuration
 $installPath = "C:\ITTools\Scripts"
-$downloadDir = "C:\ITStuff\Downloads\CWRMM"
+$downloadDir = "C:\ITTools\Downloads\CWRMM"
 $downloadUrl = "https://prod.setup.itsupport247.net/windows/RepairUtility/32/Platform-Watchdog/EXE/utility"
 $exeName = "platform-watchdog.exe"
 $exePath = Join-Path $downloadDir $exeName
