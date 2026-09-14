@@ -112,7 +112,7 @@ function Show-CWRMMMenu {
     Write-Host "    2. Repair ConnectWise RMM (Platform Watchdog)" -ForegroundColor Magenta
     Write-Host "       Downloads and runs the official CW RMM repair utility." -ForegroundColor DarkGray
     Write-Host "       Use healthcheckandrestore to redeploy ScreenConnect after cleanup." -ForegroundColor DarkGray
-    Write-Host "       Download to: C:\ITTools\Downloads\CWRMM" -ForegroundColor DarkGray
+    Write-Host "       Download to: C:\ITTools\Scripts\Downloads\CWRMM" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "    B. Back to Main Menu" -ForegroundColor Gray
     Write-Host ""

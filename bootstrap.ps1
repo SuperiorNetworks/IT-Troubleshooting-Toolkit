@@ -20,7 +20,14 @@ PowerShell.exe -ExecutionPolicy Bypass -File bootstrap.ps1
 $installPath = "C:\ITTools\Scripts"
 $launcherScript = Join-Path $installPath "launch_menu.ps1"
 $githubZipUrl = "https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/archive/refs/heads/master.zip"
-$tempDir = "C:\ITTools\Temp"
+$tempDir = Join-Path $installPath "Temp"
+$requiredToolkitFiles = @(
+    "launch_menu.ps1",
+    "hp_m404dn_troubleshooter.ps1",
+    "hp_m404dn_connectivity_test.ps1",
+    "hp_m404dn_spooler_repair.ps1",
+    "hp_m404dn_driver_reinstall.ps1"
+)
 
 Write-Host ""
 Write-Host "=================================================================" -ForegroundColor Cyan
@@ -96,6 +103,14 @@ function Install-Toolkit {
             Copy-Item -Path $_.FullName -Destination $installPath -Force
         }
         
+        # Verify required toolkit files, including the HP M404dn Printer Troubleshooter module
+        foreach ($requiredToolkitFile in $requiredToolkitFiles) {
+            $installedFile = Join-Path $installPath $requiredToolkitFile
+            if (-not (Test-Path $installedFile)) {
+                throw "Required toolkit file was not installed: $requiredToolkitFile"
+            }
+        }
+
         # Copy directories
         Get-ChildItem -Path $sourceFolder -Directory | ForEach-Object {
             $destDir = Join-Path $installPath $_.Name

@@ -437,7 +437,7 @@ function Install-WinSCP {
     Write-Host "`n=== WinSCP Download and Installation ===" -ForegroundColor Cyan
     Write-Host ""
     
-    $winscpPath = "C:\ITTools\WinSCP"
+    $winscpPath = "C:\ITTools\Scripts\WinSCP"
     $winscpExe = Join-Path $winscpPath "WinSCP.com"
     
     # Check if already installed
@@ -477,10 +477,10 @@ function Install-WinSCP {
         
         # Download URL from GitHub repository
         $downloadUrl = "https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/releases/download/v3.5.1-assets/WinSCP-6.5.5-Setup.exe"
-        $installerFile = "C:\ITTools\Temp\WinSCP-Setup.exe"
+        $installerFile = "C:\ITTools\Scripts\Temp\WinSCP-Setup.exe"
         
         # Create temp directory
-        $tempDir = "C:\ITTools\Temp"
+        $tempDir = "C:\ITTools\Scripts\Temp"
         if (-not (Test-Path $tempDir)) {
             New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
         }
@@ -535,8 +535,8 @@ function Install-WinSCP {
         Write-Host "Manual Installation Instructions:" -ForegroundColor Yellow
         Write-Host "1. Download WinSCP installer from GitHub:" -ForegroundColor White
         Write-Host "   https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/raw/master/WinSCP-6.5.5-Setup.exe" -ForegroundColor White
-        Write-Host "2. Run the installer and choose installation directory: C:\ITTools\WinSCP" -ForegroundColor White
-        Write-Host "3. Verify WinSCP.com exists at: C:\ITTools\WinSCP\WinSCP.com" -ForegroundColor White
+        Write-Host "2. Run the installer and choose installation directory: C:\ITTools\Scripts\WinSCP" -ForegroundColor White
+        Write-Host "3. Verify WinSCP.com exists at: C:\ITTools\Scripts\WinSCP\WinSCP.com" -ForegroundColor White
         Write-Host ""
     }
     

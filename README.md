@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.8.3  
+**Version:** 3.9.0
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -16,6 +16,7 @@ The **IT Troubleshooting Toolkit** is a comprehensive PowerShell-based solution 
 
 - **StorageCraft Backup Management** - Complete toolset for managing ShadowProtect backups
 - **ConnectWise RMM Repair** - Automated utilities to clear stuck ScreenConnect agents and redeploy RMM agents
+- **HP M404dn Printer Repair** - Guided connectivity diagnostics, spooler repair, and driver reinstall for HP LaserJet Pro M404dn printers
 - **FTP Synchronization** - Multiple methods to sync backups to offsite FTP servers
 - **ImageManager Integration** - Query replication queue and manage backup jobs
 - **Service Management** - Control ImageManager service (start/stop/restart/status)
@@ -66,7 +67,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.8.3
+IT Troubleshooting Toolkit - v3.9.0
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -75,6 +76,7 @@ Toolkit Management:
 Troubleshooting Tools:
   3. StorageCraft Troubleshooter
   4. ConnectWise RMM Troubleshooter
+  6. HP M404dn Printer Troubleshooter
 
 Windows/Office Activation:
   5. Run MassGrave Activation Scripts (MAS)
@@ -91,7 +93,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.8.3
+ConnectWise RMM Troubleshooter - Toolkit v3.9.0
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -103,7 +105,7 @@ Step 2 - ConnectWise RMM Agent Repair (Redeploy):
   2. Repair ConnectWise RMM (Platform Watchdog)
      Downloads and runs the official CW RMM repair utility.
      Use healthcheckandrestore to redeploy ScreenConnect after cleanup.
-     Download to: C:\ITTools\Downloads\CWRMM
+     Download to: C:\ITTools\Scripts\Downloads\CWRMM
 
   B. Back to Main Menu
 ```
@@ -122,13 +124,63 @@ When an endpoint shows **"ScreenConnect Installation Pending"** or the agent is 
 
 ---
 
+## HP M404dn Printer Troubleshooter
+
+The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided workflow for diagnosing and repairing common HP LaserJet Pro M404dn printing failures, including loss of network or USB connectivity, stuck print jobs, and corrupted printer drivers.
+
+```
+SUPERIOR NETWORKS LLC
+HP M404dn Printer Troubleshooter - Toolkit v3.9.0
+
+  1. Connectivity Test (network / USB diagnostics)
+  2. Spooler Repair (stuck jobs / hung spooler)
+  3. Driver Reinstall (clean remove & reinstall)
+
+  B. Back to Main Menu
+```
+
+### Recommended Repair Workflow
+
+Start with **Connectivity Test** to identify whether the workstation can reach the printer over Ethernet or whether Windows can see the USB-connected hardware. If the printer is reachable but jobs remain stuck, run **Spooler Repair** to stop the Print Spooler service, clear orphaned spool files, and restart the service. Use **Driver Reinstall** only after the connectivity and spooler checks, when the installed printer object, TCP/IP port, or HP PCL-6 driver is corrupted or incorrectly configured.
+
+**Files:**
+- `hp_m404dn_troubleshooter.ps1` - Main printer troubleshooting submenu
+- `hp_m404dn_connectivity_test.ps1` - Network and USB connectivity diagnostics
+- `hp_m404dn_spooler_repair.ps1` - Stuck-job and Print Spooler repair utility
+- `hp_m404dn_driver_reinstall.ps1` - Clean printer, port, and driver reinstall utility
+
+### Tool Features
+
+#### Option 1 - Connectivity Test
+
+- Detects an installed M404dn queue and retrieves the configured TCP/IP port address when available.
+- Tests ICMP reachability and TCP ports 9100, 80, 443, and 161 for a network-connected printer.
+- Enumerates HP USB printer devices and flags common device-class misidentification symptoms.
+- Checks the Windows Print Spooler service and presents a plain-language diagnosis summary.
+
+#### Option 2 - Spooler Repair
+
+- Lists pending jobs for the HP M404dn queue before repair.
+- Stops the Print Spooler, clears orphaned `.SHD` and `.SPL` files from `C:\Windows\System32\spool\PRINTERS`, then restarts and verifies the service.
+- Includes a quick spooler restart option and a manual spool-folder cleanup option.
+- Requires an elevated toolkit session but does not trigger a second UAC prompt.
+
+#### Option 3 - Driver Reinstall
+
+- Lists printer objects and drivers matching the M404dn before making changes.
+- Removes affected printer objects, releases driver locks through a spooler restart, removes matching drivers, and clears matching ports.
+- Attempts to use the in-box `HP LaserJet Pro M404-M405 PCL-6` driver before prompting for a downloaded `.inf` file.
+- Creates a standard TCP/IP port, reinstalls the printer, and can set it as default or send a Windows test page.
+
+---
+
 ## StorageCraft Troubleshooter
 
 The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive backup management tools:
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.8.3
+StorageCraft Troubleshooter - Toolkit v3.9.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -205,7 +257,7 @@ Please refer to the `Large_File_Transfer_Fix_Guide.md` file in the repository fo
 **Technology:**
 - Uses **WinSCP 6.5.5 Portable** (open-source, trusted by millions)
 - Auto-downloads from winscp.net on first run (~8 MB)
-- Installs to `C:\ITTools\WinSCP`
+- Installs to `C:\ITTools\Scripts\WinSCP`
 - No installation required - fully portable
 
 **Use Case:** Monitor backup sync status and identify which incremental backups need uploading
@@ -301,7 +353,7 @@ Please refer to the `Large_File_Transfer_Fix_Guide.md` file in the repository fo
 
 **Features:**
 - Downloads WinSCP 6.5.5 installer from GitHub repository
-- Extracts portable version to `C:\ITTools\WinSCP`
+- Extracts portable version to `C:\ITTools\Scripts\WinSCP`
 - Detects existing installation
 - Shows version information
 - Silent installation (no user interaction)
@@ -419,7 +471,7 @@ Please refer to the `Large_File_Transfer_Fix_Guide.md` file in the repository fo
 **Purpose:** Download and run the official ConnectWise RMM Platform Watchdog repair utility to diagnose, restore, or cleanly remove the RMM agent.
 
 **Features:**
-- Downloads `platform-watchdog.exe` from the official ConnectWise source to `C:\ITTools\Downloads\CWRMM`
+- Downloads `platform-watchdog.exe` from the official ConnectWise source to `C:\ITTools\Scripts\Downloads\CWRMM`
 - Skips re-download if the file already exists
 - Presents four repair actions via an interactive sub-menu
 - Verbose on-screen output and full logging to `cw_rmm_repair_log.txt`
@@ -440,6 +492,21 @@ Please refer to the `Large_File_Transfer_Fix_Guide.md` file in the repository fo
 **Download Source:** `https://prod.setup.itsupport247.net/windows/RepairUtility/32/Platform-Watchdog/EXE/utility`
 
 **File:** `connectwise_rmm_repair.ps1`
+
+---
+
+### HP M404dn Printer Troubleshooter (Option 6)
+
+**Purpose:** Diagnose and repair HP LaserJet Pro M404dn printing problems from a single guided submenu.
+
+**Features:**
+- **Connectivity Test:** Checks network reachability, raw printing and management ports, USB device detection, and Print Spooler status.
+- **Spooler Repair:** Clears stuck jobs and orphaned spool files, then restarts and verifies the Print Spooler service.
+- **Driver Reinstall:** Removes a broken M404dn printer installation and rebuilds it with a standard TCP/IP port and the appropriate HP driver.
+- **Unified Versioning:** Every banner reads the master toolkit version dynamically from `launch_menu.ps1`.
+- **No Duplicate Elevation:** Repair tools report a missing elevated session instead of reopening themselves with a second UAC prompt.
+
+**Files:** `hp_m404dn_troubleshooter.ps1`, `hp_m404dn_connectivity_test.ps1`, `hp_m404dn_spooler_repair.ps1`, and `hp_m404dn_driver_reinstall.ps1`
 
 ---
 
@@ -468,6 +535,10 @@ C:\ITTools\
 │   ├── cwrmm_troubleshooter.ps1
 │   ├── connectwise_rmm_repair.ps1
 │   ├── screenconnect_repair.ps1
+│   ├── hp_m404dn_troubleshooter.ps1
+│   ├── hp_m404dn_connectivity_test.ps1
+│   ├── hp_m404dn_spooler_repair.ps1
+│   ├── hp_m404dn_driver_reinstall.ps1
 │   ├── storagecraft_troubleshooter.ps1
 │   ├── ftp_troubleshooter_tool.ps1
 │   ├── ftp_sync_tool.ps1
@@ -476,21 +547,25 @@ C:\ITTools\
 │   ├── bootstrap.ps1
 │   ├── launcher.bat           # Quick launcher
 │   ├── README.md
+│   ├── Temp\                  # Temporary installer and updater files
 │   └── Logs\                  # Log directory
 │       ├── master_audit_log.txt
 │       ├── ftp_upload_log.txt
 │       ├── ftp_sync_log.txt
 │       ├── ftp_sync_imagemanager_log.txt
 │       ├── cw_rmm_repair_log.txt
-│       └── screenconnect_repair_log.txt
-├── Downloads\
-│   └── CWRMM\                 # ConnectWise RMM repair utility download
-│       └── platform-watchdog.exe
-├── WinSCP\                    # WinSCP portable installation
-│   ├── WinSCP.com
-│   ├── WinSCP.exe
-│   └── ...
-└── Temp\                      # Temporary files
+│       ├── screenconnect_repair_log.txt
+│       ├── hp_m404dn_troubleshooter_log.txt
+│       ├── hp_m404dn_connectivity_log.txt
+│       ├── hp_m404dn_spooler_log.txt
+│       └── hp_m404dn_driver_log.txt
+│   ├── Downloads\             # ConnectWise RMM repair utility download
+│   │   └── CWRMM\
+│   │       └── platform-watchdog.exe
+│   └── WinSCP\                # WinSCP portable installation
+│       ├── WinSCP.com
+│       ├── WinSCP.exe
+│       └── ...
 ```
 
 ### System Requirements
@@ -597,6 +672,20 @@ Credentials are **not stored** - you must enter them each time for security.
 - Upload operations
 - Database errors
 
+### HP M404dn Printer Logs
+
+**HP M404dn Troubleshooter Log:** `C:\ITTools\Scripts\Logs\hp_m404dn_troubleshooter_log.txt`
+- Printer submenu starts, selections, missing-file errors, and returns to the main menu
+
+**Connectivity Test Log:** `C:\ITTools\Scripts\Logs\hp_m404dn_connectivity_log.txt`
+- Printer discovery, network or USB diagnostics, port results, spooler status, and diagnosis summary
+
+**Spooler Repair Log:** `C:\ITTools\Scripts\Logs\hp_m404dn_spooler_log.txt`
+- Queue inspection, spooler service state changes, spool-file cleanup, and verification results
+
+**Driver Reinstall Log:** `C:\ITTools\Scripts\Logs\hp_m404dn_driver_log.txt`
+- Printer, driver, and port removal; driver discovery; TCP/IP port creation; reinstall and test-page results
+
 ### Log Format
 
 ```
@@ -618,7 +707,7 @@ Credentials are **not stored** - you must enter them each time for security.
 
 **Issue:** "WinSCP download failed"
 - **Solution:** Download manually from https://winscp.net/
-- **Extract to:** `C:\ITTools\WinSCP`
+- **Extract to:** `C:\ITTools\Scripts\WinSCP`
 
 **Issue:** "Administrator privileges required"
 - **Solution:** Right-click PowerShell and select "Run as Administrator"
@@ -629,7 +718,7 @@ Credentials are **not stored** - you must enter them each time for security.
   2. Run Option 2 (CW RMM Repair) and select Health Check and Restore
 
 **Issue:** `platform-watchdog.exe` download fails
-- **Solution:** Download manually from `https://prod.setup.itsupport247.net/windows/RepairUtility/32/Platform-Watchdog/EXE/utility` and place in `C:\ITTools\Downloads\CWRMM\platform-watchdog.exe`
+- **Solution:** Download manually from `https://prod.setup.itsupport247.net/windows/RepairUtility/32/Platform-Watchdog/EXE/utility` and place in `C:\ITTools\Scripts\Downloads\CWRMM\platform-watchdog.exe`
 
 **Issue:** ScreenConnect cleanup finds no packages but agent is still stuck
 - **Solution:** Manually check Add/Remove Programs for any entry matching `ScreenConnect Client (xxxxxxxxxxxxxxxx)` and remove it, then re-run Option 2 (Health Check and Restore)
@@ -730,13 +819,22 @@ For support, feature requests, or bug reports:
 
 ## Change Log
 
+### Version 3.9.0 (2026-09-14) - NEW FEATURE
+- **New Feature**: Added the **HP M404dn Printer Troubleshooter** as main-menu **Option 6**, with a guided connectivity, spooler-repair, and driver-reinstall workflow.
+- **Unified Versioning**: All new HP M404dn menus read and display the master toolkit version dynamically from `launch_menu.ps1`.
+- **Elevation Handling**: Spooler repair and driver reinstall require an elevated toolkit session without re-launching themselves or prompting a second time through UAC.
+- **Installer Manifest**: Added required-file validation for the HP M404dn module to both bootstrap installers.
+- **Path Standardization**: Moved temporary, download, and WinSCP locations under `C:\ITTools\Scripts` to keep toolkit files within the established installation structure.
+- **Files Added**: `hp_m404dn_troubleshooter.ps1`, `hp_m404dn_connectivity_test.ps1`, `hp_m404dn_spooler_repair.ps1`, `hp_m404dn_driver_reinstall.ps1`.
+- **Files Updated**: `launch_menu.ps1`, `bootstrap.ps1`, `bootstrap_ps4.ps1`, `connectwise_rmm_repair.ps1`, `cwrmm_troubleshooter.ps1`, `storagecraft_troubleshooter.ps1`, `ftp_sync_tool.ps1`, `ftp_sync_imagemanager.ps1`, and `README.md`.
+
 ### Version 3.8.3 (2026-07-01) - WORKFLOW REORDER
 - **UX Fix**: Reordered ConnectWise RMM Troubleshooter submenu into logical repair workflow order
   - **Option 1**: Repair ScreenConnect (Uninstall/Cleanup) — run this first to remove the broken client
   - **Option 2**: Repair ConnectWise RMM (Platform Watchdog) — run this second to redeploy via healthcheckandrestore
 
 ### Version 3.8.2 (2026-07-01) - PATH FIX
-- **Bug Fix**: Corrected download directory from `C:\ITStuff\Downloads\CWRMM` to `C:\ITTools\Downloads\CWRMM` in `connectwise_rmm_repair.ps1` and `cwrmm_troubleshooter.ps1` to stay consistent with the `C:\ITTools` base path used across the entire toolkit
+- **Bug Fix**: Corrected download directory from `C:\ITStuff\Downloads\CWRMM` to `C:\ITTools\Scripts\Downloads\CWRMM` in `connectwise_rmm_repair.ps1` and `cwrmm_troubleshooter.ps1` to stay consistent with the `C:\ITTools` base path used across the entire toolkit
 
 ### Version 3.8.1 (2026-07-01) - MENU RESTRUCTURE
 - **Menu Fix**: Moved ConnectWise RMM Troubleshooter out of StorageCraft submenu and onto the main menu as its own **Option 4**
@@ -993,7 +1091,7 @@ For support, feature requests, or bug reports:
   - Professional features: resume support, error handling, logging
 - **Features**:
   - Auto-downloads WinSCP 5.21.7 Portable (only once)
-  - Installs to C:\ITTools\WinSCP
+  - Installs to C:\ITTools\Scripts\WinSCP
   - Uses WinSCP scripting interface for automation
   - Comprehensive WinSCP logging to C:\ITTools\Scripts\Logs\winscp.log
   - Still filters for *-cd.spi files

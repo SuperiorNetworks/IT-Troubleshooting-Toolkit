@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.8.3
+Version: 3.9.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -84,6 +84,7 @@ Change Log:
                     created cwrmm_troubleshooter.ps1 submenu
 2026-07-01 v3.8.2 - Fixed download path from C:\ITStuff to C:\ITTools\Downloads\CWRMM
 2026-07-01 v3.8.3 - Reordered CW RMM submenu: ScreenConnect Cleanup=Option 1, CW RMM Repair=Option 2
+2026-09-14 v3.9.0 - Added HP M404dn Printer Troubleshooter as Option 6; added connectivity, spooler repair, and driver reinstall tools.
 
 .RELEASE_NOTES
 v2.5.0:
@@ -202,7 +203,7 @@ function Show-Menu {
     Clear-Host
     
     # Get version dynamically from script header
-    $scriptVersion = "3.8.3"
+    $scriptVersion = "3.9.0"
     $scriptPath = $PSCommandPath
     if (Test-Path $scriptPath) {
         $content = Get-Content $scriptPath -Raw
@@ -225,6 +226,7 @@ function Show-Menu {
     Write-Host "  Troubleshooting Tools:" -ForegroundColor White
     Write-Host "    3. StorageCraft Troubleshooter" -ForegroundColor Cyan
     Write-Host "    4. ConnectWise RMM Troubleshooter" -ForegroundColor Cyan
+    Write-Host "    6. HP M404dn Printer Troubleshooter" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Windows/Office Activation:" -ForegroundColor White
     Write-Host "    5. Run MassGrave Activation Scripts (MAS)" -ForegroundColor Magenta
@@ -612,6 +614,34 @@ function Run-CWRMMTroubleshooter {
     }
 }
 
+function Run-HPM404dnTroubleshooter {
+    Write-Host "`n=== Launching HP M404dn Printer Troubleshooter ===" -ForegroundColor Cyan
+
+    $hpScriptName = "hp_m404dn_troubleshooter.ps1"
+    $scriptPath = Join-Path $installPath $hpScriptName
+
+    if (Test-Path $scriptPath) {
+        Write-Host "Starting HP M404dn Printer Troubleshooter..." -ForegroundColor Green
+        Write-Host ""
+
+        Write-AuditLog -action "HP M404dn Printer Troubleshooter" -details "Launched submenu script: $hpScriptName"
+
+        # Run the HP M404dn submenu script
+        & $scriptPath
+
+    }
+    else {
+        Write-Host "`nError: HP M404dn Printer Troubleshooter not found!" -ForegroundColor Red
+        Write-Host "Expected location: $scriptPath" -ForegroundColor Yellow
+        Write-Host "`nPlease use Option 1 to download and install first." -ForegroundColor Yellow
+
+        Write-AuditLog -action "HP M404dn Printer Troubleshooter" -level "ERROR" -errorMessage "Script not found: $scriptPath"
+
+        Write-Host "`nPress any key to return to menu..."
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
+}
+
 function Show-ToolkitLogs {
     do {
         Clear-Host
@@ -764,12 +794,12 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.7.5"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.9.0"
 
 # Main menu loop
 do {
     Show-Menu
-    Write-Host "  Select an option (1-5 or Q): " -NoNewline -ForegroundColor White
+    Write-Host "  Select an option (1-6 or Q): " -NoNewline -ForegroundColor White
     $choice = Read-Host
     
     switch ($choice.ToUpper()) {
@@ -809,6 +839,15 @@ do {
                 throw
             }
         }
+        '6' {
+            Write-AuditLog -action "Menu Selection" -details "Option 6: HP M404dn Printer Troubleshooter"
+            try {
+                Run-HPM404dnTroubleshooter
+            } catch {
+                Write-AuditLog -action "HP M404dn Printer Troubleshooter" -level "ERROR" -errorMessage $_.Exception.Message
+                throw
+            }
+        }
         '5' {
             Write-AuditLog -action "Menu Selection" -details "Option 5: Run MassGrave Activation Scripts"
             try {
@@ -834,7 +873,7 @@ do {
         }
         default {
             Write-AuditLog -action "Invalid Menu Selection" -level "WARN" -details "User entered: $choice"
-            Write-Host "`nInvalid selection. Please choose 1-5 or Q." -ForegroundColor Red
+            Write-Host "`nInvalid selection. Please choose 1-6 or Q." -ForegroundColor Red
             Start-Sleep -Seconds 2
         }
     }

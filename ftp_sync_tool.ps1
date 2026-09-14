@@ -121,7 +121,7 @@ $defaultSftpServer = "ftp.sndayton.com"   # SFTP server hostname (port 22, same 
 $defaultSftpPort   = 22                    # OpenSSH default port
 $logDirectory = "C:\ITTools\Scripts\Logs"
 $logFile = Join-Path $logDirectory "ftp_sync_log.txt"
-$winscpDirectory = "C:\ITTools\WinSCP"
+$winscpDirectory = "C:\ITTools\Scripts\WinSCP"
 $winscpExe = Join-Path $winscpDirectory "WinSCP.com"
 $winscpUrl = "https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/releases/download/v3.5.1-assets/WinSCP-6.5.5-Setup.exe"
 
