@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.9.0
+Version: 3.10.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -20,8 +20,8 @@ Key Features:
 - Administrator privilege detection
 - Superior Networks branding
 
-Input: 
-- User menu selection (1-3 or Q)
+Input:
+- User menu selection (1-6 or Q)
 
 Output:
 - Downloaded and extracted files to C:\ITTools\Scripts
@@ -85,6 +85,7 @@ Change Log:
 2026-07-01 v3.8.2 - Fixed download path from C:\ITStuff to C:\ITTools\Downloads\CWRMM
 2026-07-01 v3.8.3 - Reordered CW RMM submenu: ScreenConnect Cleanup=Option 1, CW RMM Repair=Option 2
 2026-09-14 v3.9.0 - Added HP M404dn Printer Troubleshooter as Option 6; added connectivity, spooler repair, and driver reinstall tools.
+2026-09-16 v3.10.0 - Added macOS Troubleshooter Terminal with OneDrive Sync Repair as Option 1; added dry-run-first workflow, verbose transcripts, and macOS master audit logging.
 
 .RELEASE_NOTES
 v2.5.0:
@@ -203,7 +204,7 @@ function Show-Menu {
     Clear-Host
     
     # Get version dynamically from script header
-    $scriptVersion = "3.9.0"
+    $scriptVersion = "3.10.0"
     $scriptPath = $PSCommandPath
     if (Test-Path $scriptPath) {
         $content = Get-Content $scriptPath -Raw
@@ -794,7 +795,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.9.0"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.10.0"
 
 # Main menu loop
 do {

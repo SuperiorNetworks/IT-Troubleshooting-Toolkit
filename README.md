@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.9.0
+**Version:** 3.10.0
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -17,6 +17,7 @@ The **IT Troubleshooting Toolkit** is a comprehensive PowerShell-based solution 
 - **StorageCraft Backup Management** - Complete toolset for managing ShadowProtect backups
 - **ConnectWise RMM Repair** - Automated utilities to clear stuck ScreenConnect agents and redeploy RMM agents
 - **HP M404dn Printer Repair** - Guided connectivity diagnostics, spooler repair, and driver reinstall for HP LaserJet Pro M404dn printers
+- **macOS OneDrive Repair** - A dry-run-first terminal workflow for post-update OneDrive synchronization failures
 - **FTP Synchronization** - Multiple methods to sync backups to offsite FTP servers
 - **ImageManager Integration** - Query replication queue and manage backup jobs
 - **Service Management** - Control ImageManager service (start/stop/restart/status)
@@ -52,6 +53,26 @@ Run this command in PowerShell (as Administrator):
 - Can be run from anywhere - handles everything automatically
 - Works on all Windows versions (Server 2012 R2 through Server 2025)
 
+### macOS OneDrive Repair
+
+The macOS tools are designed to run directly in **Terminal** as the signed-in user. Do not use `sudo` because the OneDrive credentials and preferences being repaired are stored in the user's Keychain and Library folders.
+
+```bash
+cd /path/to/IT-Troubleshooting-Toolkit
+chmod +x mac_troubleshooter_terminal.sh Fix-OneDriveSync-macOS.sh
+./mac_troubleshooter_terminal.sh
+```
+
+Select **Option 1 - OneDrive Sync Repair**. The terminal runs a no-change dry-run before it offers the live repair. For direct script use, run:
+
+```bash
+chmod +x Fix-OneDriveSync-macOS.sh
+./Fix-OneDriveSync-macOS.sh --dry-run
+./Fix-OneDriveSync-macOS.sh
+```
+
+See [MAC_TROUBLESHOOTER_GUIDE.md](MAC_TROUBLESHOOTER_GUIDE.md) for the full repair workflow, safeguards, logs, backups, and post-repair verification.
+
 ### After Installation
 
 The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
@@ -67,7 +88,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.9.0
+IT Troubleshooting Toolkit - v3.10.0
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -87,13 +108,53 @@ Windows/Office Activation:
 
 ---
 
+## macOS Troubleshooter Terminal
+
+The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for macOS repair tasks. It retrieves the master toolkit version dynamically from `launch_menu.ps1` when the repository is present locally, with a GitHub fallback for standalone deployment.
+
+```
+SUPERIOR NETWORKS LLC
+macOS Troubleshooter Terminal - Toolkit v3.10.0
+
+Troubleshooting Tools:
+  1. OneDrive Sync Repair (macOS post-update failures)
+     Runs a dry-run preview first, then offers the safe repair.
+
+Q. Quit
+```
+
+### Option 1 - OneDrive Sync Repair
+
+**Purpose:** Repair common OneDrive synchronization failures after a macOS update without resetting or deleting local OneDrive content.
+
+**Workflow:** The terminal first runs `Fix-OneDriveSync-macOS.sh --dry-run` and displays every proposed action. Only after the preview completes successfully and the technician types `YES` does it run the live repair.
+
+**Features:**
+- Checks for files modified in the last 15 minutes before a live repair and requires confirmation if recent edits are found.
+- Stops OneDrive and related Office processes, clears known stale OneDrive Keychain credentials, and backs up affected preference plists before removing them.
+- Flushes the macOS preference cache and relaunches OneDrive for a clean sign-in.
+- Never deletes files from the user's OneDrive folder.
+- Creates a verbose per-run transcript and records menu selections, approvals, completion states, and errors in the macOS master audit log.
+
+**Files:**
+- `mac_troubleshooter_terminal.sh` - Interactive macOS terminal menu
+- `Fix-OneDriveSync-macOS.sh` - OneDrive synchronization repair script
+- `MAC_TROUBLESHOOTER_GUIDE.md` - Deployment, repair, and validation guide
+
+**Logs:**
+- Master Audit Log: `~/Library/Logs/SuperiorNetworks/master_audit_log.txt`
+- OneDrive Repair Transcript: `~/Library/Logs/SuperiorNetworks/Fix-OneDriveSync-<timestamp>.log`
+- Plist Backup Folder: `~/Desktop/OneDrive-Plist-Backup-<timestamp>/`
+
+---
+
 ## ConnectWise RMM Troubleshooter
 
 The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated repair utilities to resolve stuck agent installations (such as the "ScreenConnect Installation Pending" error) and restore full remote access.
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.9.0
+ConnectWise RMM Troubleshooter - Toolkit v3.10.0
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -130,7 +191,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.9.0
+HP M404dn Printer Troubleshooter - Toolkit v3.10.0
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -180,7 +241,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.9.0
+StorageCraft Troubleshooter - Toolkit v3.10.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -539,6 +600,9 @@ C:\ITTools\
 │   ├── hp_m404dn_connectivity_test.ps1
 │   ├── hp_m404dn_spooler_repair.ps1
 │   ├── hp_m404dn_driver_reinstall.ps1
+│   ├── mac_troubleshooter_terminal.sh
+│   ├── Fix-OneDriveSync-macOS.sh
+│   ├── MAC_TROUBLESHOOTER_GUIDE.md
 │   ├── storagecraft_troubleshooter.ps1
 │   ├── ftp_troubleshooter_tool.ps1
 │   ├── ftp_sync_tool.ps1
@@ -686,6 +750,14 @@ Credentials are **not stored** - you must enter them each time for security.
 **Driver Reinstall Log:** `C:\ITTools\Scripts\Logs\hp_m404dn_driver_log.txt`
 - Printer, driver, and port removal; driver discovery; TCP/IP port creation; reinstall and test-page results
 
+### macOS Troubleshooter Logs
+
+**macOS Master Audit Log:** `~/Library/Logs/SuperiorNetworks/master_audit_log.txt`
+- Terminal starts, menu selections, dry-run results, live-repair approvals, outcomes, and errors
+
+**OneDrive Repair Transcript:** `~/Library/Logs/SuperiorNetworks/Fix-OneDriveSync-<timestamp>.log`
+- Detailed pre-flight results, process handling, Keychain cleanup, preference backup and removal, and post-repair instructions
+
 ### Log Format
 
 ```
@@ -818,6 +890,14 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.10.0 (2026-09-16) - NEW FEATURE
+- **New Feature**: Added `mac_troubleshooter_terminal.sh`, a macOS companion terminal with **Option 1 - OneDrive Sync Repair** for post-update synchronization failures.
+- **Safe Repair Workflow**: The terminal runs `Fix-OneDriveSync-macOS.sh --dry-run` first and requires a typed `YES` before the live repair. The repair backs up targeted OneDrive preference plists and never deletes OneDrive sync-folder data.
+- **Unified Versioning**: The macOS terminal and OneDrive repair script dynamically read the master toolkit version from `launch_menu.ps1`, with a GitHub fallback for standalone macOS deployment.
+- **Verbose Auditability**: Added timestamped OneDrive transcripts and a macOS `master_audit_log.txt` that records menu selections, approvals, outcomes, and errors.
+- **Files Added**: `mac_troubleshooter_terminal.sh`, `Fix-OneDriveSync-macOS.sh`, and `MAC_TROUBLESHOOTER_GUIDE.md`.
+- **Files Updated**: `launch_menu.ps1` and `README.md`.
 
 ### Version 3.9.0 (2026-09-14) - NEW FEATURE
 - **New Feature**: Added the **HP M404dn Printer Troubleshooter** as main-menu **Option 6**, with a guided connectivity, spooler-repair, and driver-reinstall workflow.
