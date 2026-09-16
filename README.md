@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.10.0
+**Version:** 3.11.0
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -55,23 +55,23 @@ Run this command in PowerShell (as Administrator):
 
 ### macOS OneDrive Repair
 
-The macOS tools are designed to run directly in **Terminal** as the signed-in user. Do not use `sudo` because the OneDrive credentials and preferences being repaired are stored in the user's Keychain and Library folders.
+The macOS tools run in native **Terminal** with Bash and Git; **PowerShell is not required**. Run the following command as the signed-in macOS user, not with `sudo`:
 
 ```bash
-cd /path/to/IT-Troubleshooting-Toolkit
-chmod +x mac_troubleshooter_terminal.sh Fix-OneDriveSync-macOS.sh
-./mac_troubleshooter_terminal.sh
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_macos.sh)"
 ```
 
-Select **Option 1 - OneDrive Sync Repair**. The terminal runs a no-change dry-run before it offers the live repair. For direct script use, run:
+The Git bootstrapper clones the version-controlled toolkit to `~/ITTools/Scripts`, reports whether the current version was installed or no changes were needed, displays release notes after an update, and launches the macOS terminal. From the menu, choose **Option 1 - OneDrive Sync Repair** for the dry-run-first repair flow or **Option 2 - Check GitHub for Toolkit Updates** when an update is desired.
+
+For direct script use after installation, run:
 
 ```bash
-chmod +x Fix-OneDriveSync-macOS.sh
+cd ~/ITTools/Scripts
 ./Fix-OneDriveSync-macOS.sh --dry-run
 ./Fix-OneDriveSync-macOS.sh
 ```
 
-See [MAC_TROUBLESHOOTER_GUIDE.md](MAC_TROUBLESHOOTER_GUIDE.md) for the full repair workflow, safeguards, logs, backups, and post-repair verification.
+See [MAC_TROUBLESHOOTER_GUIDE.md](MAC_TROUBLESHOOTER_GUIDE.md) for prerequisites, Git diagnostics, safeguards, logs, backups, and post-repair verification.
 
 ### After Installation
 
@@ -88,7 +88,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.10.0
+IT Troubleshooting Toolkit - v3.11.0
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -114,14 +114,26 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.10.0
+macOS Troubleshooter Terminal - Toolkit v3.11.0
 
 Troubleshooting Tools:
   1. OneDrive Sync Repair (macOS post-update failures)
      Runs a dry-run preview first, then offers the safe repair.
 
+Toolkit Management:
+  2. Check GitHub for Toolkit Updates
+     User-initiated only; preserves Git version history.
+
 Q. Quit
 ```
+
+### Option 2 - Check GitHub for Toolkit Updates
+
+**Purpose:** Perform an on-demand Git update of the macOS toolkit without silently updating during terminal startup.
+
+**Behavior:** Runs `bootstrap_macos.sh`, fetches `origin/master`, and uses `git pull --ff-only` only when a newer commit exists. The update flow clearly reports either that no changes were made because the installed toolkit is current, or that a new version was installed along with its matching release notes. If local uncommitted changes exist, the update stops and displays the Git status without overwriting those changes.
+
+**Installation:** The supported one-command bootstrap clones the repository to `~/ITTools/Scripts` and preserves `.git` history for `git status`, `git log`, and future updates. If Git is absent, the bootstrapper directs the user to install Apple Command Line Tools with `xcode-select --install`.
 
 ### Option 1 - OneDrive Sync Repair
 
@@ -154,7 +166,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.10.0
+ConnectWise RMM Troubleshooter - Toolkit v3.11.0
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -191,7 +203,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.10.0
+HP M404dn Printer Troubleshooter - Toolkit v3.11.0
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -241,7 +253,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.10.0
+StorageCraft Troubleshooter - Toolkit v3.11.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -600,6 +612,7 @@ C:\ITTools\
 │   ├── hp_m404dn_connectivity_test.ps1
 │   ├── hp_m404dn_spooler_repair.ps1
 │   ├── hp_m404dn_driver_reinstall.ps1
+│   ├── bootstrap_macos.sh
 │   ├── mac_troubleshooter_terminal.sh
 │   ├── Fix-OneDriveSync-macOS.sh
 │   ├── MAC_TROUBLESHOOTER_GUIDE.md
@@ -890,6 +903,15 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.11.0 (2026-09-16) - GIT DEPLOYMENT
+- **New Feature**: Added `bootstrap_macos.sh`, a one-command native macOS Bash installer that clones the GitHub repository to `~/ITTools/Scripts` and launches the macOS troubleshooting terminal.
+- **Version Control**: The macOS installation keeps its `.git` directory, preserves commit history, and uses Git `pull --ff-only` for safe updates from the `master` branch.
+- **On-Demand Updates**: Added macOS terminal **Option 2 - Check GitHub for Toolkit Updates**. It explicitly reports when no changes are required or when a new version is installed, and shows that version's release notes.
+- **Local-Change Protection**: Git updates do not overwrite uncommitted local changes; the bootstrapper stops and displays Git status for review.
+- **Native macOS Deployment**: The installer and terminal use Bash, Git, and curl; PowerShell is not required on macOS.
+- **Files Added**: `bootstrap_macos.sh`.
+- **Files Updated**: `mac_troubleshooter_terminal.sh`, `MAC_TROUBLESHOOTER_GUIDE.md`, `launch_menu.ps1`, and `README.md`.
 
 ### Version 3.10.0 (2026-09-16) - NEW FEATURE
 - **New Feature**: Added `mac_troubleshooter_terminal.sh`, a macOS companion terminal with **Option 1 - OneDrive Sync Repair** for post-update synchronization failures.

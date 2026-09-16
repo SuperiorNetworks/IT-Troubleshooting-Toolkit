@@ -8,31 +8,44 @@ The **macOS Troubleshooter Terminal** is the macOS companion to the IT Troublesh
 
 The terminal supports **macOS 12 or later** and uses the system-provided Bash 3.2 environment. It must be run by the signed-in user, not through `sudo`, because the affected OneDrive Keychain credentials and preference files are user-specific. OneDrive should be installed in `/Applications/OneDrive.app` for the relaunch step to work.
 
-## Quick Start
+The supported installation method requires **Git** and `curl`. macOS normally installs Git with the Apple Command Line Tools. If the installer reports that Git is unavailable, run `xcode-select --install`, finish the Apple prompt, then run the bootstrap command again.
 
-Place both shell scripts in the same directory. For an installation cloned from this repository, open **Terminal** and run:
+## One-Command Git Installation
+
+Run this in **Terminal** as the signed-in user:
 
 ```bash
-cd /path/to/IT-Troubleshooting-Toolkit
-chmod +x mac_troubleshooter_terminal.sh Fix-OneDriveSync-macOS.sh
-./mac_troubleshooter_terminal.sh
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_macos.sh)"
 ```
 
-Choose **Option 1 - OneDrive Sync Repair**. The terminal will first execute the equivalent of:
+The bootstrapper clones the complete version-controlled repository to `~/ITTools/Scripts`, preserves its `.git` directory, confirms the installed master version, displays the applicable release notes, and launches the macOS terminal menu. It never uses PowerShell.
+
+If a previous Git-managed installation is present, run the same command again. The bootstrapper checks `origin/master` and performs a **fast-forward-only** update. If the installed toolkit is already current, it explicitly reports that no changes were made. If it updates, it reports the newly installed version and prints that version's release notes. Local uncommitted changes are never overwritten; instead, the installer stops and displays the Git status.
+
+## Quick Start
+
+After the one-command installation, launch the terminal later with:
+
+```bash
+~/ITTools/Scripts/mac_troubleshooter_terminal.sh
+```
+
+Choose **Option 1 - OneDrive Sync Repair**. The terminal first executes the equivalent of:
 
 ```bash
 ./Fix-OneDriveSync-macOS.sh --dry-run
 ```
 
-After reviewing the preview, type `YES` only if the reported actions are appropriate. The terminal will then run:
+After reviewing the preview, type `YES` only if the reported actions are appropriate. The terminal then runs:
 
 ```bash
 ./Fix-OneDriveSync-macOS.sh
 ```
 
-To use the repair script directly without the menu, use the same commands:
+To use the repair script directly without the menu, run:
 
 ```bash
+cd ~/ITTools/Scripts
 chmod +x Fix-OneDriveSync-macOS.sh
 ./Fix-OneDriveSync-macOS.sh --dry-run
 ./Fix-OneDriveSync-macOS.sh
@@ -48,10 +61,29 @@ Troubleshooting Tools:
   1. OneDrive Sync Repair (macOS post-update failures)
      Runs a dry-run preview first, then offers the safe repair.
 
+Toolkit Management:
+  2. Check GitHub for Toolkit Updates
+     User-initiated only; preserves Git version history.
+
 Q. Quit
 ```
 
 The terminal reads the master toolkit version from `launch_menu.ps1` when it is in the same directory. If it is deployed on a Mac without the PowerShell files, it attempts to read the current master version from the GitHub `master` branch. This preserves the toolkit's one-version convention across platforms.
+
+## Git Version Control and Updates
+
+The native macOS deployment is intentionally implemented in **Bash**, not PowerShell. Bash is already available on supported macOS versions, works directly with Git and the macOS user environment, and avoids adding a PowerShell dependency solely for the launcher. PowerShell can still be installed for cross-platform administrative scripts, but it is not required for the macOS troubleshooting terminal.
+
+Use **Option 2 - Check GitHub for Toolkit Updates** only when an update is desired. The terminal invokes `bootstrap_macos.sh`, which fetches the `master` branch from GitHub and applies a Git `pull --ff-only` only when there is a newer commit. This design means the tool never silently changes itself during startup. It also retains standard Git history and enables diagnostics with:
+
+```bash
+cd ~/ITTools/Scripts
+git status
+git log --oneline -10
+git remote -v
+```
+
+For a managed deployment, the bootstrapper supports environment overrides for `SUPERIOR_NETWORKS_INSTALL_DIR`, `SUPERIOR_NETWORKS_REPO_URL`, and `SUPERIOR_NETWORKS_BRANCH`. These are optional and should normally remain at their secure defaults.
 
 ## OneDrive Sync Repair Workflow
 
@@ -87,6 +119,7 @@ If OneDrive is not installed at `/Applications/OneDrive.app`, the script complet
 
 ## Files
 
+- `bootstrap_macos.sh` - One-command Git installer and user-initiated updater.
 - `mac_troubleshooter_terminal.sh` - Interactive macOS terminal menu.
 - `Fix-OneDriveSync-macOS.sh` - OneDrive synchronization repair script.
-- `MAC_TROUBLESHOOTER_GUIDE.md` - Deployment, workflow, and verification guide.
+- `MAC_TROUBLESHOOTER_GUIDE.md` - Deployment, update, workflow, and verification guide.

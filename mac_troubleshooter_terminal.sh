@@ -11,6 +11,7 @@
 # Key Features:
 #   - Interactive macOS troubleshooting terminal with a guided repair workflow
 #   - Option 1 runs the OneDrive repair in dry-run mode before requesting approval
+#   - Option 2 checks GitHub for a user-initiated fast-forward update
 #   - Reads the single master toolkit version from launch_menu.ps1 at runtime
 #   - Records terminal selections, outcomes, and errors in a master audit log
 #   - Runs as the signed-in macOS user and does not require administrator access
@@ -31,6 +32,7 @@ set -u
 SCRIPT_NAME="mac_troubleshooter_terminal.sh"
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 ONEDRIVE_TOOL="$SCRIPT_DIR/Fix-OneDriveSync-macOS.sh"
+BOOTSTRAP_TOOL="$SCRIPT_DIR/bootstrap_macos.sh"
 LOG_DIR="$HOME/Library/Logs/SuperiorNetworks"
 MASTER_AUDIT_LOG="$LOG_DIR/master_audit_log.txt"
 
@@ -89,6 +91,10 @@ show_menu() {
     printf '  Troubleshooting Tools:\n'
     printf '    1. OneDrive Sync Repair (macOS post-update failures)\n'
     printf '       Runs a dry-run preview first, then offers the safe repair.\n'
+    printf '\n'
+    printf '  Toolkit Management:\n'
+    printf '    2. Check GitHub for Toolkit Updates\n'
+    printf '       User-initiated only; preserves Git version history.\n'
     printf '\n'
     printf '    Q. Quit\n'
     printf '\n'
@@ -160,6 +166,34 @@ run_onedrive_repair() {
     wait_for_key
 }
 
+run_toolkit_update() {
+    write_audit_log "INFO" "Menu Selection" "Option 2: Check GitHub for Toolkit Updates"
+    clear
+    printf '\n=== Check GitHub for Toolkit Updates ===\n\n'
+    printf 'This performs a Git fast-forward update only when you choose this option.\n'
+    printf 'Local uncommitted changes are protected and will not be overwritten.\n\n'
+
+    if [ ! -f "$BOOTSTRAP_TOOL" ]; then
+        printf 'Error: macOS Git bootstrapper not found.\n'
+        printf 'Expected: %s\n' "$BOOTSTRAP_TOOL"
+        write_audit_log "ERROR" "Toolkit Update" "Bootstrapper not found: $BOOTSTRAP_TOOL"
+        wait_for_key
+        return
+    fi
+
+    if [ ! -x "$BOOTSTRAP_TOOL" ]; then
+        if ! chmod +x "$BOOTSTRAP_TOOL"; then
+            printf 'Error: Could not set executable permission on the Git bootstrapper.\n'
+            write_audit_log "ERROR" "Toolkit Update" "Could not set executable permission on $BOOTSTRAP_TOOL"
+            wait_for_key
+            return
+        fi
+    fi
+
+    write_audit_log "INFO" "Toolkit Update" "Starting user-initiated Git update"
+    exec "$BOOTSTRAP_TOOL"
+}
+
 if [ "$(uname -s)" != "Darwin" ]; then
     printf '%s supports macOS only.\n' "$SCRIPT_NAME" >&2
     exit 2
@@ -178,7 +212,7 @@ write_audit_log "INFO" "macOS Troubleshooter Terminal" "Terminal opened; toolkit
 
 while true; do
     show_menu
-    printf '  Select an option (1 or Q): '
+    printf '  Select an option (1-2 or Q): '
     choice=""
     read -r choice || choice="Q"
 
@@ -186,13 +220,16 @@ while true; do
         1)
             run_onedrive_repair
             ;;
+        2)
+            run_toolkit_update
+            ;;
         Q|q)
             write_audit_log "INFO" "macOS Troubleshooter Terminal" "User selected Quit"
             printf '\nExiting macOS Troubleshooter Terminal...\n'
             exit 0
             ;;
         *)
-            printf '\nInvalid selection. Please choose 1 or Q.\n'
+            printf '\nInvalid selection. Please choose 1-2 or Q.\n'
             write_audit_log "WARN" "Invalid Menu Selection" "User entered: $choice"
             sleep 2
             ;;
