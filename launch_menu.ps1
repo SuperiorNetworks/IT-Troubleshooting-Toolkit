@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.11.0
+Version: 3.12.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -87,6 +87,7 @@ Change Log:
 2026-09-14 v3.9.0 - Added HP M404dn Printer Troubleshooter as Option 6; added connectivity, spooler repair, and driver reinstall tools.
 2026-09-16 v3.10.0 - Added macOS Troubleshooter Terminal with OneDrive Sync Repair as Option 1; added dry-run-first workflow, verbose transcripts, and macOS master audit logging.
 2026-09-16 v3.11.0 - Added native macOS Git bootstrapper and on-demand menu updates; Git history is retained in ~/ITTools/Scripts and updates use fast-forward-only pulls.
+2026-09-16 v3.12.0 - Redesigned macOS Troubleshooter Terminal with branded graphical panels, actionable instruction cards, status labels, version footer, and in-terminal Help Guide.
 
 .RELEASE_NOTES
 v2.5.0:
@@ -205,7 +206,7 @@ function Show-Menu {
     Clear-Host
     
     # Get version dynamically from script header
-    $scriptVersion = "3.11.0"
+    $scriptVersion = "3.12.0"
     $scriptPath = $PSCommandPath
     if (Test-Path $scriptPath) {
         $content = Get-Content $scriptPath -Raw
@@ -796,7 +797,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.11.0"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.12.0"
 
 # Main menu loop
 do {

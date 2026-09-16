@@ -1,6 +1,9 @@
 # macOS Troubleshooter Terminal
 
-The **macOS Troubleshooter Terminal** is the macOS companion to the IT Troubleshooting Toolkit. It is designed to be run locally by the signed-in macOS user and currently includes a guided repair workflow for OneDrive synchronization failures after an operating-system update.
+**Current version:** v3.12.0
+**Help Guide last updated:** 2026-09-16
+
+The **macOS Troubleshooter Terminal** is the macOS companion to the IT Troubleshooting Toolkit. It is designed to be run locally by the signed-in macOS user and currently includes a guided repair workflow for OneDrive synchronization failures after an operating-system update. The terminal uses the Superior Networks visual language: clean neutral panels, high-contrast labels, prominent instruction cards, explicit status indicators, a visible version footer, and an in-terminal Help Guide.
 
 > **Safety model:** The OneDrive repair always runs a dry-run preview before the terminal offers the live repair. The live repair does not delete any content within a OneDrive sync folder. It backs up affected OneDrive preference files before removal and preserves a timestamped transcript for ticket records.
 
@@ -57,15 +60,23 @@ chmod +x Fix-OneDriveSync-macOS.sh
 SUPERIOR NETWORKS LLC
 macOS Troubleshooter Terminal - Toolkit v[master version]
 
-Troubleshooting Tools:
-  1. OneDrive Sync Repair (macOS post-update failures)
-     Runs a dry-run preview first, then offers the safe repair.
+START HERE
+  Choose a task below. Every repair explains its impact before it makes a change.
 
-Toolkit Management:
-  2. Check GitHub for Toolkit Updates
-     User-initiated only; preserves Git version history.
+TROUBLESHOOTING
+  [ 1 ]  OneDrive Sync Repair
+         Dry-run preview first. No OneDrive folder data is deleted.
 
-Q. Quit
+TOOLKIT MANAGEMENT
+  [ 2 ]  Check GitHub for Toolkit Updates
+         User-initiated only. Git history and local changes are protected.
+
+SUPPORT
+  [ H ]  Help Guide
+         Workflow, safeguards, log locations, and operating limits.
+  [ Q ]  Quit
+
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v[master version]
 ```
 
 The terminal reads the master toolkit version from `launch_menu.ps1` when it is in the same directory. If it is deployed on a Mac without the PowerShell files, it attempts to read the current master version from the GitHub `master` branch. This preserves the toolkit's one-version convention across platforms.
@@ -84,6 +95,16 @@ git remote -v
 ```
 
 For a managed deployment, the bootstrapper supports environment overrides for `SUPERIOR_NETWORKS_INSTALL_DIR`, `SUPERIOR_NETWORKS_REPO_URL`, and `SUPERIOR_NETWORKS_BRANCH`. These are optional and should normally remain at their secure defaults.
+
+## Interface and Built-In Help Guide
+
+The terminal is designed for use on the macOS Terminal app, iTerm2, and comparable ANSI-capable terminals. The **Start Here** card identifies the safe path into the tool. Each action uses a concise card instead of a dense instruction paragraph: **What This Repair Does** explains scope, **Step 1 of 3** identifies the dry run, **Preview Complete - Action Required** identifies the technician approval point, and **Repair Complete** highlights the next operational steps.
+
+Terminal status labels use clear language rather than decorative color alone: `[ NEXT ]` marks the next operation, `[ READ ]` marks an instruction that requires attention, `[ DONE ]` confirms a completed or safely cancelled action, and `[ STOP ]` identifies a blocked operation. The terminal remains usable with color disabled because every visual status has a text label.
+
+Select **H** at any time from the main menu to open the in-terminal **Help Guide**. It summarizes the OneDrive repair, Git update policy, local-change protection, log locations, and the operating limit that OneDrive folder data is never deleted. The footer on each terminal screen displays both the current toolkit version and the Help Guide entry point.
+
+The canonical Superior Networks logo is included locally at `assets/superior-networks-logo.png`. Standard macOS Terminal does not display inline images, so the terminal preserves an accessible text-based brand header. iTerm2 users with `imgcat` installed receive an optional inline-logo enhancement.
 
 ## OneDrive Sync Repair Workflow
 
@@ -120,6 +141,7 @@ If OneDrive is not installed at `/Applications/OneDrive.app`, the script complet
 ## Files
 
 - `bootstrap_macos.sh` - One-command Git installer and user-initiated updater.
-- `mac_troubleshooter_terminal.sh` - Interactive macOS terminal menu.
+- `mac_terminal_ui.sh` - Shared Superior Networks terminal visual design system.
+- `mac_troubleshooter_terminal.sh` - Interactive macOS terminal menu and built-in Help Guide.
 - `Fix-OneDriveSync-macOS.sh` - OneDrive synchronization repair script.
 - `MAC_TROUBLESHOOTER_GUIDE.md` - Deployment, update, workflow, and verification guide.

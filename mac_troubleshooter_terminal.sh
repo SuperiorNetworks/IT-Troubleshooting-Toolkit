@@ -1,40 +1,57 @@
 #!/bin/bash
 # ==============================================================================
-# Script Name : mac_troubleshooter_terminal.sh
-# Version     : Master toolkit version dynamically read from launch_menu.ps1
-# Purpose     : Provides a terminal-based macOS troubleshooting menu for Superior
-#               Networks LLC. The first option safely guides a signed-in user
-#               through the OneDrive sync repair workflow after an OS update.
-# Author      : Dwain Henderson Jr., Superior Networks LLC
-# Copyright   : (c) 2026 Superior Networks LLC. All rights reserved.
+# Name: mac_troubleshooter_terminal.sh
+# Version: Master toolkit version dynamically read from launch_menu.ps1
+# Purpose: Provides a branded, accessible macOS troubleshooting terminal for
+#          Superior Networks LLC with guided repair, update, and help workflows.
+# Author: Dwain Henderson Jr. | Superior Networks LLC
+# Contact: (937) 985-2480 | dhenderson@superiornetworks.biz
+# Copyright: 2026, Superior Networks LLC
+# Location: ~/ITTools/Scripts/mac_troubleshooter_terminal.sh
 #
-# Key Features:
-#   - Interactive macOS troubleshooting terminal with a guided repair workflow
-#   - Option 1 runs the OneDrive repair in dry-run mode before requesting approval
-#   - Option 2 checks GitHub for a user-initiated fast-forward update
-#   - Reads the single master toolkit version from launch_menu.ps1 at runtime
-#   - Records terminal selections, outcomes, and errors in a master audit log
-#   - Runs as the signed-in macOS user and does not require administrator access
+# What This Script Does:
+#   - Presents a graphical ANSI terminal dashboard for macOS troubleshooting
+#   - Guides the user through a dry-run-first OneDrive sync repair workflow
+#   - Performs user-initiated GitHub updates through the Git bootstrapper
+#   - Displays an in-terminal Help Guide and persistent release-version footer
+#   - Records selections, approvals, outcomes, and errors in the master audit log
 #
-# Inputs      : Interactive menu selection
-# Outputs     : Console status output
-#               Audit: ~/Library/Logs/SuperiorNetworks/master_audit_log.txt
-# Dependencies: macOS 12 or later, bash 3.2+, Fix-OneDriveSync-macOS.sh in the
-#               same directory, and read/write access to the signed-in user's home
-#               directory. No admin rights required.
-# Notes       : Run as the signed-in user, NOT with sudo. OneDrive credentials and
-#               sync preferences are per-user. The repair tool backs up plist files
-#               and never deletes content from a OneDrive sync folder.
+# Input:
+#   - Interactive menu selections, optional OneDrive repair confirmation, and
+#     terminal capabilities for graphical ANSI rendering
+#
+# Output:
+#   - Branded terminal dashboard, instructions, and status cards
+#   - Audit: ~/Library/Logs/SuperiorNetworks/master_audit_log.txt
+#
+# Dependencies:
+#   - macOS 12 or later, Bash 3.2+, mac_terminal_ui.sh,
+#     Fix-OneDriveSync-macOS.sh, bootstrap_macos.sh, and terminal access
+#   - assets/superior-networks-logo.png is used as an optional iTerm2 enhancement
+#
+# Change Log:
+#   2026-09-16 v3.12.0 - Added branded graphical dashboard, instruction cards,
+#                        footer versioning, and built-in Help Guide (Dwain Henderson Jr.)
 # ==============================================================================
 
 set -u
 
 SCRIPT_NAME="mac_troubleshooter_terminal.sh"
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+UI_TOOL="$SCRIPT_DIR/mac_terminal_ui.sh"
 ONEDRIVE_TOOL="$SCRIPT_DIR/Fix-OneDriveSync-macOS.sh"
 BOOTSTRAP_TOOL="$SCRIPT_DIR/bootstrap_macos.sh"
+HELP_GUIDE="$SCRIPT_DIR/MAC_TROUBLESHOOTER_GUIDE.md"
 LOG_DIR="$HOME/Library/Logs/SuperiorNetworks"
 MASTER_AUDIT_LOG="$LOG_DIR/master_audit_log.txt"
+
+if [ ! -r "$UI_TOOL" ]; then
+    printf 'Required terminal design component is missing: %s\n' "$UI_TOOL" >&2
+    exit 1
+fi
+# shellcheck source=mac_terminal_ui.sh
+. "$UI_TOOL"
+sn_ui_initialize
 
 get_toolkit_version() {
     local launcher_path="$SCRIPT_DIR/launch_menu.ps1"
@@ -75,31 +92,51 @@ write_audit_log() {
     } >> "$MASTER_AUDIT_LOG" 2>/dev/null
 }
 
-wait_for_key() {
-    printf '\nPress Return to continue...'
-    read -r _unused
+show_menu() {
+    sn_ui_show_brand "macOS Troubleshooter Terminal" "Toolkit v$TOOLKIT_VERSION | Guided repair and safe updates"
+    sn_ui_show_optional_logo
+    sn_ui_instruction_card "START HERE" \
+        "Choose a task below. Every repair explains its impact before it makes a change." \
+        "Use Help Guide for the workflow, safeguards, and log locations."
+
+    sn_ui_section_label "TROUBLESHOOTING"
+    sn_ui_menu_card "1" "OneDrive Sync Repair" "Dry-run preview first. No OneDrive folder data is deleted."
+
+    sn_ui_section_label "TOOLKIT MANAGEMENT"
+    sn_ui_menu_card "2" "Check GitHub for Toolkit Updates" "On-demand only. Git history and local changes are protected."
+
+    sn_ui_section_label "SUPPORT"
+    sn_ui_menu_card "H" "Help Guide" "OneDrive workflow, update policy, logs, and recovery details."
+    sn_ui_menu_card "Q" "Quit" "Close the macOS Troubleshooter Terminal."
+
+    sn_ui_footer "$TOOLKIT_VERSION" "Select [ H ] in this terminal"
 }
 
-show_menu() {
-    clear
-    printf '\n'
-    printf '  =================================================================\n'
-    printf '                     SUPERIOR NETWORKS LLC                        \n'
-    printf '          macOS Troubleshooter Terminal - Toolkit v%s\n' "$TOOLKIT_VERSION"
-    printf '  =================================================================\n'
-    printf '\n'
-    printf '  Troubleshooting Tools:\n'
-    printf '    1. OneDrive Sync Repair (macOS post-update failures)\n'
-    printf '       Runs a dry-run preview first, then offers the safe repair.\n'
-    printf '\n'
-    printf '  Toolkit Management:\n'
-    printf '    2. Check GitHub for Toolkit Updates\n'
-    printf '       User-initiated only; preserves Git version history.\n'
-    printf '\n'
-    printf '    Q. Quit\n'
-    printf '\n'
-    printf '  Audit Log: %s\n' "$MASTER_AUDIT_LOG"
-    printf '\n'
+show_help_guide() {
+    write_audit_log "INFO" "Menu Selection" "Help Guide opened"
+    sn_ui_show_brand "Help Guide" "Toolkit v$TOOLKIT_VERSION | Everyday operating guidance"
+    sn_ui_show_optional_logo
+
+    sn_ui_section_label "ONE DRIVE REPAIR"
+    sn_ui_instruction_card "SAFE, GUIDED WORKFLOW" \
+        "Option 1 always runs a dry-run preview before it offers a live repair." \
+        "The live repair backs up affected plist files and never deletes OneDrive folder data." \
+        "Type YES only after reviewing the preview and confirming recent work is synced."
+
+    sn_ui_section_label "GITHUB UPDATES"
+    sn_ui_instruction_card "YOU CONTROL WHEN UPDATES RUN" \
+        "Option 2 checks GitHub only when you select it. The terminal never updates itself at startup." \
+        "A Git fast-forward update keeps version history. Local uncommitted changes are never overwritten." \
+        "You will see either NO CHANGES or the new version with its release notes."
+
+    sn_ui_section_label "SUPPORT RECORDS"
+    sn_ui_instruction_card "WHERE TO FIND DETAILS" \
+        "Master audit log: ~/Library/Logs/SuperiorNetworks/master_audit_log.txt" \
+        "Repair transcript: ~/Library/Logs/SuperiorNetworks/Fix-OneDriveSync-<timestamp>.log" \
+        "Full guide: $HELP_GUIDE"
+
+    sn_ui_footer "$TOOLKIT_VERSION" "$HELP_GUIDE"
+    sn_ui_wait
 }
 
 run_onedrive_repair() {
@@ -107,89 +144,107 @@ run_onedrive_repair() {
     local approval=""
 
     write_audit_log "INFO" "Menu Selection" "Option 1: OneDrive Sync Repair"
-    clear
-    printf '\n=== OneDrive Sync Repair ===\n\n'
-    printf 'This workflow first previews all actions. It does not remove OneDrive data.\n'
-    printf 'Preference files are backed up before a live repair changes them.\n\n'
+    sn_ui_show_brand "OneDrive Sync Repair" "Toolkit v$TOOLKIT_VERSION | Post-update sync recovery"
+    sn_ui_show_optional_logo
+    sn_ui_status "warning" "Read this screen before running the repair."
+    sn_ui_instruction_card "WHAT THIS REPAIR DOES" \
+        "It stops OneDrive and related Office helpers, clears stale OneDrive credentials," \
+        "backs up targeted sync preferences, refreshes the preference cache, and relaunches OneDrive." \
+        "It NEVER deletes files inside the user's OneDrive folder."
+    sn_ui_footer "$TOOLKIT_VERSION" "$HELP_GUIDE"
 
     if [ ! -f "$ONEDRIVE_TOOL" ]; then
-        printf 'Error: OneDrive repair script not found.\n'
-        printf 'Expected: %s\n' "$ONEDRIVE_TOOL"
+        sn_ui_status "danger" "OneDrive repair script not found: $ONEDRIVE_TOOL"
         write_audit_log "ERROR" "OneDrive Sync Repair" "Required script not found: $ONEDRIVE_TOOL"
-        wait_for_key
+        sn_ui_wait
         return
     fi
 
     if [ ! -x "$ONEDRIVE_TOOL" ]; then
-        printf 'Making the OneDrive repair script executable...\n'
+        sn_ui_status "action" "Preparing the OneDrive repair script for use..."
         if chmod +x "$ONEDRIVE_TOOL"; then
             write_audit_log "INFO" "OneDrive Sync Repair" "Set executable permission on Fix-OneDriveSync-macOS.sh"
         else
-            printf 'Error: Could not set executable permission on the OneDrive repair script.\n'
+            sn_ui_status "danger" "Could not set executable permission on the OneDrive repair script."
             write_audit_log "ERROR" "OneDrive Sync Repair" "Could not set executable permission on $ONEDRIVE_TOOL"
-            wait_for_key
+            sn_ui_wait
             return
         fi
     fi
 
-    printf 'Step 1 of 2: Running the safety preview...\n\n'
+    sn_ui_step "1" "3" "Safety Preview"
+    sn_ui_status "action" "Running a dry-run. It reports actions only and changes nothing."
     "$ONEDRIVE_TOOL" --dry-run
     status=$?
     if [ "$status" -ne 0 ]; then
-        printf '\nDry run stopped with exit code %s. No repair was performed.\n' "$status"
+        sn_ui_status "danger" "Dry run stopped with exit code $status. No repair was performed."
         write_audit_log "ERROR" "OneDrive Sync Repair" "Dry run exited with code $status"
-        wait_for_key
+        sn_ui_wait
         return
     fi
 
-    printf '\nStep 2 of 2: Review the preview above.\n'
-    printf 'Run the live repair now? Type YES to proceed: '
+    sn_ui_step "2" "3" "Your Approval"
+    sn_ui_instruction_card "PREVIEW COMPLETE - ACTION REQUIRED" \
+        "Review the dry-run results above before choosing. The live repair will affect only" \
+        "OneDrive processes, cached credentials, and backed-up preference files." \
+        "Run the live repair now? Type YES to proceed, or press Return to cancel."
+    printf '\n%sType YES to run the live repair: %s' "$SN_UI_BOLD" "$SN_UI_RESET"
     read -r approval
     if [ "$approval" != "YES" ]; then
-        printf '\nLive repair cancelled. The dry run made no changes.\n'
+        sn_ui_status "success" "Live repair cancelled. The dry run made no changes."
         write_audit_log "INFO" "OneDrive Sync Repair" "Live repair cancelled after dry run"
-        wait_for_key
+        sn_ui_wait
         return
     fi
 
     write_audit_log "INFO" "OneDrive Sync Repair" "Live repair approved after dry run"
-    printf '\nRunning the live repair...\n\n'
+    sn_ui_step "3" "3" "Live Repair"
+    sn_ui_status "action" "Running the approved repair. Follow the final sign-in and sync verification steps."
     "$ONEDRIVE_TOOL"
     status=$?
     if [ "$status" -eq 0 ]; then
-        printf '\nOneDrive repair completed. Review the repair transcript shown above.\n'
+        sn_ui_instruction_card "REPAIR COMPLETE" \
+            "Sign in to OneDrive with the work account when prompted." \
+            "Keep the EXISTING OneDrive folder location. Do not select a new sync folder." \
+            "Use the repair transcript and master audit log for the ticket record."
+        sn_ui_status "success" "OneDrive repair completed successfully."
         write_audit_log "SUCCESS" "OneDrive Sync Repair" "Live repair completed successfully"
     else
-        printf '\nOneDrive repair exited with code %s. Review its transcript and master audit log.\n' "$status"
+        sn_ui_status "danger" "OneDrive repair exited with code $status. Review the transcript and audit log."
         write_audit_log "ERROR" "OneDrive Sync Repair" "Live repair exited with code $status"
     fi
-    wait_for_key
+    sn_ui_footer "$TOOLKIT_VERSION" "$HELP_GUIDE"
+    sn_ui_wait
 }
 
 run_toolkit_update() {
     write_audit_log "INFO" "Menu Selection" "Option 2: Check GitHub for Toolkit Updates"
-    clear
-    printf '\n=== Check GitHub for Toolkit Updates ===\n\n'
-    printf 'This performs a Git fast-forward update only when you choose this option.\n'
-    printf 'Local uncommitted changes are protected and will not be overwritten.\n\n'
+    sn_ui_show_brand "GitHub Toolkit Updates" "Toolkit v$TOOLKIT_VERSION | User-initiated Git version control"
+    sn_ui_show_optional_logo
+    sn_ui_instruction_card "WHAT HAPPENS NEXT" \
+        "The updater checks GitHub only because you selected this option. It never updates at startup." \
+        "If current, it reports NO CHANGES. If newer code exists, it uses a Git fast-forward update" \
+        "and displays the newly installed version and its release notes."
+    sn_ui_instruction_card "YOUR LOCAL WORK IS PROTECTED" \
+        "Uncommitted local changes are never overwritten. The updater stops and shows Git status instead." \
+        "Git history remains available in ~/ITTools/Scripts/.git for support and rollback diagnostics."
+    sn_ui_footer "$TOOLKIT_VERSION" "$HELP_GUIDE"
 
     if [ ! -f "$BOOTSTRAP_TOOL" ]; then
-        printf 'Error: macOS Git bootstrapper not found.\n'
-        printf 'Expected: %s\n' "$BOOTSTRAP_TOOL"
+        sn_ui_status "danger" "Git bootstrapper not found: $BOOTSTRAP_TOOL"
         write_audit_log "ERROR" "Toolkit Update" "Bootstrapper not found: $BOOTSTRAP_TOOL"
-        wait_for_key
+        sn_ui_wait
         return
     fi
 
-    if [ ! -x "$BOOTSTRAP_TOOL" ]; then
-        if ! chmod +x "$BOOTSTRAP_TOOL"; then
-            printf 'Error: Could not set executable permission on the Git bootstrapper.\n'
-            write_audit_log "ERROR" "Toolkit Update" "Could not set executable permission on $BOOTSTRAP_TOOL"
-            wait_for_key
-            return
-        fi
+    if [ ! -x "$BOOTSTRAP_TOOL" ] && ! chmod +x "$BOOTSTRAP_TOOL"; then
+        sn_ui_status "danger" "Could not set executable permission on the Git bootstrapper."
+        write_audit_log "ERROR" "Toolkit Update" "Could not set executable permission on $BOOTSTRAP_TOOL"
+        sn_ui_wait
+        return
     fi
 
+    sn_ui_status "action" "Opening the Git update workflow..."
     write_audit_log "INFO" "Toolkit Update" "Starting user-initiated Git update"
     exec "$BOOTSTRAP_TOOL"
 }
@@ -212,7 +267,7 @@ write_audit_log "INFO" "macOS Troubleshooter Terminal" "Terminal opened; toolkit
 
 while true; do
     show_menu
-    printf '  Select an option (1-2 or Q): '
+    printf '%sSelect an option [ 1 | 2 | H | Q ]: %s' "$SN_UI_BOLD" "$SN_UI_RESET"
     choice=""
     read -r choice || choice="Q"
 
@@ -223,13 +278,16 @@ while true; do
         2)
             run_toolkit_update
             ;;
+        H|h)
+            show_help_guide
+            ;;
         Q|q)
             write_audit_log "INFO" "macOS Troubleshooter Terminal" "User selected Quit"
-            printf '\nExiting macOS Troubleshooter Terminal...\n'
+            sn_ui_status "success" "Exiting macOS Troubleshooter Terminal."
             exit 0
             ;;
         *)
-            printf '\nInvalid selection. Please choose 1-2 or Q.\n'
+            sn_ui_status "danger" "Invalid selection. Choose 1, 2, H, or Q."
             write_audit_log "WARN" "Invalid Menu Selection" "User entered: $choice"
             sleep 2
             ;;

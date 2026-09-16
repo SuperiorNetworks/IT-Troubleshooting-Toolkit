@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.11.0
+**Version:** 3.12.0
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -88,7 +88,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.11.0
+IT Troubleshooting Toolkit - v3.12.0
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -110,22 +110,36 @@ Windows/Office Activation:
 
 ## macOS Troubleshooter Terminal
 
-The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for macOS repair tasks. It retrieves the master toolkit version dynamically from `launch_menu.ps1` when the repository is present locally, with a GitHub fallback for standalone deployment.
+The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for macOS repair tasks. It retrieves the master toolkit version dynamically from `launch_menu.ps1` when the repository is present locally, with a GitHub fallback for standalone deployment. The interface uses a clean, high-contrast Superior Networks dashboard with boxed instructions, explicit status labels, numbered steps, an always-visible version footer, and a built-in Help Guide.
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.11.0
+macOS Troubleshooter Terminal - Toolkit v3.12.0
 
-Troubleshooting Tools:
-  1. OneDrive Sync Repair (macOS post-update failures)
-     Runs a dry-run preview first, then offers the safe repair.
+START HERE
+  Choose a task below. Every repair explains its impact before it makes a change.
 
-Toolkit Management:
-  2. Check GitHub for Toolkit Updates
-     User-initiated only; preserves Git version history.
+TROUBLESHOOTING
+  [ 1 ]  OneDrive Sync Repair
+         Dry-run preview first. No OneDrive folder data is deleted.
 
-Q. Quit
+TOOLKIT MANAGEMENT
+  [ 2 ]  Check GitHub for Toolkit Updates
+         User-initiated only. Git history and local changes are protected.
+
+SUPPORT
+  [ H ]  Help Guide
+         Workflow, safeguards, log locations, and operating limits.
+  [ Q ]  Quit
+
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.12.0
 ```
+
+### Help Guide (Option H)
+
+**Purpose:** Display the everyday operating guide within the terminal without requiring a browser or a separate document search.
+
+**Content:** Explains the dry-run-first OneDrive repair, Git update behavior, local-change protection, audit and transcript locations, and the important operating limit that OneDrive folder content is never deleted. The terminal footer always identifies the Help Guide entry point and the current master version.
 
 ### Option 2 - Check GitHub for Toolkit Updates
 
@@ -139,7 +153,7 @@ Q. Quit
 
 **Purpose:** Repair common OneDrive synchronization failures after a macOS update without resetting or deleting local OneDrive content.
 
-**Workflow:** The terminal first runs `Fix-OneDriveSync-macOS.sh --dry-run` and displays every proposed action. Only after the preview completes successfully and the technician types `YES` does it run the live repair.
+**Workflow:** The terminal presents a high-contrast **What This Repair Does** card before it starts. It then runs `Fix-OneDriveSync-macOS.sh --dry-run` and displays every proposed action. A numbered **Step 2 of 3 - Your Approval** card summarizes the protected scope and requires the technician to type `YES` before the live repair. A completion card then highlights the required sign-in, existing-folder, and ticket-record steps.
 
 **Features:**
 - Checks for files modified in the last 15 minutes before a live repair and requires confirmation if recent edits are found.
@@ -166,7 +180,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.11.0
+ConnectWise RMM Troubleshooter - Toolkit v3.12.0
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -203,7 +217,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.11.0
+HP M404dn Printer Troubleshooter - Toolkit v3.12.0
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -253,7 +267,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.11.0
+StorageCraft Troubleshooter - Toolkit v3.12.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -613,9 +627,11 @@ C:\ITTools\
 │   ├── hp_m404dn_spooler_repair.ps1
 │   ├── hp_m404dn_driver_reinstall.ps1
 │   ├── bootstrap_macos.sh
+│   ├── mac_terminal_ui.sh
 │   ├── mac_troubleshooter_terminal.sh
 │   ├── Fix-OneDriveSync-macOS.sh
 │   ├── MAC_TROUBLESHOOTER_GUIDE.md
+│   ├── assets\superior-networks-logo.png
 │   ├── storagecraft_troubleshooter.ps1
 │   ├── ftp_troubleshooter_tool.ps1
 │   ├── ftp_sync_tool.ps1
@@ -903,6 +919,15 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.12.0 (2026-09-16) - USER EXPERIENCE
+- **Graphical Terminal Redesign**: Rebuilt the macOS Troubleshooter Terminal as a branded ANSI dashboard using the Superior Networks visual standards: neutral panels, high-contrast instruction cards, explicit status labels, and step indicators.
+- **Actionable Instructions**: Added prominent **Start Here**, **What This Repair Does**, **Preview Complete - Action Required**, and **Repair Complete** cards so technicians can identify decisions and safe next steps at a glance.
+- **Built-In Help Guide**: Added **Option H - Help Guide** with the core OneDrive workflow, Git update behavior, operating limits, and support-log locations directly in the terminal.
+- **Visible Versioning**: Added a persistent footer to terminal pages showing the current master toolkit version and Help Guide entry point.
+- **Brand Asset**: Added the canonical Superior Networks logo at `assets/superior-networks-logo.png` with an optional inline iTerm2 rendering enhancement.
+- **Files Added**: `mac_terminal_ui.sh` and `assets/superior-networks-logo.png`.
+- **Files Updated**: `mac_troubleshooter_terminal.sh`, `MAC_TROUBLESHOOTER_GUIDE.md`, `launch_menu.ps1`, and `README.md`.
 
 ### Version 3.11.0 (2026-09-16) - GIT DEPLOYMENT
 - **New Feature**: Added `bootstrap_macos.sh`, a one-command native macOS Bash installer that clones the GitHub repository to `~/ITTools/Scripts` and launches the macOS troubleshooting terminal.
