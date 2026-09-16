@@ -18,12 +18,14 @@
 #   - Backs up every removed plist before deletion, timestamped
 #   - Flushes the cfprefsd preference cache so old settings are not restored
 #   - Timestamped transcript and master audit logs for ticket documentation
+#   - Automatically opens the completed transcript in TextEdit for review
 #   - --dry-run mode to preview all actions with no changes
 #   - Never touches user data inside the OneDrive folder
 #
 # Inputs      : Optional flags
 #                 --dry-run       Report actions only, change nothing
 #                 --no-relaunch   Skip relaunching OneDrive at the end
+#                 --no-open-log   Do not automatically open the transcript log
 #                 --help          Show usage
 # Outputs     : Console status output
 #               Log  : ~/Library/Logs/SuperiorNetworks/Fix-OneDriveSync-<stamp>.log
@@ -82,6 +84,7 @@ PROCESSES=(
 
 DRY_RUN=0
 RELAUNCH=1
+OPEN_LOG=1
 CHANGES=0
 WARNINGS=0
 
@@ -133,6 +136,34 @@ warn() { log "  [ WARN ] $*"; WARNINGS=$((WARNINGS+1)); }
 act()  { log "  [ ACT ]  $*"; CHANGES=$((CHANGES+1)); }
 plan() { log "  [ DRY ]  would $*"; }
 
+open_transcript_log() {
+  printf '\n=== Opening repair transcript ===\n'
+
+  if [ "$OPEN_LOG" -eq 0 ]; then
+    printf '  [ SKIP ] Automatic transcript opening skipped by --no-open-log\n'
+    write_audit_log "INFO" "OneDrive Sync Repair" "Automatic transcript opening skipped by --no-open-log; transcript=$LOG_FILE"
+    return
+  fi
+
+  if [ ! -f "$LOG_FILE" ]; then
+    printf '  [ WARN ] Transcript was not found, so it could not be opened: %s\n' "$LOG_FILE"
+    write_audit_log "ERROR" "OneDrive Sync Repair" "Transcript was missing when automatic opening was requested; transcript=$LOG_FILE"
+    return
+  fi
+
+  printf '  Transcript is complete and ready for review: %s\n' "$LOG_FILE"
+  if /usr/bin/open -a TextEdit "$LOG_FILE" >/dev/null 2>&1; then
+    printf '  [ OK ]   Transcript opened in TextEdit for review.\n'
+    write_audit_log "SUCCESS" "OneDrive Sync Repair" "Opened transcript in TextEdit; transcript=$LOG_FILE"
+  elif /usr/bin/open "$LOG_FILE" >/dev/null 2>&1; then
+    printf '  [ OK ]   Transcript opened with the Mac default log viewer.\n'
+    write_audit_log "SUCCESS" "OneDrive Sync Repair" "Opened transcript with default application; transcript=$LOG_FILE"
+  else
+    printf '  [ WARN ] Could not automatically open the transcript. Open it manually: %s\n' "$LOG_FILE"
+    write_audit_log "ERROR" "OneDrive Sync Repair" "Could not automatically open transcript; transcript=$LOG_FILE"
+  fi
+}
+
 get_running_onedrive_processes() {
   /usr/bin/pgrep -fl -i onedrive 2>/dev/null | grep -v "$SCRIPT_NAME" || true
 }
@@ -169,11 +200,12 @@ $SCRIPT_NAME  Toolkit v$SCRIPT_VERSION  -  Superior Networks LLC
 Repairs macOS OneDrive sync after an OS update.
 
 Usage:
-  ./$SCRIPT_NAME [--dry-run] [--no-relaunch]
+  ./$SCRIPT_NAME [--dry-run] [--no-relaunch] [--no-open-log]
 
 Options:
   --dry-run       Show every action without changing anything
   --no-relaunch   Do not reopen OneDrive when finished
+  --no-open-log   Do not automatically open the completed transcript
   --help          Show this help
 
 Run as the signed-in user. Do not use sudo.
@@ -185,6 +217,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --dry-run)     DRY_RUN=1 ;;
     --no-relaunch) RELAUNCH=0 ;;
+    --no-open-log) OPEN_LOG=0 ;;
     --help|-h)     usage; exit 0 ;;
     *)             printf 'Unknown option: %s\n\n' "$1"; usage; exit 1 ;;
   esac
@@ -407,12 +440,14 @@ log ""
 log "  A full OneDrive reset was NOT performed. That step can remove local"
 log "  content and should only be run after backup state is verified."
 log ""
-log "Finished $(date '+%Y-%m-%d %H:%M:%S')"
 
 if [ "$DRY_RUN" -eq 1 ]; then
   write_audit_log "SUCCESS" "OneDrive Sync Repair" "Dry run completed successfully; changes=0; warnings=$WARNINGS"
 else
   write_audit_log "SUCCESS" "OneDrive Sync Repair" "Live repair completed; changes=$CHANGES; warnings=$WARNINGS; transcript=$LOG_FILE"
 fi
+
+log "Finished $(date '+%Y-%m-%d %H:%M:%S')"
+open_transcript_log
 
 exit 0

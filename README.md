@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.13.0
+**Version:** 3.14.0
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -88,7 +88,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.13.0
+IT Troubleshooting Toolkit - v3.14.0
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -114,7 +114,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.13.0
+macOS Troubleshooter Terminal - Toolkit v3.14.0
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -132,7 +132,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.13.0
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.14.0
 ```
 
 ### Help Guide (Option H)
@@ -160,7 +160,8 @@ Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Tool
 - Stops OneDrive and related Office processes, clears known stale OneDrive Keychain credentials, and backs up affected preference plists before removing them.
 - Flushes the macOS preference cache and relaunches OneDrive for a clean sign-in.
 - Never deletes files from the user's OneDrive folder.
-- Creates a verbose per-run transcript and records menu selections, approvals, OneDrive closure verification, relaunch outcome, completion states, and errors in the macOS master audit log.
+- Automatically opens every completed dry-run or live-repair transcript in TextEdit for review, while keeping `--no-open-log` available for unattended or diagnostic use.
+- Records menu selections, approvals, OneDrive closure verification, transcript-open outcome, relaunch outcome, completion states, and errors in the macOS master audit log.
 
 **Files:**
 - `mac_troubleshooter_terminal.sh` - Interactive macOS terminal menu
@@ -180,7 +181,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.13.0
+ConnectWise RMM Troubleshooter - Toolkit v3.14.0
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -217,7 +218,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.13.0
+HP M404dn Printer Troubleshooter - Toolkit v3.14.0
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -267,7 +268,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.13.0
+StorageCraft Troubleshooter - Toolkit v3.14.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -785,7 +786,7 @@ Credentials are **not stored** - you must enter them each time for security.
 - Terminal starts, menu selections, dry-run results, live-repair approvals, outcomes, and errors
 
 **OneDrive Repair Transcript:** `~/Library/Logs/SuperiorNetworks/Fix-OneDriveSync-<timestamp>.log`
-- Detailed pre-flight results, process handling, Keychain cleanup, preference backup and removal, and post-repair instructions
+- Detailed pre-flight results, process handling, Keychain cleanup, preference backup and removal, and post-repair instructions; automatically opens in TextEdit after a completed run
 
 ### Log Format
 
@@ -919,6 +920,12 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.14.0 (2026-09-16) - TRANSCRIPT REVIEW
+- **Automatic Transcript Review**: Every completed OneDrive dry-run or live repair now opens its timestamped transcript automatically in TextEdit. If TextEdit is unavailable, the script tries the macOS default application and prints the manual file path if neither launch succeeds.
+- **Operational Control**: Added `--no-open-log` for unattended or diagnostic use when a technician does not want the script to open the transcript window.
+- **Auditability**: The master audit log records whether automatic transcript opening succeeded, was skipped, or failed.
+- **Files Updated**: `Fix-OneDriveSync-macOS.sh`, `mac_troubleshooter_terminal.sh`, `MAC_TROUBLESHOOTER_GUIDE.md`, `launch_menu.ps1`, and `README.md`.
 
 ### Version 3.13.0 (2026-09-16) - BRANDING AND REPAIR SEQUENCE
 - **Superior Networks Logo**: Added canonical-logo rendering to the macOS terminal. iTerm2 displays the local PNG inline when available; standard macOS Terminal shows a high-contrast Superior Networks wordmark fallback.

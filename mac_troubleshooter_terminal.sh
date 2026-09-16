@@ -150,7 +150,7 @@ run_onedrive_repair() {
     sn_ui_instruction_card "WHAT THIS REPAIR DOES" \
         "Dry-run reports the repair sequence only. It never closes or reopens OneDrive." \
         "Live repair closes OneDrive first, verifies it is stopped, repairs cached settings," \
-        "then reopens OneDrive. It NEVER deletes files inside the user's OneDrive folder."
+        "then reopens OneDrive. Each completed run opens its timestamped transcript in TextEdit."
     sn_ui_footer "$TOOLKIT_VERSION" "$HELP_GUIDE"
 
     if [ ! -f "$ONEDRIVE_TOOL" ]; then
@@ -206,7 +206,7 @@ run_onedrive_repair() {
         sn_ui_instruction_card "REPAIR COMPLETE" \
             "OneDrive was reopened. Sign in to OneDrive with the work account when prompted." \
             "Keep the EXISTING OneDrive folder location. Do not select a new sync folder." \
-            "Use the repair transcript and master audit log for the ticket record."
+            "The repair transcript opened automatically in TextEdit for the ticket record."
         sn_ui_status "success" "OneDrive repair completed successfully."
         write_audit_log "SUCCESS" "OneDrive Sync Repair" "Live repair completed successfully"
     else

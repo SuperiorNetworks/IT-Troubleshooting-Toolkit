@@ -1,11 +1,11 @@
 # macOS Troubleshooter Terminal
 
-**Current version:** v3.13.0
+**Current version:** v3.14.0
 **Help Guide last updated:** 2026-09-16
 
 The **macOS Troubleshooter Terminal** is the macOS companion to the IT Troubleshooting Toolkit. It is designed to be run locally by the signed-in macOS user and currently includes a guided repair workflow for OneDrive synchronization failures after an operating-system update. The terminal uses the Superior Networks visual language: canonical-logo rendering in iTerm2, a high-contrast wordmark fallback in standard Terminal, clean neutral panels, prominent instruction cards, explicit status indicators, a visible version footer, and an in-terminal Help Guide.
 
-> **Safety model:** The OneDrive repair always runs a dry-run preview before the terminal offers the live repair. The dry run makes no changes, so it does not close or reopen OneDrive. The approved live repair closes OneDrive, verifies it has stopped before touching credentials or preference files, backs up affected preferences, then relaunches OneDrive. It does not delete any content within a OneDrive sync folder and preserves a timestamped transcript for ticket records.
+> **Safety model:** The OneDrive repair always runs a dry-run preview before the terminal offers the live repair. The dry run makes no changes, so it does not close or reopen OneDrive. The approved live repair closes OneDrive, verifies it has stopped before touching credentials or preference files, backs up affected preferences, then relaunches OneDrive. It does not delete any content within a OneDrive sync folder. Every completed run automatically opens its timestamped transcript in TextEdit for immediate review and ticket documentation.
 
 ## Requirements
 
@@ -44,6 +44,8 @@ After reviewing the preview, type `YES` only if the reported actions are appropr
 ```bash
 ./Fix-OneDriveSync-macOS.sh
 ```
+
+After the dry run or live repair completes, the timestamped transcript opens automatically in TextEdit. For unattended or diagnostic execution, add `--no-open-log` to leave the log unopened.
 
 To use the repair script directly without the menu, run:
 
@@ -125,7 +127,7 @@ The terminal and repair script create two kinds of logs in `~/Library/Logs/Super
 - `master_audit_log.txt` records terminal openings, menu selections, approvals, outcomes, and errors.
 - `Fix-OneDriveSync-<timestamp>.log` records the full verbose repair transcript for the individual execution.
 
-The backup directory is created only for a live repair at `~/Desktop/OneDrive-Plist-Backup-<timestamp>/`.
+The backup directory is created only for a live repair at `~/Desktop/OneDrive-Plist-Backup-<timestamp>/`. At normal completion, the repair opens its transcript in TextEdit automatically. Use `--no-open-log` to suppress that behavior for an unattended or diagnostic command-line run.
 
 ## Post-Repair Verification
 
