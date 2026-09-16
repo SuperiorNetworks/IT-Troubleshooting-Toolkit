@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.14.0
+**Version:** 3.15.0
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -88,7 +88,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.14.0
+IT Troubleshooting Toolkit - v3.15.0
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -114,7 +114,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.14.0
+macOS Troubleshooter Terminal - Toolkit v3.15.0
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -132,7 +132,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.14.0
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.15.0
 ```
 
 ### Help Guide (Option H)
@@ -153,7 +153,7 @@ Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Tool
 
 **Purpose:** Repair common OneDrive synchronization failures after a macOS update without resetting or deleting local OneDrive content.
 
-**Workflow:** The terminal presents a high-contrast **What This Repair Does** card before it starts. The dry run then reports the close, verify, repair, and relaunch sequence while leaving OneDrive fully unchanged. A numbered **Step 2 of 3 - Your Approval** card states that the live repair will close OneDrive, verify its processes have stopped, repair the protected settings, and then reopen OneDrive. The technician must type `YES` before that live workflow begins. If OneDrive cannot be closed, the live script stops before it changes any credentials or preference files.
+**Workflow:** The terminal presents a high-contrast **What This Repair Does** card before it starts. The dry run then reports the close, verify, repair, and relaunch sequence while leaving OneDrive fully unchanged. A numbered **Step 2 of 3 - Your Approval** card states that the live repair will close the OneDrive app and the separate **OneDrive Sync Service**, verify their processes have stopped, repair the protected settings, and then reopen OneDrive. The technician must type `YES` before that live workflow begins. If any OneDrive component cannot be closed, the live script stops before it changes any credentials or preference files and automatically opens its transcript for review.
 
 **Features:**
 - Checks for files modified in the last 15 minutes before a live repair and requires confirmation if recent edits are found.
@@ -181,7 +181,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.14.0
+ConnectWise RMM Troubleshooter - Toolkit v3.15.0
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -218,7 +218,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.14.0
+HP M404dn Printer Troubleshooter - Toolkit v3.15.0
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -268,7 +268,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.14.0
+StorageCraft Troubleshooter - Toolkit v3.15.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -920,6 +920,12 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.15.0 (2026-09-16) - ONEDRIVE SYNC SERVICE FIX
+- **Sync Service Shutdown**: Added explicit detection and shutdown handling for Microsoft's separate `OneDrive Sync Service`, which can remain active after the main OneDrive app exits.
+- **PID-Aware Safety Verification**: Replaced the broad process check with PID-aware filtering so the repair ignores its own process while still detecting real OneDrive components. The live repair verifies the app and Sync Service are down before touching credentials or preferences.
+- **Safe-Stop Review**: A repair stopped because a OneDrive component remains running now finalizes and automatically opens its timestamped transcript, just like a completed repair or dry run.
+- **Files Updated**: `Fix-OneDriveSync-macOS.sh`, `mac_troubleshooter_terminal.sh`, `MAC_TROUBLESHOOTER_GUIDE.md`, `launch_menu.ps1`, and `README.md`.
 
 ### Version 3.14.0 (2026-09-16) - TRANSCRIPT REVIEW
 - **Automatic Transcript Review**: Every completed OneDrive dry-run or live repair now opens its timestamped transcript automatically in TextEdit. If TextEdit is unavailable, the script tries the macOS default application and prints the manual file path if neither launch succeeds.

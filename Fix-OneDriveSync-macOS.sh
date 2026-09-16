@@ -12,6 +12,7 @@
 # Key Features:
 #   - Pre-flight safety check for pending OneDrive uploads before any change
 #   - Graceful quit, then force stop, of OneDrive and Office helper processes
+#   - Explicitly detects and stops the OneDrive Sync Service before repair
 #   - Removes "OneDrive Cached Credential" and related login keychain items
 #   - Deletes UBF8T346G9.OneDriveSyncClientSuite.plist and
 #     UBF8T346G9.OfficeOneDriveSyncIntegration.plist from both known locations
@@ -39,6 +40,10 @@
 #               files are per-user. A full "reset OneDrive" is intentionally NOT
 #               performed because it can remove local content. Dry-run mode does
 #               not close or relaunch OneDrive because it must make no changes.
+#
+# Change Log:
+#   2026-09-16 v3.15.0 - Explicitly stop OneDrive Sync Service, apply PID-aware
+#                        verification, and open transcript after safe stops (Dwain Henderson Jr.)
 # ==============================================================================
 
 set -u
@@ -71,6 +76,7 @@ KEYCHAIN_LABELS=(
 # Process names to stop. OneDrive first, then Office integration helpers.
 PROCESSES=(
   "OneDrive"
+  "OneDrive Sync Service"
   "OneDrive File Provider"
   "OneDriveStandaloneUpdater"
   "OneDriveUpdaterDaemon"
@@ -136,6 +142,31 @@ warn() { log "  [ WARN ] $*"; WARNINGS=$((WARNINGS+1)); }
 act()  { log "  [ ACT ]  $*"; CHANGES=$((CHANGES+1)); }
 plan() { log "  [ DRY ]  would $*"; }
 
+is_managed_process_running() {
+  local process_name="$1"
+
+  if [ "$process_name" = "OneDrive Sync Service" ]; then
+    /usr/bin/pgrep -f "OneDrive Sync Service" >/dev/null 2>&1
+  else
+    /usr/bin/pgrep -x "$process_name" >/dev/null 2>&1
+  fi
+}
+
+signal_managed_process() {
+  local process_name="$1"
+  local signal_name="$2"
+  local process_ids=""
+
+  if [ "$process_name" = "OneDrive Sync Service" ]; then
+    process_ids="$(/usr/bin/pgrep -f "OneDrive Sync Service" 2>/dev/null || true)"
+    for process_id in $process_ids; do
+      /bin/kill "-$signal_name" "$process_id" >/dev/null 2>&1 || true
+    done
+  else
+    /usr/bin/killall "-$signal_name" "$process_name" >/dev/null 2>&1 || true
+  fi
+}
+
 open_transcript_log() {
   printf '\n=== Opening repair transcript ===\n'
 
@@ -164,8 +195,34 @@ open_transcript_log() {
   fi
 }
 
+finish_with_transcript() {
+  local exit_code="$1"
+
+  log "Finished $(date '+%Y-%m-%d %H:%M:%S')"
+  open_transcript_log
+  exit "$exit_code"
+}
+
 get_running_onedrive_processes() {
-  /usr/bin/pgrep -fl -i onedrive 2>/dev/null | grep -v "$SCRIPT_NAME" || true
+  local process_ids=""
+  local process_id=""
+  local process_command=""
+
+  process_ids="$(/usr/bin/pgrep -f -i onedrive 2>/dev/null || true)"
+  for process_id in $process_ids; do
+    [ "$process_id" = "$$" ] && continue
+    process_command="$(/bin/ps -p "$process_id" -o command= 2>/dev/null || true)"
+    [ -z "$process_command" ] && continue
+
+    # The repair script, its command substitution, and the pgrep invocation can
+    # contain "OneDrive" in their own command lines. They are not OneDrive
+    # components and must not block the live repair's safety verification.
+    case "$process_command" in
+      *"$SCRIPT_NAME"*|*"pgrep -f -i onedrive"*) continue ;;
+    esac
+
+    printf '%s %s\n' "$process_id" "$process_command"
+  done
 }
 
 verify_onedrive_stopped() {
@@ -182,7 +239,7 @@ verify_onedrive_stopped() {
     warn "OneDrive-related processes are still running. No credential or preference changes will be made."
     printf '%s\n' "$still_running" | while IFS= read -r L; do log "           $L"; done
     write_audit_log "ERROR" "OneDrive Sync Repair" "OneDrive would not close; repair stopped before credential or preference changes"
-    exit 4
+    finish_with_transcript 4
   fi
 
   if [ "$DRY_RUN" -eq 1 ]; then
@@ -278,7 +335,7 @@ if [ "$PENDING" -eq 1 ] && [ "$DRY_RUN" -eq 0 ]; then
   if [ "$ANSWER" != "YES" ]; then
     log "Aborted at user request. No changes were made."
     write_audit_log "INFO" "OneDrive Sync Repair" "User stopped repair after pending-upload warning"
-    exit 0
+    finish_with_transcript 0
   fi
   log "  User confirmed. Continuing."
 else
@@ -288,22 +345,22 @@ fi
 # ----------------------- Step 1: stop OneDrive / Office ----------------------
 head1 "Step 1: Stopping OneDrive and Office processes"
 for PROC in "${PROCESSES[@]}"; do
-  if /usr/bin/pgrep -x "$PROC" >/dev/null 2>&1; then
+  if is_managed_process_running "$PROC"; then
     if [ "$DRY_RUN" -eq 1 ]; then
       plan "quit \"$PROC\""
       continue
     fi
     /usr/bin/osascript -e "tell application \"$PROC\" to quit" >/dev/null 2>&1
     sleep 2
-    if /usr/bin/pgrep -x "$PROC" >/dev/null 2>&1; then
-      /usr/bin/killall -TERM "$PROC" >/dev/null 2>&1
+    if is_managed_process_running "$PROC"; then
+      signal_managed_process "$PROC" "TERM"
       sleep 2
     fi
-    if /usr/bin/pgrep -x "$PROC" >/dev/null 2>&1; then
-      /usr/bin/killall -KILL "$PROC" >/dev/null 2>&1
+    if is_managed_process_running "$PROC"; then
+      signal_managed_process "$PROC" "KILL"
       sleep 1
     fi
-    if /usr/bin/pgrep -x "$PROC" >/dev/null 2>&1; then
+    if is_managed_process_running "$PROC"; then
       warn "\"$PROC\" is still running. macOS may be relaunching a helper."
     else
       act "Stopped \"$PROC\""
@@ -447,7 +504,4 @@ else
   write_audit_log "SUCCESS" "OneDrive Sync Repair" "Live repair completed; changes=$CHANGES; warnings=$WARNINGS; transcript=$LOG_FILE"
 fi
 
-log "Finished $(date '+%Y-%m-%d %H:%M:%S')"
-open_transcript_log
-
-exit 0
+finish_with_transcript 0

@@ -149,7 +149,7 @@ run_onedrive_repair() {
     sn_ui_status "warning" "Read this screen before running the repair."
     sn_ui_instruction_card "WHAT THIS REPAIR DOES" \
         "Dry-run reports the repair sequence only. It never closes or reopens OneDrive." \
-        "Live repair closes OneDrive first, verifies it is stopped, repairs cached settings," \
+        "Live repair closes OneDrive and its Sync Service first, verifies they are stopped," \
         "then reopens OneDrive. Each completed run opens its timestamped transcript in TextEdit."
     sn_ui_footer "$TOOLKIT_VERSION" "$HELP_GUIDE"
 

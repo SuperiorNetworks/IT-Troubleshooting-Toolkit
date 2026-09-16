@@ -1,11 +1,11 @@
 # macOS Troubleshooter Terminal
 
-**Current version:** v3.14.0
+**Current version:** v3.15.0
 **Help Guide last updated:** 2026-09-16
 
 The **macOS Troubleshooter Terminal** is the macOS companion to the IT Troubleshooting Toolkit. It is designed to be run locally by the signed-in macOS user and currently includes a guided repair workflow for OneDrive synchronization failures after an operating-system update. The terminal uses the Superior Networks visual language: canonical-logo rendering in iTerm2, a high-contrast wordmark fallback in standard Terminal, clean neutral panels, prominent instruction cards, explicit status indicators, a visible version footer, and an in-terminal Help Guide.
 
-> **Safety model:** The OneDrive repair always runs a dry-run preview before the terminal offers the live repair. The dry run makes no changes, so it does not close or reopen OneDrive. The approved live repair closes OneDrive, verifies it has stopped before touching credentials or preference files, backs up affected preferences, then relaunches OneDrive. It does not delete any content within a OneDrive sync folder. Every completed run automatically opens its timestamped transcript in TextEdit for immediate review and ticket documentation.
+> **Safety model:** The OneDrive repair always runs a dry-run preview before the terminal offers the live repair. The dry run makes no changes, so it does not close or reopen OneDrive. The approved live repair closes both the OneDrive app and Microsoft's separate **OneDrive Sync Service**, verifies every OneDrive component has stopped before touching credentials or preference files, backs up affected preferences, then relaunches OneDrive. It does not delete any content within a OneDrive sync folder. Every completed or safely blocked run automatically opens its timestamped transcript in TextEdit for immediate review and ticket documentation.
 
 ## Requirements
 
@@ -116,7 +116,7 @@ The repair tool executes the following stages and writes detailed on-screen info
 |---|---|---|
 | 0. Pre-flight | Searches OneDrive folders for files modified in the prior 15 minutes | Requires typed `YES` if recent edits are found during a live repair |
 | 1. Dry-run preview | Reports the full close, verify, repair, and relaunch sequence | Does not close or reopen OneDrive because dry-run makes no changes |
-| 2. Live process stop | Quits OneDrive and Office integration processes, then only force-stops a process that will not close cleanly | Verifies all OneDrive-related processes are stopped; if not, exits before changing credentials or preferences |
+| 2. Live process stop | Quits OneDrive, explicitly stops the separate OneDrive Sync Service, and closes Office integration processes; force-stops only a component that will not close cleanly | PID-aware verification confirms all genuine OneDrive components are stopped; if not, exits before changing credentials or preferences and opens the transcript |
 | 3. Keychain cleanup | Removes stale OneDrive credentials by known Keychain labels | Begins only after OneDrive closure is verified; applies only to the signed-in user's Keychain |
 | 4. Preference repair | Backs up and removes the affected OneDrive sync plist files | Every targeted plist is copied to a timestamped Desktop backup folder before deletion |
 | 5. Preference cache | Signals `cfprefsd` to ensure deleted settings are not restored from cache | Falls back to a restart advisory if macOS does not accept the signal |
@@ -137,7 +137,7 @@ Verify two-way synchronization by creating `sync-test.txt` in the OneDrive folde
 
 ## Troubleshooting
 
-If the dry run exits with a nonzero code, the terminal will not offer the live repair. Review the on-screen error and `master_audit_log.txt`; typical causes are attempting to run the tool on a non-macOS host or with `sudo`.
+If the dry run exits with a nonzero code, the terminal will not offer the live repair. Review the on-screen error and `master_audit_log.txt`; typical causes are attempting to run the tool on a non-macOS host or with `sudo`. If a live repair stops with exit code `4`, OneDrive or its separate OneDrive Sync Service remained active. The script opens that run's transcript automatically; close the named process if necessary, then run the repair again.
 
 If OneDrive is not installed at `/Applications/OneDrive.app`, the script completes its repair actions but reports that the app must be installed or opened manually. If OneDrive continues to have issues after this repair, preserve the transcript log and Desktop plist backup before taking additional reset actions.
 

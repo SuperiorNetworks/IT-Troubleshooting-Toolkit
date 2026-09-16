@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.14.0
+Version: 3.15.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -90,6 +90,7 @@ Change Log:
 2026-09-16 v3.12.0 - Redesigned macOS Troubleshooter Terminal with branded graphical panels, actionable instruction cards, status labels, version footer, and in-terminal Help Guide.
 2026-09-16 v3.13.0 - Added Superior Networks logo rendering and clarified OneDrive dry-run/live sequencing: live repair closes, verifies, and relaunches OneDrive with audit logging.
 2026-09-16 v3.14.0 - Added automatic TextEdit opening of each completed OneDrive repair transcript, with audit logging and a --no-open-log override.
+2026-09-16 v3.15.0 - Added explicit OneDrive Sync Service shutdown and PID-aware verification; blocked runs now automatically open their transcript for review.
 
 .RELEASE_NOTES
 v2.5.0:
@@ -208,7 +209,7 @@ function Show-Menu {
     Clear-Host
     
     # Get version dynamically from script header
-    $scriptVersion = "3.14.0"
+    $scriptVersion = "3.15.0"
     $scriptPath = $PSCommandPath
     if (Test-Path $scriptPath) {
         $content = Get-Content $scriptPath -Raw
@@ -799,7 +800,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.14.0"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.15.0"
 
 # Main menu loop
 do {
