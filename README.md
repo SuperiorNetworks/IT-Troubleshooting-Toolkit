@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.15.0
+**Version:** 3.16.0
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -61,7 +61,7 @@ The macOS tools run in native **Terminal** with Bash and Git; **PowerShell is no
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_macos.sh)"
 ```
 
-The Git bootstrapper clones the version-controlled toolkit to `~/ITTools/Scripts`, reports whether the current version was installed or no changes were needed, displays release notes after an update, and launches the macOS terminal. From the menu, choose **Option 1 - OneDrive Sync Repair** for the dry-run-first repair flow or **Option 2 - Check GitHub for Toolkit Updates** when an update is desired.
+The Git bootstrapper clones the version-controlled toolkit to `~/ITTools/Scripts`, reports whether the current version was installed or no changes were needed, displays release notes after an update, and launches the macOS terminal. Before cloning, it verifies that Apple Command Line Tools are actually installed—not just that the macOS Git launcher exists. If they are missing, it opens the Apple installer, makes no partial installation, and tells the technician to rerun the same command after setup completes. From the menu, choose **Option 1 - OneDrive Sync Repair** for the dry-run-first repair flow or **Option 2 - Check GitHub for Toolkit Updates** when an update is desired.
 
 For direct script use after installation, run:
 
@@ -88,7 +88,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.15.0
+IT Troubleshooting Toolkit - v3.16.0
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -114,7 +114,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.15.0
+macOS Troubleshooter Terminal - Toolkit v3.16.0
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -132,7 +132,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.15.0
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.16.0
 ```
 
 ### Help Guide (Option H)
@@ -147,7 +147,7 @@ Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Tool
 
 **Behavior:** Runs `bootstrap_macos.sh`, fetches `origin/master`, and uses `git pull --ff-only` only when a newer commit exists. The update flow clearly reports either that no changes were made because the installed toolkit is current, or that a new version was installed along with its matching release notes. If local uncommitted changes exist, the update stops and displays the Git status without overwriting those changes.
 
-**Installation:** The supported one-command bootstrap clones the repository to `~/ITTools/Scripts` and preserves `.git` history for `git status`, `git log`, and future updates. If Git is absent, the bootstrapper directs the user to install Apple Command Line Tools with `xcode-select --install`.
+**Installation:** The supported one-command bootstrap clones the repository to `~/ITTools/Scripts` and preserves `.git` history for `git status`, `git log`, and future updates. The bootstrapper first validates Apple Command Line Tools with `xcode-select -p`. If the tools are missing, it invokes `xcode-select --install`, clearly states that no clone was attempted, and exits so the technician can rerun the same bootstrap command after Apple finishes the installation.
 
 ### Option 1 - OneDrive Sync Repair
 
@@ -181,7 +181,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.15.0
+ConnectWise RMM Troubleshooter - Toolkit v3.16.0
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -218,7 +218,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.15.0
+HP M404dn Printer Troubleshooter - Toolkit v3.16.0
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -268,7 +268,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.15.0
+StorageCraft Troubleshooter - Toolkit v3.16.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -920,6 +920,12 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.16.0 (2026-09-16) - MACOS PREREQUISITE FIX
+- **Apple Command Line Tools Check**: The macOS bootstrapper now validates `xcode-select -p` before it calls Git. This distinguishes a real Git installation from macOS's placeholder Git launcher.
+- **Guided Installation**: When the tools are missing, the bootstrapper requests the Apple installer, states that no toolkit download or partial installation was created, and provides the exact instruction to rerun the same bootstrap command after installation completes.
+- **Clearer Failure State**: If Command Line Tools are present but Git still cannot run, the bootstrapper provides a separate diagnostic path instead of reporting a misleading clone failure.
+- **Files Updated**: `bootstrap_macos.sh`, `MAC_TROUBLESHOOTER_GUIDE.md`, `launch_menu.ps1`, and `README.md`.
 
 ### Version 3.15.0 (2026-09-16) - ONEDRIVE SYNC SERVICE FIX
 - **Sync Service Shutdown**: Added explicit detection and shutdown handling for Microsoft's separate `OneDrive Sync Service`, which can remain active after the main OneDrive app exits.

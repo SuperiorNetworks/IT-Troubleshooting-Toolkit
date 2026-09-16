@@ -12,6 +12,7 @@
 #   - Retains the repository .git directory for status checks and safe updates
 #   - Uses fast-forward-only Git updates and preserves local changes without
 #     overwriting them
+#   - Detects missing Apple Command Line Tools before any Git clone is attempted
 #   - Shows whether no change was needed or which toolkit version was installed
 #   - Displays the matching release notes whenever an update is installed
 #   - Launches the native macOS Troubleshooter Terminal after install or update
@@ -21,6 +22,7 @@
 #                 SUPERIOR_NETWORKS_INSTALL_DIR  Installation directory override
 #                 SUPERIOR_NETWORKS_REPO_URL     Repository URL override
 #                 SUPERIOR_NETWORKS_BRANCH       Branch override
+#                 SUPERIOR_NETWORKS_XCODE_SELECT_BIN  Test-only xcode-select override
 # Outputs     : Console status output
 #               Install: ~/ITTools/Scripts (default)
 #               Audit  : ~/Library/Logs/SuperiorNetworks/master_audit_log.txt
@@ -28,6 +30,10 @@
 #               Git is normally supplied by Xcode Command Line Tools.
 # Notes       : Run as the signed-in macOS user, NOT with sudo. This tool does
 #               not use PowerShell and does not remove an existing non-Git folder.
+#
+# Change Log:
+#   2026-09-16 v3.16.0 - Detect missing Apple Command Line Tools before Git clone
+#                        and provide guided installation/re-run instructions (Dwain Henderson Jr.)
 # ==============================================================================
 
 set -u
@@ -36,6 +42,7 @@ SCRIPT_NAME="bootstrap_macos.sh"
 REPO_URL="${SUPERIOR_NETWORKS_REPO_URL:-https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit.git}"
 BRANCH="${SUPERIOR_NETWORKS_BRANCH:-master}"
 INSTALL_DIR="${SUPERIOR_NETWORKS_INSTALL_DIR:-$HOME/ITTools/Scripts}"
+XCODE_SELECT_BIN="${SUPERIOR_NETWORKS_XCODE_SELECT_BIN:-/usr/bin/xcode-select}"
 LOG_DIR="$HOME/Library/Logs/SuperiorNetworks"
 MASTER_AUDIT_LOG="$LOG_DIR/master_audit_log.txt"
 
@@ -105,15 +112,34 @@ show_release_notes() {
 }
 
 ensure_git_is_available() {
-    if command -v git >/dev/null 2>&1; then
+    if [ ! -x "$XCODE_SELECT_BIN" ] || ! "$XCODE_SELECT_BIN" -p >/dev/null 2>&1; then
+        printf '\n=== Apple Command Line Tools Required ===\n\n'
+        printf 'macOS provides a Git launcher, but the Apple Command Line Tools are not installed yet.\n'
+        printf 'The toolkit was NOT downloaded and no partial installation was created.\n\n'
+        printf 'A macOS installation dialog will now open. Select Install, wait for it to finish,\n'
+        printf 'then run this same bootstrap command again from Terminal.\n\n'
+
+        if [ -x "$XCODE_SELECT_BIN" ] && "$XCODE_SELECT_BIN" --install >/dev/null 2>&1; then
+            printf 'Apple Command Line Tools installation was requested.\n'
+        else
+            printf 'If no installation dialog appears, run this command manually:\n'
+            printf '  xcode-select --install\n'
+        fi
+
+        write_audit_log "ERROR" "macOS Git Bootstrap" "Apple Command Line Tools are not installed; clone was intentionally skipped"
+        exit 4
+    fi
+
+    if command -v git >/dev/null 2>&1 && git --version >/dev/null 2>&1; then
         return 0
     fi
 
-    printf 'Git is required to preserve repository version control.\n'
-    printf 'Install Apple Command Line Tools, then run this command again:\n'
+    printf '\n=== Git Is Not Available ===\n\n'
+    printf 'Apple Command Line Tools appear to be installed, but Git could not run.\n'
+    printf 'Restart Terminal and run this command again. If the issue continues, run:\n'
     printf '  xcode-select --install\n'
-    write_audit_log "ERROR" "macOS Git Bootstrap" "Git is not installed; directed user to xcode-select --install"
-    exit 1
+    write_audit_log "ERROR" "macOS Git Bootstrap" "Command Line Tools were detected but Git could not run"
+    exit 5
 }
 
 update_existing_installation() {

@@ -1,6 +1,6 @@
 # macOS Troubleshooter Terminal
 
-**Current version:** v3.15.0
+**Current version:** v3.16.0
 **Help Guide last updated:** 2026-09-16
 
 The **macOS Troubleshooter Terminal** is the macOS companion to the IT Troubleshooting Toolkit. It is designed to be run locally by the signed-in macOS user and currently includes a guided repair workflow for OneDrive synchronization failures after an operating-system update. The terminal uses the Superior Networks visual language: canonical-logo rendering in iTerm2, a high-contrast wordmark fallback in standard Terminal, clean neutral panels, prominent instruction cards, explicit status indicators, a visible version footer, and an in-terminal Help Guide.
@@ -11,7 +11,7 @@ The **macOS Troubleshooter Terminal** is the macOS companion to the IT Troublesh
 
 The terminal supports **macOS 12 or later** and uses the system-provided Bash 3.2 environment. It must be run by the signed-in user, not through `sudo`, because the affected OneDrive Keychain credentials and preference files are user-specific. OneDrive should be installed in `/Applications/OneDrive.app` for the relaunch step to work.
 
-The supported installation method requires **Git** and `curl`. macOS normally installs Git with the Apple Command Line Tools. If the installer reports that Git is unavailable, run `xcode-select --install`, finish the Apple prompt, then run the bootstrap command again.
+The supported installation method requires **Git** and `curl`. macOS normally installs Git with the Apple Command Line Tools. The bootstrapper verifies that these tools are genuinely installed before it attempts a clone. If they are missing, it requests the Apple installer, creates no partial toolkit installation, and exits. Select **Install** in the Apple dialog, wait until installation completes, close and reopen Terminal, then run the exact same bootstrap command again.
 
 ## One-Command Git Installation
 
@@ -21,7 +21,7 @@ Run this in **Terminal** as the signed-in user:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_macos.sh)"
 ```
 
-The bootstrapper clones the complete version-controlled repository to `~/ITTools/Scripts`, preserves its `.git` directory, confirms the installed master version, displays the applicable release notes, and launches the macOS terminal menu. It never uses PowerShell.
+The bootstrapper first verifies Apple Command Line Tools, then clones the complete version-controlled repository to `~/ITTools/Scripts`, preserves its `.git` directory, confirms the installed master version, displays the applicable release notes, and launches the macOS terminal menu. It never uses PowerShell. If Command Line Tools are missing, no Git clone is attempted; install them through the Apple dialog and rerun the same command after completion.
 
 If a previous Git-managed installation is present, run the same command again. The bootstrapper checks `origin/master` and performs a **fast-forward-only** update. If the installed toolkit is already current, it explicitly reports that no changes were made. If it updates, it reports the newly installed version and prints that version's release notes. Local uncommitted changes are never overwritten; instead, the installer stops and displays the Git status.
 
