@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.12.0
+**Version:** 3.13.0
 **Copyright:** 2025  
 **Developed by:** Superior Networks LLC
 
@@ -88,7 +88,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.12.0
+IT Troubleshooting Toolkit - v3.13.0
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -110,18 +110,18 @@ Windows/Office Activation:
 
 ## macOS Troubleshooter Terminal
 
-The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for macOS repair tasks. It retrieves the master toolkit version dynamically from `launch_menu.ps1` when the repository is present locally, with a GitHub fallback for standalone deployment. The interface uses a clean, high-contrast Superior Networks dashboard with boxed instructions, explicit status labels, numbered steps, an always-visible version footer, and a built-in Help Guide.
+The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for macOS repair tasks. It retrieves the master toolkit version dynamically from `launch_menu.ps1` when the repository is present locally, with a GitHub fallback for standalone deployment. The interface uses a clean, high-contrast Superior Networks dashboard with the canonical local logo on iTerm2, an accessible Superior Networks wordmark fallback in standard Terminal, boxed instructions, explicit status labels, numbered steps, an always-visible version footer, and a built-in Help Guide.
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.12.0
+macOS Troubleshooter Terminal - Toolkit v3.13.0
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
 
 TROUBLESHOOTING
   [ 1 ]  OneDrive Sync Repair
-         Dry-run preview first. No OneDrive folder data is deleted.
+         Dry-run previews only. Live repair closes, verifies, then reopens OneDrive.
 
 TOOLKIT MANAGEMENT
   [ 2 ]  Check GitHub for Toolkit Updates
@@ -132,7 +132,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.12.0
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.13.0
 ```
 
 ### Help Guide (Option H)
@@ -153,14 +153,14 @@ Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Tool
 
 **Purpose:** Repair common OneDrive synchronization failures after a macOS update without resetting or deleting local OneDrive content.
 
-**Workflow:** The terminal presents a high-contrast **What This Repair Does** card before it starts. It then runs `Fix-OneDriveSync-macOS.sh --dry-run` and displays every proposed action. A numbered **Step 2 of 3 - Your Approval** card summarizes the protected scope and requires the technician to type `YES` before the live repair. A completion card then highlights the required sign-in, existing-folder, and ticket-record steps.
+**Workflow:** The terminal presents a high-contrast **What This Repair Does** card before it starts. The dry run then reports the close, verify, repair, and relaunch sequence while leaving OneDrive fully unchanged. A numbered **Step 2 of 3 - Your Approval** card states that the live repair will close OneDrive, verify its processes have stopped, repair the protected settings, and then reopen OneDrive. The technician must type `YES` before that live workflow begins. If OneDrive cannot be closed, the live script stops before it changes any credentials or preference files.
 
 **Features:**
 - Checks for files modified in the last 15 minutes before a live repair and requires confirmation if recent edits are found.
 - Stops OneDrive and related Office processes, clears known stale OneDrive Keychain credentials, and backs up affected preference plists before removing them.
 - Flushes the macOS preference cache and relaunches OneDrive for a clean sign-in.
 - Never deletes files from the user's OneDrive folder.
-- Creates a verbose per-run transcript and records menu selections, approvals, completion states, and errors in the macOS master audit log.
+- Creates a verbose per-run transcript and records menu selections, approvals, OneDrive closure verification, relaunch outcome, completion states, and errors in the macOS master audit log.
 
 **Files:**
 - `mac_troubleshooter_terminal.sh` - Interactive macOS terminal menu
@@ -180,7 +180,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.12.0
+ConnectWise RMM Troubleshooter - Toolkit v3.13.0
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -217,7 +217,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.12.0
+HP M404dn Printer Troubleshooter - Toolkit v3.13.0
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -267,7 +267,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.12.0
+StorageCraft Troubleshooter - Toolkit v3.13.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -919,6 +919,13 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.13.0 (2026-09-16) - BRANDING AND REPAIR SEQUENCE
+- **Superior Networks Logo**: Added canonical-logo rendering to the macOS terminal. iTerm2 displays the local PNG inline when available; standard macOS Terminal shows a high-contrast Superior Networks wordmark fallback.
+- **Dry-Run Safety**: Clarified and enforced that `--dry-run` reports the full stop, verify, repair, and relaunch sequence but does not close or reopen OneDrive because dry-run makes no changes.
+- **Live Repair Sequence**: The live repair now closes OneDrive first, verifies no OneDrive-related process remains before it can alter credentials or preferences, then logs and relaunches OneDrive at completion. If OneDrive will not close, the repair exits before changing those settings.
+- **Auditability**: Added master-audit entries for OneDrive closure verification, a blocked repair, and relaunch success, skip, or failure.
+- **Files Updated**: `mac_terminal_ui.sh`, `mac_troubleshooter_terminal.sh`, `Fix-OneDriveSync-macOS.sh`, `MAC_TROUBLESHOOTER_GUIDE.md`, `launch_menu.ps1`, and `README.md`.
 
 ### Version 3.12.0 (2026-09-16) - USER EXPERIENCE
 - **Graphical Terminal Redesign**: Rebuilt the macOS Troubleshooter Terminal as a branded ANSI dashboard using the Superior Networks visual standards: neutral panels, high-contrast instruction cards, explicit status labels, and step indicators.

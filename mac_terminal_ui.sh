@@ -27,6 +27,7 @@
 #
 # Change Log:
 #   2026-09-16 v3.12.0 - Initial terminal design system (Dwain Henderson Jr.)
+#   2026-09-16 v3.13.0 - Added native inline-logo support and Terminal wordmark fallback (Dwain Henderson Jr.)
 # ==============================================================================
 
 set -u
@@ -175,9 +176,28 @@ sn_ui_show_brand() {
 }
 
 sn_ui_show_optional_logo() {
-    if command -v imgcat >/dev/null 2>&1 && [ -f "$SN_UI_LOGO" ] && [ -t 1 ]; then
-        imgcat -W 121 -H 64 "$SN_UI_LOGO" 2>/dev/null || true
+    local encoded_logo=""
+
+    if [ ! -t 1 ]; then
+        return
     fi
+
+    if command -v imgcat >/dev/null 2>&1 && [ -f "$SN_UI_LOGO" ]; then
+        imgcat -W 121 -H 64 "$SN_UI_LOGO" 2>/dev/null && return
+    fi
+
+    if [ "${TERM_PROGRAM:-}" = "iTerm.app" ] && [ -f "$SN_UI_LOGO" ] && command -v base64 >/dev/null 2>&1; then
+        encoded_logo="$(base64 "$SN_UI_LOGO" | tr -d '\n')"
+        if [ -n "$encoded_logo" ]; then
+            printf '\033]1337;File=inline=1;width=121px;height=64px;preserveAspectRatio=1:%s\a\n' "$encoded_logo"
+            return
+        fi
+    fi
+
+    # macOS Terminal cannot render raster images inline. Preserve a branded,
+    # high-contrast wordmark instead of hiding the logo entirely.
+    printf '\n%s%s  S N  |  SUPERIOR NETWORKS%s\n' "$SN_UI_ACCENT" "$SN_UI_BOLD" "$SN_UI_RESET"
+    printf '%s  Managed IT & Security Services%s\n' "$SN_UI_MUTED" "$SN_UI_RESET"
 }
 
 sn_ui_status() {

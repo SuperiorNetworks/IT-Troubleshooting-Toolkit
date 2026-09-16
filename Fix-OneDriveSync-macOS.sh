@@ -30,12 +30,13 @@
 #               Audit: ~/Library/Logs/SuperiorNetworks/master_audit_log.txt
 #               Bkup : ~/Desktop/OneDrive-Plist-Backup-<stamp>/
 # Exit Codes  : 0 success, 1 usage error, 2 unsupported platform,
-#               3 run as root (not permitted)
+#               3 run as root (not permitted), 4 OneDrive would not close
 # Dependencies: macOS 12 or later, bash 3.2+, /usr/bin/security, /usr/bin/plutil,
 #               /usr/bin/osascript, /usr/bin/killall. No admin rights required.
 # Notes       : Run as the signed-in user, NOT with sudo. Keychain and preference
 #               files are per-user. A full "reset OneDrive" is intentionally NOT
-#               performed because it can remove local content.
+#               performed because it can remove local content. Dry-run mode does
+#               not close or relaunch OneDrive because it must make no changes.
 # ==============================================================================
 
 set -u
@@ -131,6 +132,35 @@ skip() { log "  [ SKIP ] $*"; }
 warn() { log "  [ WARN ] $*"; WARNINGS=$((WARNINGS+1)); }
 act()  { log "  [ ACT ]  $*"; CHANGES=$((CHANGES+1)); }
 plan() { log "  [ DRY ]  would $*"; }
+
+get_running_onedrive_processes() {
+  /usr/bin/pgrep -fl -i onedrive 2>/dev/null | grep -v "$SCRIPT_NAME" || true
+}
+
+verify_onedrive_stopped() {
+  local still_running=""
+
+  still_running="$(get_running_onedrive_processes)"
+  if [ -n "$still_running" ]; then
+    if [ "$DRY_RUN" -eq 1 ]; then
+      plan "verify OneDrive is closed before a live credential or preference repair"
+      log "  [ DRY ]  OneDrive is currently running; the live repair would close it first."
+      return 0
+    fi
+
+    warn "OneDrive-related processes are still running. No credential or preference changes will be made."
+    printf '%s\n' "$still_running" | while IFS= read -r L; do log "           $L"; done
+    write_audit_log "ERROR" "OneDrive Sync Repair" "OneDrive would not close; repair stopped before credential or preference changes"
+    exit 4
+  fi
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    plan "verify OneDrive is closed before a live credential or preference repair"
+  else
+    ok "Verified OneDrive is closed before credential and preference repair."
+    write_audit_log "INFO" "OneDrive Sync Repair" "Verified OneDrive closed before credential and preference repair"
+  fi
+}
 
 usage() {
   cat <<USAGE
@@ -250,12 +280,9 @@ for PROC in "${PROCESSES[@]}"; do
   fi
 done
 
-# Report anything OneDrive-related still alive, for the ticket record.
-STILL="$(/usr/bin/pgrep -fl -i onedrive 2>/dev/null | grep -v "$SCRIPT_NAME" || true)"
-if [ -n "$STILL" ]; then
-  warn "OneDrive-related processes still present:"
-  printf '%s\n' "$STILL" | while IFS= read -r L; do log "           $L"; done
-fi
+# Verify the live repair never changes credentials or preferences while OneDrive
+# is still active. Dry-run mode reports the required sequence without changing it.
+verify_onedrive_stopped
 
 # ---------------------- Step 2: purge keychain credentials -------------------
 head1 "Step 2: Removing cached OneDrive keychain credentials"
@@ -345,16 +372,20 @@ fi
 head1 "Step 5: Relaunching OneDrive"
 if [ "$RELAUNCH" -eq 0 ]; then
   skip "Relaunch skipped by --no-relaunch"
+  write_audit_log "INFO" "OneDrive Sync Repair" "OneDrive relaunch skipped by --no-relaunch"
 elif [ "$DRY_RUN" -eq 1 ]; then
   plan "open /Applications/OneDrive.app"
 elif [ -d "/Applications/OneDrive.app" ]; then
   if /usr/bin/open -a "/Applications/OneDrive.app" 2>/dev/null; then
     act "Launched OneDrive. Sign in when prompted."
+    write_audit_log "SUCCESS" "OneDrive Sync Repair" "OneDrive relaunched after live repair"
   else
     warn "Could not launch OneDrive. Open it from the Applications folder."
+    write_audit_log "ERROR" "OneDrive Sync Repair" "OneDrive could not be relaunched automatically"
   fi
 else
   warn "OneDrive.app not found. Install the current version, then sign in."
+  write_audit_log "ERROR" "OneDrive Sync Repair" "OneDrive.app was not available for relaunch"
 fi
 
 # ----------------------------- Summary -------------------------------------

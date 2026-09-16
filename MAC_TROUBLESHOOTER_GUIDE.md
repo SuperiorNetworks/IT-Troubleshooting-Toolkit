@@ -1,11 +1,11 @@
 # macOS Troubleshooter Terminal
 
-**Current version:** v3.12.0
+**Current version:** v3.13.0
 **Help Guide last updated:** 2026-09-16
 
-The **macOS Troubleshooter Terminal** is the macOS companion to the IT Troubleshooting Toolkit. It is designed to be run locally by the signed-in macOS user and currently includes a guided repair workflow for OneDrive synchronization failures after an operating-system update. The terminal uses the Superior Networks visual language: clean neutral panels, high-contrast labels, prominent instruction cards, explicit status indicators, a visible version footer, and an in-terminal Help Guide.
+The **macOS Troubleshooter Terminal** is the macOS companion to the IT Troubleshooting Toolkit. It is designed to be run locally by the signed-in macOS user and currently includes a guided repair workflow for OneDrive synchronization failures after an operating-system update. The terminal uses the Superior Networks visual language: canonical-logo rendering in iTerm2, a high-contrast wordmark fallback in standard Terminal, clean neutral panels, prominent instruction cards, explicit status indicators, a visible version footer, and an in-terminal Help Guide.
 
-> **Safety model:** The OneDrive repair always runs a dry-run preview before the terminal offers the live repair. The live repair does not delete any content within a OneDrive sync folder. It backs up affected OneDrive preference files before removal and preserves a timestamped transcript for ticket records.
+> **Safety model:** The OneDrive repair always runs a dry-run preview before the terminal offers the live repair. The dry run makes no changes, so it does not close or reopen OneDrive. The approved live repair closes OneDrive, verifies it has stopped before touching credentials or preference files, backs up affected preferences, then relaunches OneDrive. It does not delete any content within a OneDrive sync folder and preserves a timestamped transcript for ticket records.
 
 ## Requirements
 
@@ -65,7 +65,7 @@ START HERE
 
 TROUBLESHOOTING
   [ 1 ]  OneDrive Sync Repair
-         Dry-run preview first. No OneDrive folder data is deleted.
+         Dry-run previews only. Live repair closes, verifies, then reopens OneDrive.
 
 TOOLKIT MANAGEMENT
   [ 2 ]  Check GitHub for Toolkit Updates
@@ -104,7 +104,7 @@ Terminal status labels use clear language rather than decorative color alone: `[
 
 Select **H** at any time from the main menu to open the in-terminal **Help Guide**. It summarizes the OneDrive repair, Git update policy, local-change protection, log locations, and the operating limit that OneDrive folder data is never deleted. The footer on each terminal screen displays both the current toolkit version and the Help Guide entry point.
 
-The canonical Superior Networks logo is included locally at `assets/superior-networks-logo.png`. Standard macOS Terminal does not display inline images, so the terminal preserves an accessible text-based brand header. iTerm2 users with `imgcat` installed receive an optional inline-logo enhancement.
+The canonical Superior Networks logo is included locally at `assets/superior-networks-logo.png`. iTerm2 displays this local asset inline through `imgcat` when available or its native inline-image protocol. Standard macOS Terminal does not display raster images inline, so it shows a high-contrast **S N | SUPERIOR NETWORKS** wordmark and service line instead. Both paths retain a visible, accessible brand identity.
 
 ## OneDrive Sync Repair Workflow
 
@@ -113,11 +113,12 @@ The repair tool executes the following stages and writes detailed on-screen info
 | Stage | Operation | Safeguard |
 |---|---|---|
 | 0. Pre-flight | Searches OneDrive folders for files modified in the prior 15 minutes | Requires typed `YES` if recent edits are found during a live repair |
-| 1. Process stop | Quits OneDrive and Office integration processes, then only force-stops a process that will not close cleanly | Does not affect user OneDrive content |
-| 2. Keychain cleanup | Removes stale OneDrive credentials by known Keychain labels | Applies only to the signed-in user's Keychain |
-| 3. Preference repair | Backs up and removes the affected OneDrive sync plist files | Every targeted plist is copied to a timestamped Desktop backup folder before deletion |
-| 4. Preference cache | Signals `cfprefsd` to ensure deleted settings are not restored from cache | Falls back to a restart advisory if macOS does not accept the signal |
-| 5. Relaunch | Opens OneDrive and directs the user to sign in and retain the existing folder location | Can be skipped with `--no-relaunch` |
+| 1. Dry-run preview | Reports the full close, verify, repair, and relaunch sequence | Does not close or reopen OneDrive because dry-run makes no changes |
+| 2. Live process stop | Quits OneDrive and Office integration processes, then only force-stops a process that will not close cleanly | Verifies all OneDrive-related processes are stopped; if not, exits before changing credentials or preferences |
+| 3. Keychain cleanup | Removes stale OneDrive credentials by known Keychain labels | Begins only after OneDrive closure is verified; applies only to the signed-in user's Keychain |
+| 4. Preference repair | Backs up and removes the affected OneDrive sync plist files | Every targeted plist is copied to a timestamped Desktop backup folder before deletion |
+| 5. Preference cache | Signals `cfprefsd` to ensure deleted settings are not restored from cache | Falls back to a restart advisory if macOS does not accept the signal |
+| 6. Relaunch | Opens OneDrive and directs the user to sign in and retain the existing folder location | Live repair logs the relaunch result; can be skipped with `--no-relaunch` |
 
 The terminal and repair script create two kinds of logs in `~/Library/Logs/SuperiorNetworks/`:
 
@@ -128,7 +129,7 @@ The backup directory is created only for a live repair at `~/Desktop/OneDrive-Pl
 
 ## Post-Repair Verification
 
-After OneDrive starts, sign in with the user's work email address and **accept the existing OneDrive folder location**. Do not select a new sync folder. Approve any macOS file-access or system-extension prompt, then update OneDrive and Microsoft Office from the App Store if updates are available.
+After the live repair relaunches OneDrive, sign in with the user's work email address and **accept the existing OneDrive folder location**. Do not select a new sync folder. Approve any macOS file-access or system-extension prompt, then update OneDrive and Microsoft Office from the App Store if updates are available.
 
 Verify two-way synchronization by creating `sync-test.txt` in the OneDrive folder, confirming that it appears at [Microsoft 365](https://www.office.com/), renaming it online, and confirming that the new name reaches the Mac. Delete the test file once both directions succeed.
 

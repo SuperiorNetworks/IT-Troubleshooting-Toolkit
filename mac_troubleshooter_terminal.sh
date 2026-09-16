@@ -100,7 +100,7 @@ show_menu() {
         "Use Help Guide for the workflow, safeguards, and log locations."
 
     sn_ui_section_label "TROUBLESHOOTING"
-    sn_ui_menu_card "1" "OneDrive Sync Repair" "Dry-run preview first. No OneDrive folder data is deleted."
+    sn_ui_menu_card "1" "OneDrive Sync Repair" "Dry-run previews only. Live repair closes, verifies, then reopens OneDrive."
 
     sn_ui_section_label "TOOLKIT MANAGEMENT"
     sn_ui_menu_card "2" "Check GitHub for Toolkit Updates" "On-demand only. Git history and local changes are protected."
@@ -120,7 +120,7 @@ show_help_guide() {
     sn_ui_section_label "ONE DRIVE REPAIR"
     sn_ui_instruction_card "SAFE, GUIDED WORKFLOW" \
         "Option 1 always runs a dry-run preview before it offers a live repair." \
-        "The live repair backs up affected plist files and never deletes OneDrive folder data." \
+        "Dry-run never closes or reopens OneDrive. Live repair closes, verifies, then reopens it." \
         "Type YES only after reviewing the preview and confirming recent work is synced."
 
     sn_ui_section_label "GITHUB UPDATES"
@@ -148,9 +148,9 @@ run_onedrive_repair() {
     sn_ui_show_optional_logo
     sn_ui_status "warning" "Read this screen before running the repair."
     sn_ui_instruction_card "WHAT THIS REPAIR DOES" \
-        "It stops OneDrive and related Office helpers, clears stale OneDrive credentials," \
-        "backs up targeted sync preferences, refreshes the preference cache, and relaunches OneDrive." \
-        "It NEVER deletes files inside the user's OneDrive folder."
+        "Dry-run reports the repair sequence only. It never closes or reopens OneDrive." \
+        "Live repair closes OneDrive first, verifies it is stopped, repairs cached settings," \
+        "then reopens OneDrive. It NEVER deletes files inside the user's OneDrive folder."
     sn_ui_footer "$TOOLKIT_VERSION" "$HELP_GUIDE"
 
     if [ ! -f "$ONEDRIVE_TOOL" ]; then
@@ -173,7 +173,7 @@ run_onedrive_repair() {
     fi
 
     sn_ui_step "1" "3" "Safety Preview"
-    sn_ui_status "action" "Running a dry-run. It reports actions only and changes nothing."
+    sn_ui_status "action" "Running a dry-run. It reports actions only; OneDrive stays open and unchanged."
     "$ONEDRIVE_TOOL" --dry-run
     status=$?
     if [ "$status" -ne 0 ]; then
@@ -186,8 +186,8 @@ run_onedrive_repair() {
     sn_ui_step "2" "3" "Your Approval"
     sn_ui_instruction_card "PREVIEW COMPLETE - ACTION REQUIRED" \
         "Review the dry-run results above before choosing. The live repair will affect only" \
-        "OneDrive processes, cached credentials, and backed-up preference files." \
-        "Run the live repair now? Type YES to proceed, or press Return to cancel."
+        "OneDrive processes, cached credentials, and backed-up preference files. It closes OneDrive" \
+        "before the repair, verifies it stopped, then reopens OneDrive. Type YES to proceed."
     printf '\n%sType YES to run the live repair: %s' "$SN_UI_BOLD" "$SN_UI_RESET"
     read -r approval
     if [ "$approval" != "YES" ]; then
@@ -199,12 +199,12 @@ run_onedrive_repair() {
 
     write_audit_log "INFO" "OneDrive Sync Repair" "Live repair approved after dry run"
     sn_ui_step "3" "3" "Live Repair"
-    sn_ui_status "action" "Running the approved repair. Follow the final sign-in and sync verification steps."
+    sn_ui_status "action" "Closing and verifying OneDrive before repair; it will reopen when the repair completes."
     "$ONEDRIVE_TOOL"
     status=$?
     if [ "$status" -eq 0 ]; then
         sn_ui_instruction_card "REPAIR COMPLETE" \
-            "Sign in to OneDrive with the work account when prompted." \
+            "OneDrive was reopened. Sign in to OneDrive with the work account when prompted." \
             "Keep the EXISTING OneDrive folder location. Do not select a new sync folder." \
             "Use the repair transcript and master audit log for the ticket record."
         sn_ui_status "success" "OneDrive repair completed successfully."
