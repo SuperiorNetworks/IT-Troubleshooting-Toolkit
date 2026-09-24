@@ -2,8 +2,8 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.16.0
-**Copyright:** 2025  
+**Version:** 3.17.0
+**Copyright:** 2025-2026  
 **Developed by:** Superior Networks LLC
 
 ---
@@ -21,6 +21,7 @@ The **IT Troubleshooting Toolkit** is a comprehensive PowerShell-based solution 
 - **FTP Synchronization** - Multiple methods to sync backups to offsite FTP servers
 - **ImageManager Integration** - Query replication queue and manage backup jobs
 - **Service Management** - Control ImageManager service (start/stop/restart/status)
+- **StorageCraft Log Browsing** - Built-in log library and pager for StorageCraft SPX and ImageManager logs
 - **Automated Deployment** - One-command installation and auto-update system
 - **Comprehensive Logging** - Track all operations with detailed audit trails
 
@@ -88,7 +89,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.16.0
+IT Troubleshooting Toolkit - v3.17.0
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -114,7 +115,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.16.0
+macOS Troubleshooter Terminal - Toolkit v3.17.0
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -132,7 +133,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.16.0
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.17.0
 ```
 
 ### Help Guide (Option H)
@@ -181,7 +182,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.16.0
+ConnectWise RMM Troubleshooter - Toolkit v3.17.0
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -218,7 +219,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.16.0
+HP M404dn Printer Troubleshooter - Toolkit v3.17.0
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -268,7 +269,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.16.0
+StorageCraft Troubleshooter - Toolkit v3.17.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -283,11 +284,12 @@ ImageManager Service Management:
   8. Check ImageManager Service Status
 
 Logs and Diagnostics:
-  9. View FTP Upload Logs
+   9. StorageCraft Logs (SPX & ImageManager)
+  10. View FTP Upload Logs
 
 Utilities:
-  10. Download/Install WinSCP
-  11. Install Access Database Engine
+  11. Download/Install WinSCP
+  12. Install Access Database Engine
 
   B. Back to Main Menu
 ```
@@ -378,7 +380,7 @@ Please refer to the `Large_File_Transfer_Fix_Guide.md` file in the repository fo
 
 **Requirements:**
 - Microsoft Access Database Engine (ACE) OLE DB Provider
-- Automatically prompts to install if missing (menu option #10)
+- Automatically prompts to install if missing (menu option #12)
 - Free Microsoft component (~25 MB download)
 - Works on all Windows versions (Server 2008 R2+, Windows 7+)
 
@@ -435,7 +437,7 @@ Please refer to the `Large_File_Transfer_Fix_Guide.md` file in the repository fo
 
 ---
 
-### 10. Download/Install WinSCP
+### 11. Download/Install WinSCP
 
 **Purpose:** Install WinSCP portable for FTP sync operations
 
@@ -451,7 +453,7 @@ Please refer to the `Large_File_Transfer_Fix_Guide.md` file in the repository fo
 
 ---
 
-### 11. Install Access Database Engine
+### 12. Install Access Database Engine
 
 **Purpose:** Install Microsoft Access Database Engine for ImageManager database access
 
@@ -493,14 +495,58 @@ Please refer to the `Large_File_Transfer_Fix_Guide.md` file in the repository fo
 **Use Case:** Required for option #3 (Upload ImageManager Queue). The tool will auto-prompt to install if missing.
 
 **Hybrid Approach:**
-- **Menu Option #10** - Install manually anytime
+- **Menu Option #12** - Install manually anytime
 - **Auto-Prompt** - When using option #3, automatically detects and offers to install
 
 **File:** `install_access_engine.ps1`
 
 ---
 
-### 9. View FTP Upload Logs
+### 9. StorageCraft Logs (SPX & ImageManager) - NEW in v3.17.0
+
+**Purpose:** Browse, search, and open the StorageCraft logs that explain what SPX and ImageManager
+actually did, without hunting through Explorer or remembering log paths.
+
+**Searched Locations:**
+
+- `C:\ProgramData\StorageCraft\spx\log` - ShadowProtect SPX service and backup job logs
+- `%LocalAppData%\StorageCraft\spx-gui\log` - SPX GUI and context menu logs (current user)
+- Other local user profiles that contain SPX GUI logs (detected only when present)
+- `C:\Program Files\StorageCraft\ImageManager\Logs` and `C:\Program Files (x86)\StorageCraft\ImageManager\Logs`
+- `C:\ProgramData\StorageCraft\ImageManager\Logs`
+
+**Log Library:**
+
+- One table combining every discovered log with its **source**, **date modified**, **size**, and **file name**
+- Sorts by date modified (newest first), file name, or size (largest first)
+- Filters by source (`SPX Service`, `SPX GUI`, `ImageManager`) and by file name text
+- Page navigation for long lists, plus a source status header showing which paths were found or missing
+
+**Built-in Log Viewer:**
+
+- Select any file by number to open it inside the toolkit; no external viewer is required
+- Page forward and backward through large logs, jump to a specific line, or jump to the start or end of the file
+- Find text with a match list (line numbers plus preview) and jump straight to a match
+- Highlight every match on the visible page, and optionally wrap long lines to the window width
+- Open the selected log in Notepad, open its containing folder, or export a timestamped copy for a support ticket
+
+**Diagnostics Features:**
+
+- **Cross-log search** - scan every discovered log for one string and see which files matched
+- **Export for support** - copies a selected log to `C:\ITTools\Scripts\Logs\LogExports` with a timestamp
+- **Verbose troubleshooting mode** - optional on-screen trace written to `C:\ITTools\Scripts\Logs\storagecraft_log_viewer_log.txt`
+- **Master audit logging** - every file opened, search run, filter change, and error is recorded
+- **Administrator recommended** - reading `ProgramData` and `Program Files` logs may require elevated rights
+
+**Use Case:** Confirm whether a backup actually ran, diagnose failed or missed SPX jobs, and review
+ImageManager verification, consolidation, and retention behavior when a replication or retention
+problem is reported.
+
+**File:** `storagecraft_log_viewer.ps1`
+
+---
+
+### 10. View FTP Upload Logs
 
 **Purpose:** View and analyze FTP operation logs
 
@@ -634,6 +680,7 @@ C:\ITTools\
 │   ├── MAC_TROUBLESHOOTER_GUIDE.md
 │   ├── assets\superior-networks-logo.png
 │   ├── storagecraft_troubleshooter.ps1
+│   ├── storagecraft_log_viewer.ps1
 │   ├── ftp_troubleshooter_tool.ps1
 │   ├── ftp_sync_tool.ps1
 │   ├── ftp_sync_imagemanager.ps1
@@ -652,7 +699,9 @@ C:\ITTools\
 │       ├── hp_m404dn_troubleshooter_log.txt
 │       ├── hp_m404dn_connectivity_log.txt
 │       ├── hp_m404dn_spooler_log.txt
-│       └── hp_m404dn_driver_log.txt
+│       ├── hp_m404dn_driver_log.txt
+│       ├── storagecraft_log_viewer_log.txt
+│       └── LogExports\         # Exported log copies for support tickets
 │   ├── Downloads\             # ConnectWise RMM repair utility download
 │   │   └── CWRMM\
 │   │       └── platform-watchdog.exe
@@ -788,6 +837,15 @@ Credentials are **not stored** - you must enter them each time for security.
 **OneDrive Repair Transcript:** `~/Library/Logs/SuperiorNetworks/Fix-OneDriveSync-<timestamp>.log`
 - Detailed pre-flight results, process handling, Keychain cleanup, preference backup and removal, and post-repair instructions; automatically opens in TextEdit after a completed run
 
+### StorageCraft Log Viewer Logs
+
+**Log Viewer Activity Log:** `C:\ITTools\Scripts\Logs\storagecraft_log_viewer_log.txt`
+- Log inventory refreshes, files opened, searches run, filters, exports, and errors
+- Verbose troubleshooting mode writes its detailed trace here and to the screen
+
+**Exported Log Copies:** `C:\ITTools\Scripts\Logs\LogExports\`
+- Timestamped copies of StorageCraft logs collected for a support ticket or escalation
+
 ### Log Format
 
 ```
@@ -920,6 +978,16 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.17.0 (2026-09-24) - STORAGECRAFT LOG VIEWER
+- **StorageCraft Logs Section**: Added option 9, `StorageCraft Logs (SPX & ImageManager)`, to the StorageCraft Troubleshooter submenu.
+- **Log Library**: Combines the SPX service log path, the SPX GUI log path (current user plus any other local profile that has one), and both common ImageManager log paths into one list showing source, date modified, size, and file name.
+- **Built-in Viewer**: Selecting a log opens it in an internal pager with page navigation, jump-to-line, start/end jumps, text search with a match list, match highlighting, and optional line wrap, so very large logs can be reviewed without opening an external editor.
+- **Support Workflow**: Logs can be opened in Notepad, their folder opened in Explorer, or a timestamped copy exported to `C:\ITTools\Scripts\Logs\LogExports` for a support ticket.
+- **Cross-Log Search**: Optionally scans every discovered log for one string at a time and reports which files matched.
+- **Diagnostics**: Adds a verbose troubleshooting mode (screen plus `storagecraft_log_viewer_log.txt`) and master audit logging for opened files, searches, filter changes, and errors.
+- **Menu Renumbering**: `View FTP Upload Logs` is now option 10, `Download/Install WinSCP` is option 11, and `Install Access Database Engine` is option 12; all documentation references were updated to match.
+- **Files Updated**: `storagecraft_log_viewer.ps1` (new), `storagecraft_troubleshooter.ps1`, `launch_menu.ps1`, and `README.md`.
 
 ### Version 3.16.0 (2026-09-16) - MACOS PREREQUISITE FIX
 - **Apple Command Line Tools Check**: The macOS bootstrapper now validates `xcode-select -p` before it calls Git. This distinguishes a real Git installation from macOS's placeholder Git launcher.

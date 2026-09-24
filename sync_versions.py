@@ -17,6 +17,7 @@ SCRIPTS = [
     "ftp_troubleshooter_tool.ps1",
     "ftp_ps_checker.ps1",
     "storagecraft_troubleshooter.ps1",
+    "storagecraft_log_viewer.ps1",
     "diagnostic_imagemanager_db.ps1",
     "install_access_engine.ps1",
     "launch_menu.ps1",

@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.16.0
+Version: 3.17.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -92,7 +92,9 @@ Change Log:
 2026-09-16 v3.14.0 - Added automatic TextEdit opening of each completed OneDrive repair transcript, with audit logging and a --no-open-log override.
 2026-09-16 v3.15.0 - Added explicit OneDrive Sync Service shutdown and PID-aware verification; blocked runs now automatically open their transcript for review.
 2026-09-16 v3.16.0 - Improved macOS bootstrap prerequisite handling: detects missing Apple Command Line Tools before clone, requests install, and provides clear rerun guidance.
-
+2026-09-24 v3.17.0 - Added StorageCraft Logs to the StorageCraft Troubleshooter submenu; new
+                    storagecraft_log_viewer.ps1 lists SPX, SPX GUI, and ImageManager logs with
+                    date, name, and size, and opens them in a built-in pager with search.
 .RELEASE_NOTES
 v2.5.0:
 - Added comprehensive master audit logging system for troubleshooting
@@ -210,7 +212,7 @@ function Show-Menu {
     Clear-Host
     
     # Get version dynamically from script header
-    $scriptVersion = "3.16.0"
+    $scriptVersion = "3.17.0"
     $scriptPath = $PSCommandPath
     if (Test-Path $scriptPath) {
         $content = Get-Content $scriptPath -Raw
@@ -801,7 +803,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.16.0"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.17.0"
 
 # Main menu loop
 do {

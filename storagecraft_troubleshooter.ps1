@@ -4,31 +4,40 @@ StorageCraft Troubleshooter - Submenu for StorageCraft backup tools
 
 .DESCRIPTION
 Name: storagecraft_troubleshooter.ps1
-Version: 3.8.0
+Version: 3.17.0
 Purpose: Centralized submenu for StorageCraft backup troubleshooting tools.
-         Provides access to Manual FTP Tool, FTP Sync, and ImageManager service management.
-Path: /scripts/storagecraft_troubleshooter.ps1
-Copyright: 2025
+         Provides access to Manual FTP Tool, FTP Sync, ImageManager service management,
+         and the StorageCraft Log Viewer for browsing SPX and ImageManager logs.
+Author: Dwain Henderson Jr. | Superior Networks LLC
+Contact: (937) 985-2480 | dhenderson@superiornetworks.biz
+Path: C:\ITTools\Scripts\storagecraft_troubleshooter.ps1
+Copyright: 2025-2026
 
 Key Features:
 - Manual FTP file upload tool (backup for ImageManager failures)
 - ImageManager service management (start/stop/restart/status)
+- StorageCraft Logs section for SPX and ImageManager logs (date, name, size, built-in pager)
 - User-friendly submenu interface
 - Real-time service status display
 - Administrator privilege detection
+- Verbose troubleshooting mode for the log viewer
 - Superior Networks branding
 
 Input: 
-- User menu selection (1-5 or B for Back)
+- User menu selection (1-12 or B for Back)
+- User commands inside the StorageCraft Log Viewer (file number, paging, search, filter)
 
 Output:
 - Launched FTP troubleshooter tool
+- Log library listing with source, date modified, size, and file name
+- Paginated log content with text search, plus optional Notepad, folder, and export actions
 - Service status changes
 - Service information display
 
 Dependencies:
 - Windows PowerShell 5.1 or higher
 - ftp_troubleshooter_tool.ps1 (for Manual FTP Tool)
+- storagecraft_log_viewer.ps1 (for the StorageCraft Logs section)
 - Administrator privileges (for service management)
 
 Change Log:
@@ -38,11 +47,15 @@ Change Log:
 2025-12-08 v1.2.0 - Added FTP Sync tool for comparing local backups with FTP destination
 2026-04-14 v1.8.0 - Added FTP PS Checker tool to menu
 2026-07-01 v3.8.0 - Added ConnectWise RMM Repair and ScreenConnect Repair utilities
+2026-09-24 v3.17.0 - Added StorageCraft Logs section (SPX and ImageManager) backed by
+                     storagecraft_log_viewer.ps1; Utilities renumbered to options 11 and 12
 
 .NOTES
 This submenu provides focused access to StorageCraft backup troubleshooting tools.
 Designed for IT professionals and MSPs managing StorageCraft backup solutions.
 #>
+
+$ErrorActionPreference = "Continue"
 
 # Configuration
 $installPath = "C:\ITTools\Scripts"
@@ -53,7 +66,33 @@ $ftpPsCheckerScriptName = "ftp_ps_checker.ps1"
 $aceInstallerScriptName = "install_access_engine.ps1"
 $cwRmmRepairScriptName = "connectwise_rmm_repair.ps1"
 $scRepairScriptName = "screenconnect_repair.ps1"
+$logViewerScriptName = "storagecraft_log_viewer.ps1"
 $serviceName = "StorageCraft ImageManager"
+$logDirectory = Join-Path $installPath "Logs"
+$auditLogFile = Join-Path $logDirectory "master_audit_log.txt"
+
+# Ensure log directory exists
+if (-not (Test-Path $logDirectory)) { New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null }
+
+function Write-AuditLog {
+    param (
+        [string]$action,
+        [string]$details = "",
+        [string]$level = "INFO",
+        [string]$errorMessage = ""
+    )
+    try {
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        $username = $env:USERNAME
+        $computername = $env:COMPUTERNAME
+        $logEntry = "[$timestamp] [$level] $username@$computername`n"
+        $logEntry += "  Action: $action`n"
+        if ($details)      { $logEntry += "  Details: $details`n" }
+        if ($errorMessage) { $logEntry += "  Error: $errorMessage`n" }
+        $logEntry += "  $("="*70)`n"
+        Add-Content -Path $auditLogFile -Value $logEntry -ErrorAction SilentlyContinue
+    } catch {}
+}
 
 function Test-Administrator {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -93,11 +132,12 @@ function Show-StorageCraftMenu {
     Write-Host "    8. Check ImageManager Service Status" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Logs and Diagnostics:" -ForegroundColor White
-    Write-Host "    9. View FTP Upload Logs" -ForegroundColor Magenta
+    Write-Host "    9. StorageCraft Logs (SPX & ImageManager)" -ForegroundColor Magenta
+    Write-Host "   10. View FTP Upload Logs" -ForegroundColor Magenta
     Write-Host ""
     Write-Host "  Utilities:" -ForegroundColor White
-    Write-Host "   10. Download/Install WinSCP" -ForegroundColor Cyan
-    Write-Host "   11. Install Access Database Engine" -ForegroundColor Cyan
+    Write-Host "   11. Download/Install WinSCP" -ForegroundColor Cyan
+    Write-Host "   12. Install Access Database Engine" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "    B. Back to Main Menu" -ForegroundColor Gray
     Write-Host ""
@@ -118,8 +158,29 @@ function Show-StorageCraftMenu {
     Write-Host ""
 }
 
+function Run-StorageCraftLogs {
+    Write-Host "`n=== Launching StorageCraft Log Viewer ===" -ForegroundColor Cyan
+    
+    $scriptPath = Join-Path $installPath $logViewerScriptName
+    
+    if (Test-Path $scriptPath) {
+        Write-Host "Starting StorageCraft Log Viewer (SPX and ImageManager logs)..." -ForegroundColor Green
+        Write-Host "Script location: $scriptPath" -ForegroundColor Gray
+        Write-Host ""
+        
+        & $scriptPath
+    }
+    else {
+        Write-Host "`nError: StorageCraft Log Viewer not found!" -ForegroundColor Red
+        Write-Host "Expected location: $scriptPath" -ForegroundColor Yellow
+        Write-Host "`nPlease use the main menu to download and install the toolkit first." -ForegroundColor Yellow
+        Write-Host "`nPress any key to return to menu..."
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    }
+}
+
 function Run-FTPSyncImageManager {
-    Write-Host "`n=== Launching FTP Sync (ImageManager Queue) ==="-ForegroundColor Cyan
+    Write-Host "`n=== Launching FTP Sync (ImageManager Queue) ===" -ForegroundColor Cyan
     
     $scriptPath = Join-Path $installPath $ftpSyncImageManagerScriptName
     
@@ -399,7 +460,7 @@ function View-FTPUploadLogs {
         Write-Host "Size: $logSizeKB KB | Last Modified: $($logInfo.LastWriteTime)" -ForegroundColor Gray
         Write-Host ""
         Write-Host "Showing last 100 lines:" -ForegroundColor White
-        Write-Host "?????????????????????????????????????????????????????????????????" -ForegroundColor Gray
+        Write-Host "-----------------------------------------------------------------" -ForegroundColor Gray
         Write-Host ""
         
         try {
@@ -426,7 +487,7 @@ function View-FTPUploadLogs {
         }
         
         Write-Host ""
-        Write-Host "?????????????????????????????????????????????????????????????????" -ForegroundColor Gray
+        Write-Host "-----------------------------------------------------------------" -ForegroundColor Gray
     }
     
     Write-Host "`nPress any key to return to menu..."
@@ -571,52 +632,72 @@ function Install-AccessEngine {
     }
 }
 
+# Log submenu startup
+Write-AuditLog -action "StorageCraft Troubleshooter" -details "Submenu opened"
+
 # Main menu loop
 do {
     Show-StorageCraftMenu
-    Write-Host "  Select an option (1-11 or B): " -NoNewline -ForegroundColor White
+    Write-Host "  Select an option (1-12 or B): " -NoNewline -ForegroundColor White
     $choice = Read-Host
     
     switch ($choice.ToUpper()) {
         '1' {
+            Write-AuditLog -action "Menu Selection" -details "Option 1: Upload Single File (PowerShell FTP)"
             Run-ManualFTPTool
         }
         '2' {
+            Write-AuditLog -action "Menu Selection" -details "Option 2: Sync Local Backups to FTP"
             Run-FTPSync
         }
         '3' {
+            Write-AuditLog -action "Menu Selection" -details "Option 3: Upload ImageManager Queue"
             Run-FTPSyncImageManager
         }
         '4' {
+            Write-AuditLog -action "Menu Selection" -details "Option 4: Test FTP Connectivity"
             Run-FTPPSChecker
         }
         '5' {
+            Write-AuditLog -action "Menu Selection" -details "Option 5: Start ImageManager Service"
             Start-ImageManagerService
         }
         '6' {
+            Write-AuditLog -action "Menu Selection" -details "Option 6: Stop ImageManager Service"
             Stop-ImageManagerService
         }
         '7' {
+            Write-AuditLog -action "Menu Selection" -details "Option 7: Restart ImageManager Service"
             Restart-ImageManagerService
         }
         '8' {
+            Write-AuditLog -action "Menu Selection" -details "Option 8: Check ImageManager Service Status"
             Get-ImageManagerServiceStatus
         }
         '9' {
-            View-FTPUploadLogs
+            Write-AuditLog -action "Menu Selection" -details "Option 9: StorageCraft Logs (SPX & ImageManager)"
+            Run-StorageCraftLogs
         }
         '10' {
-            Install-WinSCP
+            Write-AuditLog -action "Menu Selection" -details "Option 10: View FTP Upload Logs"
+            View-FTPUploadLogs
         }
         '11' {
+            Write-AuditLog -action "Menu Selection" -details "Option 11: Download/Install WinSCP"
+            Install-WinSCP
+        }
+        '12' {
+            Write-AuditLog -action "Menu Selection" -details "Option 12: Install Access Database Engine"
             Install-AccessEngine
         }
         'B' {
+            Write-AuditLog -action "StorageCraft Troubleshooter" -details "User returned to main menu"
             Write-Host "`nReturning to main menu..." -ForegroundColor Cyan
             exit 0
         }
         default {
-            Write-Host "`nInvalid selection. Please choose 1-11 or B." -ForegroundColor Red
+            Write-AuditLog -action "Invalid Menu Selection" -level "WARN" -details "User entered: $choice"
+            Write-Host "`nInvalid selection. Please choose 1-12 or B." -ForegroundColor Red
             Start-Sleep -Seconds 2
         }
     }
