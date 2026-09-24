@@ -35,6 +35,8 @@ $githubZipUrl = "https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/
 $tempDir = Join-Path $installPath "Temp"
 $requiredToolkitFiles = @(
     "launch_menu.ps1",
+    "storagecraft_troubleshooter.ps1",
+    "storagecraft_log_viewer.ps1",
     "hp_m404dn_troubleshooter.ps1",
     "hp_m404dn_connectivity_test.ps1",
     "hp_m404dn_spooler_repair.ps1",
