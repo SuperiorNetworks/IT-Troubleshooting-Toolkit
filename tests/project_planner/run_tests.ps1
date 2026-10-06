@@ -1,6 +1,6 @@
 <#
 Name: run_tests.ps1
-Version: 3.18.0
+Version: 3.18.1
 Purpose: End-to-end test of project_planner.ps1 against a fake share (scan, capture, report, MRPeasy check, rebuild).
 Author: Dwain Henderson Jr. | Superior Networks LLC
 Contact: (937) 985-2480 | dhenderson@superiornetworks.biz
@@ -28,6 +28,7 @@ Change Log:
   2026-10-06 v1.0.0 - Initial release (Dwain Henderson Jr)
   2026-10-06 v3.18.0 - Moved into the toolkit repo under tests/project_planner; skip checks Windows
                       can't set up (case-only names, trailing dots, paths over 260) (Dwain Henderson Jr)
+  2026-10-06 v3.18.1 - Check that the displayed version matches the script header (Dwain Henderson Jr)
 #>
 param([string] $Work = (Join-Path ([IO.Path]::GetTempPath()) 'pp-test'))
 
@@ -97,6 +98,8 @@ Check 'encoding: hash sign, SharePoint link matched' ($spec.new -eq 'https://exa
 $html = Get-Content -LiteralPath (Join-Path $o 'report.html') -Raw
 Check 'logo embedded' ($html -match 'data:image/png;base64,iVBOR') 'no PNG data'
 Check 'version in footer' ($html -match 'Project Planner v\d+\.\d+\.\d+') 'no version'
+$hdrVer = ''; foreach ($l in (Get-Content -LiteralPath $tool -TotalCount 10)) { if ($l -match '^Version:\s*(\d+\.\d+\.\d+)') { $hdrVer = $matches[1]; break } }
+Check 'footer version matches script header' ($html -match ('Project Planner v' + [regex]::Escape($hdrVer))) "header $hdrVer"
 $m = [regex]::Match($html, '<script id="pp-data" type="application/json">(.*?)</script>', 'Singleline')
 $data = $null; try { $data = $m.Groups[1].Value | ConvertFrom-Json } catch {}
 Check 'embedded report data is valid JSON' ($null -ne $data -and $data.files.Count -eq $expectFiles) "parse failed or wrong count"

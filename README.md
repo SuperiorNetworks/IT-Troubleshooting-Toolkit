@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.18.0
+**Version:** 3.18.1
 **Copyright:** 2025-2026  
 **Developed by:** Superior Networks LLC
 
@@ -100,7 +100,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.18.0
+IT Troubleshooting Toolkit - v3.18.1
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -129,7 +129,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.18.0
+macOS Troubleshooter Terminal - Toolkit v3.18.1
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -147,7 +147,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.18.0
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.18.1
 ```
 
 ### Help Guide (Option H)
@@ -196,7 +196,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.18.0
+ConnectWise RMM Troubleshooter - Toolkit v3.18.1
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -239,12 +239,12 @@ It reads names, sizes, dates and attributes only. It never opens, changes, moves
 
 **MRPeasy check (optional):** matches each link from the MRPeasy *Settings > Database Maintenance > Export file links* CSV to a real file, flags case mismatches, and drafts `mrp-link-update-DRAFT.csv` (old link, new Blob link).
 
-**Output:** `<Report path>\<client>-<ticket>-<yyyyMMdd-HHmm>\` with `report.html` (tabs: Summary, Folders, Files, Issues, MRPeasy links, Help Guide), `capture.json`, `summary.json`, CSVs and `device-info.txt`, plus a `.zip` of the same name to send back.
+**Output:** reports go to `C:\ITTools\Reports` by default (created if missing; outside `Scripts`, so toolkit updates never touch them). Each scan writes `<Report path>\<client>-<ticket>-<yyyyMMdd-HHmm>\` with `report.html` (tabs: Summary, Folders, Files, Issues, MRPeasy links, Help Guide), `capture.json`, `summary.json`, CSVs and `device-info.txt`, plus a `.zip` of the same name to send back.
 
 **Standalone use** (PC without the full toolkit): copy `project_planner.ps1` and `run_project_planner.cmd` into one folder and double-click the `.cmd`. Unattended:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\project_planner.ps1 -NoGui -Client "Acme" -Project "File server to Azure" -Ticket 12345 -Path "D:\Shares\Design" -ReportPath "C:\Temp"
+powershell -ExecutionPolicy Bypass -File .\project_planner.ps1 -NoGui -Client "Acme" -Project "File server to Azure" -Ticket 12345 -Path "D:\Shares\Design"
 ```
 
 Tests (fake share, end-to-end checks) live in the repo under `tests/project_planner/` and are not installed on client machines.
@@ -257,7 +257,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.18.0
+HP M404dn Printer Troubleshooter - Toolkit v3.18.1
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -307,7 +307,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.18.0
+StorageCraft Troubleshooter - Toolkit v3.18.1
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -1018,6 +1018,11 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.18.1 (2026-10-06) - PROJECT PLANNER REPORT FOLDER
+- **Default Report Folder**: Project Planner now saves to `C:\ITTools\Reports` by default and creates the folder if it is missing. It sits beside `C:\ITTools\Scripts`, so toolkit updates never remove saved reports. A different folder chosen on the start screen is still remembered. `-NoGui` runs use it when `-ReportPath` is not given.
+- **Version Display**: The Project Planner window title, footer and reports now show the toolkit version from the script header instead of `v1.0.0`.
+- **Files Updated**: `project_planner.ps1`, `launch_menu.ps1`, `README.md`.
 
 ### Version 3.18.0 (2026-10-06) - PROJECT PLANNER
 - **New Tool**: Added option 7, **Project Planner** (`project_planner.ps1`), under a new *Project Tools* menu section. It scans a folder or share and builds an offline migration planning report: totals, file types, dates and growth, path lengths, problem names, an expandable folder tree, and a severity-ranked issues list.

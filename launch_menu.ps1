@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.18.0
+Version: 3.18.1
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -101,6 +101,7 @@ Change Log:
                     Windows 10/11 install command now sets TLS 1.2 before downloading.
 2026-10-06 v3.18.0 - Added option 7, Project Planner (project_planner.ps1): scans a share and builds an
                     offline migration planning report. Installers no longer copy the repo tests folder.
+2026-10-06 v3.18.1 - Project Planner reports default to C:\ITTools\Reports; planner shows the toolkit version.
 .RELEASE_NOTES
 v2.5.0:
 - Added comprehensive master audit logging system for troubleshooting
@@ -221,7 +222,7 @@ function Show-Menu {
     Clear-Host
     
     # Get version dynamically from script header
-    $scriptVersion = "3.18.0"
+    $scriptVersion = "3.18.1"
     $scriptPath = $PSCommandPath
     if (Test-Path $scriptPath) {
         $content = Get-Content $scriptPath -Raw
@@ -869,7 +870,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.18.0"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.18.1"
 
 # Main menu loop
 do {
