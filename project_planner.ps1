@@ -8,8 +8,8 @@ Copyright: 2026, Superior Networks LLC
 Path: C:\ITTools\Scripts\project_planner.ps1
 
 What This Script Does:
-  - Opens a start screen (client, project, ticket, parent path, report path, Scan, Open previous report)
-  - Scans every folder and file under the parent path (metadata only; OneDrive cloud-only files are never downloaded)
+  - Opens a start screen (client, project, ticket, folder to scan, save report to, Scan, Open previous report)
+  - Scans every folder and file inside the folder to scan (metadata only; OneDrive cloud-only files are never downloaded)
   - Writes a full capture (capture.json) of every folder and file for offline exploration
   - Calculates planning metrics: size, counts, file types, dates, growth rate, size buckets, depth, path lengths
   - Flags migration problems: characters that break web links, long paths, trailing dots/spaces, case collisions,
@@ -26,7 +26,7 @@ Input:
   - Settings (last values, recent reports): %APPDATA%\SuperiorNetworks\ProjectPlanner\settings.json
 
 Output:
-  - <Report path>\<client>-<ticket>-<yyyyMMdd-HHmm>\ with report.html, capture.json, summary.json, CSVs, device-info.txt
+  - <Save report to folder>\<client>-<ticket>-<yyyyMMdd-HHmm>\ with report.html, capture.json, summary.json, CSVs, device-info.txt
   - <same name>.zip next to that folder
   - If -MrpLinks is used: mrp-link-review.csv, mrp-link-update-DRAFT.csv, mrp-unlinked-pdfs.csv
 
@@ -48,7 +48,8 @@ Change Log:
                       hash failures and FIPS mode are reported instead of silently skipped (Dwain Henderson Jr)
   2026-10-06 v3.18.3 - Report location shown everywhere: "REPORT SAVED" block in the console, folder and zip in
                       the Scan complete box, "Report saved to" bar (with Copy path) in report.html. Start-screen
-                      runs keep the window open until Enter (Dwain Henderson Jr)
+                      runs keep the window open until Enter. Plain labels: "Folder to scan" (with a read-only
+                      hint) and "Save report to" instead of Parent path / Report path (Dwain Henderson Jr)
 #>
 
 <#
@@ -209,20 +210,20 @@ function Test-PPInputs($v) {
     if (-not $v.Client) { $err.Add('Client name is required.') }
     if (-not $v.Project) { $err.Add('Project description is required.') }
     if ($v.Ticket -and $v.Ticket -notmatch '^\d+$') { $err.Add('Ticket # should be digits only.') }
-    if (-not $v.Path) { $err.Add('Parent path is required.') }
-    elseif (-not (Test-Path -LiteralPath $v.Path -PathType Container)) { $err.Add("Parent path not found: $($v.Path)") }
-    if (-not $v.ReportPath) { $err.Add('Report path is required.') }
-    elseif (-not (Test-Path -LiteralPath $v.ReportPath -PathType Container)) { $err.Add("Report path not found: $($v.ReportPath)") }
+    if (-not $v.Path) { $err.Add('Choose a folder to scan.') }
+    elseif (-not (Test-Path -LiteralPath $v.Path -PathType Container)) { $err.Add("Folder to scan not found: $($v.Path)") }
+    if (-not $v.ReportPath) { $err.Add('Choose where to save the report.') }
+    elseif (-not (Test-Path -LiteralPath $v.ReportPath -PathType Container)) { $err.Add("Report folder not found: $($v.ReportPath)") }
     else {
         try {
             $t = Join-Path $v.ReportPath ('.pp-write-test-' + [guid]::NewGuid().ToString('N'))
             [IO.File]::WriteAllText($t, 'x'); Remove-Item -LiteralPath $t -Force
-        } catch { $err.Add("Can't write to the report path: $($v.ReportPath)") }
+        } catch { $err.Add("Can't save to this folder: $($v.ReportPath)") }
         if ($v.Path -and (Test-Path -LiteralPath $v.Path)) {
             $src = (Resolve-Path -LiteralPath $v.Path).ProviderPath.TrimEnd('\', '/')
             $dst = (Resolve-Path -LiteralPath $v.ReportPath).ProviderPath.TrimEnd('\', '/')
             if ($dst -ieq $src -or $dst.StartsWith($src + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
-                $err.Add('Report path must not be inside the parent path being scanned.')
+                $err.Add('Save the report outside the folder being scanned.')
             }
         }
     }
@@ -1009,8 +1010,11 @@ function Show-PPStartForm($settings) {
     $tbProject = & $addRow 'Project description *' ([string]$last.project) ''
     $tbTicket = & $addRow 'Ticket #' ([string]$last.ticket) ''
     $tbTicket.Width = 120
-    $tbPath = & $addRow 'Parent path *' ([string]$last.path) 'folder'
-    $tbReport = & $addRow 'Report path *' $(if ($last.reportPath) { [string]$last.reportPath } else { $DefaultReportPath }) 'folder'
+    $tbPath = & $addRow 'Folder to scan *' ([string]$last.path) 'folder'
+    $scanHint = New-Object System.Windows.Forms.Label; $scanHint.ForeColor = $muted; $scanHint.Location = New-Object System.Drawing.Point(170, ($script:ppY - 6)); $scanHint.Size = New-Object System.Drawing.Size(410, 18)
+    $scanHint.Text = 'Everything inside this folder is scanned. Files are only read, never changed.'; $form.Controls.Add($scanHint)
+    $script:ppY += 18
+    $tbReport = & $addRow 'Save report to *' $(if ($last.reportPath) { [string]$last.reportPath } else { $DefaultReportPath }) 'folder'
     $hint = New-Object System.Windows.Forms.Label; $hint.ForeColor = $muted; $hint.Location = New-Object System.Drawing.Point(170, ($script:ppY - 6)); $hint.Size = New-Object System.Drawing.Size(410, 18); $form.Controls.Add($hint)
     $updHint = { $n = (Get-SafeName $tbClient.Text) + $(if ($tbTicket.Text) { '-' + $tbTicket.Text } else { '' }) + '-' + (Get-Date -Format 'yyyyMMdd-HHmm'); $hint.Text = "Saves to $n (folder and .zip)" }
     $tbClient.Add_TextChanged($updHint); $tbTicket.Add_TextChanged($updHint); & $updHint
@@ -1163,7 +1167,7 @@ function show(k){tabs.forEach(([x])=>{document.getElementById('t-'+x).classList.
 const R={};
 R.summary=function(){
  const ic=D.issueCounts;const sev={High:0,Medium:0,Low:0};Object.keys(ic).forEach(k=>{const s=(D.issueDefs[k]||[])[0];if(s in sev)sev[s]+=ic[k]});
- let h='<h2>Scan</h2>'+T(['Item','Value'],[['Client',esc(M.client)],['Project',esc(M.project)],['Ticket',esc(M.ticket||'')],['Parent path',esc(M.root)],['Synced from',esc(M.library||'(not a synced library)')],['Scanned',esc((M.scanStarted||'').replace('T',' '))+' on '+esc(M.computer)+', '+esc(M.scanMinutes)+' min']].map(r=>['<span class="muted">'+r[0]+'</span>',r[1]]));
+ let h='<h2>Scan</h2>'+T(['Item','Value'],[['Client',esc(M.client)],['Project',esc(M.project)],['Ticket',esc(M.ticket||'')],['Folder scanned',esc(M.root)],['Synced from',esc(M.library||'(not a synced library)')],['Scanned',esc((M.scanStarted||'').replace('T',' '))+' on '+esc(M.computer)+', '+esc(M.scanMinutes)+' min']].map(r=>['<span class="muted">'+r[0]+'</span>',r[1]]));
  if(D.truncated)h+='<div class="note">This share has more than 200,000 files, so only files with issues are embedded in this report. The full list is in capture.json.</div>';
  h+='<h2>Totals</h2><div class="grid">'+stat('Total size',esc(S.TotalSize))+stat('Files',n(S.TotalFiles))+stat('Folders',n(S.TotalFolders),n(S.EmptyFolders)+' empty, '+S.MaxDepth+' levels deep')+stat('Oldest / newest',esc(S.OldestModified)+'<br>'+esc(S.NewestModified),'modified dates')+stat('Files per day, last 90 days',esc(S.FilesPerDay_Last90),esc(S.FilesPerWeek_Last90)+' / week, '+esc(S.FilesPerMonth_Last90)+' / month')+stat('Files per year, all time',n(S.FilesPerYear_AllTime),esc(S.FilesPerMonth_AllTime)+' / month, '+esc(S.FilesPerDay_AllTime)+' / day')+stat('Cloud-only files',n(S.CloudOnlyFiles),'not downloaded on the scan PC')+stat('Problems to fix',n(sev.High)+' high','plus '+n(sev.Medium)+' medium, '+n(sev.Low)+' low')+'</div>';
  const ms=D.months.slice(-36);h+='<h2>Files modified per month (last 36 months)</h2>'+bars(ms.map(m=>[m[0].slice(2),m[1]]));
@@ -1227,7 +1231,7 @@ R.mrp=function(){const el=document.getElementById('t-mrp');const m=D.mrp;
 // help
 R.help=function(){document.getElementById('t-help').innerHTML='<h2>Help Guide</h2><p class="small muted">Project Planner v__VERSION__ &middot; guide updated 2026-10-06</p>'+
  '<h2>What this report is</h2><p>A complete picture of one folder or file share, captured on '+esc((M.scanStarted||'').slice(0,10))+'. It is used to plan a migration: how big it is, how fast it grows, and what will break when files move to Azure or get web links.</p>'+
- '<h2>How it was made</h2><p>Project Planner read the names, sizes, dates and attributes of every folder and file under the parent path. It did not open, change, move or download any file. OneDrive cloud-only files stayed cloud-only.</p>'+
+ '<h2>How it was made</h2><p>Project Planner read the names, sizes, dates and attributes of every folder and file inside the folder that was scanned. It did not open, change, move or download any file. OneDrive cloud-only files stayed cloud-only.</p>'+
  '<h2>Tabs</h2><ul><li><b>Summary:</b> totals, file types, dates and growth, sizes, top-level and largest folders, path lengths, name patterns, and details of the PC that ran the scan.</li><li><b>Folders:</b> the full folder tree. Click + to open a folder and see its files.</li><li><b>Files:</b> search every file by name or path, filter by type.</li><li><b>Issues:</b> everything that could break a migration or a web link, by severity. Click an issue to list the items.</li><li><b>MRPeasy links:</b> if an MRPeasy link export was included, how each existing link maps to a file and the draft old/new link file.</li></ul>'+
  '<h2>Severity</h2><ul><li><span class="sev-High">High</span>: will fail or break links. Fix before migrating.</li><li><span class="sev-Medium">Medium</span>: likely to cause problems. Review.</li><li><span class="sev-Low">Low</span>: worth a look (duplicates).</li><li><span class="sev-Info">Info</span>: for awareness.</li></ul>'+
  '<h2>Growth numbers</h2><p>"Files per day" uses modified dates. Last-90-days figures show the current pace; all-time figures average over the span from the oldest to the newest file. Files "copied in with older dates" were created on this share after their last change, so their modified date is older than their arrival.</p>'+

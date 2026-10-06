@@ -233,13 +233,13 @@ When an endpoint shows **"ScreenConnect Installation Pending"** or the agent is 
 
 It reads names, sizes, dates and attributes only. It never opens, changes, moves or deletes files, and OneDrive cloud-only files stay in the cloud. No admin rights needed. Requires Windows PowerShell 5.1 or later (the menu option checks this).
 
-**Start screen:** client name, project description, ticket #, parent path (the folder to scan), report path (where to save; not inside the parent path), optional MRPeasy links CSV and Azure Blob base URL, optional hashing of local files and permissions for the top two folder levels. **Open previous report** opens a `report.html`, or rebuilds a report from a `capture.json` without rescanning (for example to add the MRPeasy check later). Recent reports are listed for double-click.
+**Start screen:** client name, project description, ticket #, **Folder to scan**, **Save report to** (default `C:\ITTools\Reports`; not inside the folder being scanned), optional MRPeasy links CSV and Azure Blob base URL, optional hashing of local files and permissions for the top two folder levels. **Open previous report** opens a `report.html`, or rebuilds a report from a `capture.json` without rescanning (for example to add the MRPeasy check later). Recent reports are listed for double-click.
 
 **Problem checks:** characters that break web links (`#`, `%`, `?`), paths over 260 characters, trailing dots and spaces, names that differ only by case, duplicate names and copies, junk and zero-byte files, bad dates, and Azure Blob name and URL length limits.
 
 **MRPeasy check (optional):** matches each link from the MRPeasy *Settings > Database Maintenance > Export file links* CSV to a real file, flags case mismatches, and drafts `mrp-link-update-DRAFT.csv` (old link, new Blob link).
 
-**Output:** reports go to `C:\ITTools\Reports` by default (created if missing; outside `Scripts`, so toolkit updates never touch them). Each scan writes `<Report path>\<client>-<ticket>-<yyyyMMdd-HHmm>\` with `report.html` (tabs: Summary, Folders, Files, Issues, MRPeasy links, Help Guide), `capture.json`, `summary.json`, CSVs and `device-info.txt`, plus a `.zip` of the same name to send back.
+**Output:** reports go to `C:\ITTools\Reports` by default (created if missing; outside `Scripts`, so toolkit updates never touch them). Each scan writes `<Save report to>\<client>-<ticket>-<yyyyMMdd-HHmm>\` with `report.html` (tabs: Summary, Folders, Files, Issues, MRPeasy links, Help Guide), `capture.json`, `summary.json`, CSVs and `device-info.txt`, plus a `.zip` of the same name to send back.
 
 **Standalone use** (PC without the full toolkit): copy `project_planner.ps1` and `run_project_planner.cmd` into one folder and double-click the `.cmd`. Unattended:
 
@@ -1023,6 +1023,7 @@ For support, feature requests, or bug reports:
 - **Console**: The scan ends with a "REPORT SAVED" block showing the report folder, `report.html` and the `.zip` to send back. When started from the start screen (menu option 7 or `run_project_planner.cmd`), the window now stays open until Enter is pressed; before, it closed as soon as the scan finished.
 - **Completion Box**: "Scan complete" now shows the report folder and zip path before asking to open the report.
 - **Report Page**: `report.html` has a "Report saved to" bar under the header with the folder path, a Copy path button, the zip name and the computer it was saved on.
+- **Plain Labels**: The start screen says **Folder to scan** (with the hint "Everything inside this folder is scanned. Files are only read, never changed.") and **Save report to**, instead of *Parent path* and *Report path*. Error messages and the report use the same wording.
 - **Files Updated**: `project_planner.ps1`, `launch_menu.ps1`, `README.md`.
 
 ### Version 3.18.2 (2026-10-06) - PROJECT PLANNER PROGRESS AND HASHING
