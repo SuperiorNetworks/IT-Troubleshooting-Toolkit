@@ -1,6 +1,6 @@
 <#
 Name: project_planner.ps1
-Version: 3.18.1
+Version: 3.18.2
 Purpose: Scan a file share or folder and produce a complete, offline planning report for a migration project.
 Author: Dwain Henderson Jr. | Superior Networks LLC
 Contact: (937) 985-2480 | dhenderson@superiornetworks.biz
@@ -43,6 +43,9 @@ Change Log:
                       as unreadable and skips its files. Zip uses .NET ZipFile instead of Compress-Archive.
   2026-10-06 v3.18.1 - Reports default to C:\ITTools\Reports (created if missing; also used by -NoGui when
                       -ReportPath is not given). Window title/footer show the header version, not 1.0.0 (Dwain Henderson Jr)
+  2026-10-06 v3.18.2 - Progress updates every second (hashing a big share looked frozen); shows the file being
+                      hashed when it is 50 MB+. Hashing uses .NET MD5 (faster, works on long paths in PS 5.0);
+                      hash failures and FIPS mode are reported instead of silently skipped (Dwain Henderson Jr)
 #>
 
 <#
@@ -76,7 +79,7 @@ $ErrorActionPreference = 'Continue'
 $ToolName = 'Project Planner'
 # Version comes from the Version: line in this file's header (toolkit version); the value here is
 # only a fallback if the header can't be read.
-$ToolVersion = '3.18.1'
+$ToolVersion = '3.18.2'
 try {
     foreach ($hdrLine in (Get-Content -LiteralPath $PSCommandPath -TotalCount 10 -ErrorAction Stop)) {
         if ($hdrLine -match '^Version:\s*(\d+\.\d+\.\d+)') { $ToolVersion = $matches[1]; break }
@@ -294,6 +297,16 @@ function Invoke-PPScan([string] $root, [bool] $doHash) {
     $rootName = Split-Path -Leaf $rootFull
     if (-not $rootName) { $rootName = $rootFull }
     Write-Host "Scanning $rootFull ..." -ForegroundColor Cyan
+    # Hashing reads every file. Use .NET MD5 directly (faster than Get-FileHash, and works on every
+    # path the scan can read). Windows in FIPS mode blocks MD5: say so and scan without hashes.
+    $md5 = $null; $hashFails = 0
+    if ($doHash) {
+        try { $md5 = [Security.Cryptography.MD5]::Create() } catch { $md5 = $null }
+        if ($md5) { Write-Host "Hash local files is on: every file is read, so a large share can take a long time." -ForegroundColor Yellow }
+        else { Write-Host "Hash local files skipped: MD5 is not allowed on this PC (FIPS mode)." -ForegroundColor Yellow; $errors.Add('(hash) MD5 not allowed on this PC (FIPS mode); scanned without hashes') }
+    }
+    # Progress updates once a second (not every N items), so slow hashing never looks frozen
+    $tick = [Diagnostics.Stopwatch]::StartNew()
     while ($stack.Count -gt 0) {
         $item = $stack.Pop()
         $dirPath = [string]$item[0]
@@ -314,7 +327,7 @@ function Invoke-PPScan([string] $root, [bool] $doHash) {
                 $count++
                 # Progress is display only. It can throw without a real console (SSH, RMM), and that
                 # must not be counted as a folder read error, so it gets its own try/catch.
-                if ($count % 1000 -eq 0) { try { Write-Progress -Activity "$ToolName scan" -Status ("{0:N0} items, {1:N0} files" -f $count, $files.Count) -CurrentOperation $rel } catch {} }
+                if ($tick.ElapsedMilliseconds -ge 1000) { $tick.Restart(); try { Write-Progress -Activity "$ToolName scan" -Status ("{0:N0} items, {1:N0} files" -f $count, $files.Count) -CurrentOperation $rel } catch {} }
                 $attr = [int]$e.Attributes
                 if ($e -is [IO.DirectoryInfo]) {
                     $fo.SubDirs++
@@ -331,8 +344,16 @@ function Invoke-PPScan([string] $root, [bool] $doHash) {
                     $f.Created = $e.CreationTime
                     $f.Modified = $e.LastWriteTime
                     $f.Attr = $attr
-                    if ($doHash -and -not ($attr -band $CloudMask)) {
-                        try { $f.Hash = (Get-FileHash -LiteralPath $e.FullName -Algorithm MD5 -ErrorAction Stop).Hash } catch {}
+                    if ($md5 -and -not ($attr -band $CloudMask)) {
+                        if ($e.Length -ge 50MB) {
+                            $tick.Restart()
+                            try { Write-Progress -Activity "$ToolName scan" -Status ("{0:N0} items, {1:N0} files" -f $count, $files.Count) -CurrentOperation ("Hashing {0} ({1:N0} MB)" -f $f.Rel, ($e.Length / 1MB)) } catch {}
+                        }
+                        $fs = $null
+                        try {
+                            $fs = New-Object IO.FileStream($e.FullName, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite)
+                            $f.Hash = [BitConverter]::ToString($md5.ComputeHash($fs)).Replace('-', '')
+                        } catch { $hashFails++ } finally { if ($fs) { $fs.Dispose() } }
                     }
                     $files.Add($f)
                     $fo.DirectFiles++
@@ -345,6 +366,8 @@ function Invoke-PPScan([string] $root, [bool] $doHash) {
         for ($i = $subs.Count - 1; $i -ge 0; $i--) { $stack.Push($subs[$i]) }
     }
     try { Write-Progress -Activity "$ToolName scan" -Completed } catch {}
+    if ($md5) { $md5.Dispose() }
+    if ($hashFails) { $errors.Add("(hash) $hashFails file(s) could not be read for hashing (locked or access denied)"); Write-Host "Could not hash $hashFails file(s) (locked or access denied)." -ForegroundColor Yellow }
     return @{ root = $rootFull; folders = $folders; files = $files; errors = $errors }
 }
 

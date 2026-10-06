@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.18.1
+**Version:** 3.18.2
 **Copyright:** 2025-2026  
 **Developed by:** Superior Networks LLC
 
@@ -100,7 +100,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.18.1
+IT Troubleshooting Toolkit - v3.18.2
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -129,7 +129,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.18.1
+macOS Troubleshooter Terminal - Toolkit v3.18.2
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -147,7 +147,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.18.1
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.18.2
 ```
 
 ### Help Guide (Option H)
@@ -196,7 +196,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.18.1
+ConnectWise RMM Troubleshooter - Toolkit v3.18.2
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -257,7 +257,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.18.1
+HP M404dn Printer Troubleshooter - Toolkit v3.18.2
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -307,7 +307,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.18.1
+StorageCraft Troubleshooter - Toolkit v3.18.2
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -1018,6 +1018,11 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.18.2 (2026-10-06) - PROJECT PLANNER PROGRESS AND HASHING
+- **No More Frozen Look**: The scan progress line now updates every second instead of every 1,000 items. With *Hash local files* on, a big share could sit at "Scanning ..." for many minutes with nothing on screen. Files of 50 MB or more show their name and size while they are hashed, and the scan warns up front that hashing reads every file.
+- **Faster, More Reliable Hashing**: Uses .NET MD5 directly instead of `Get-FileHash`, which works on long paths in PowerShell 5.0. Files that can't be hashed (locked, access denied) are counted and listed in the scan errors instead of being skipped silently. On PCs in FIPS mode (MD5 blocked) the scan says so and continues without hashes.
+- **Files Updated**: `project_planner.ps1`, `launch_menu.ps1`, `README.md`.
 
 ### Version 3.18.1 (2026-10-06) - PROJECT PLANNER REPORT FOLDER
 - **Default Report Folder**: Project Planner now saves to `C:\ITTools\Reports` by default and creates the folder if it is missing. It sits beside `C:\ITTools\Scripts`, so toolkit updates never remove saved reports. A different folder chosen on the start screen is still remembered. `-NoGui` runs use it when `-ReportPath` is not given.
