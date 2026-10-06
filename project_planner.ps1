@@ -1,6 +1,6 @@
 <#
 Name: project_planner.ps1
-Version: 3.18.2
+Version: 3.18.3
 Purpose: Scan a file share or folder and produce a complete, offline planning report for a migration project.
 Author: Dwain Henderson Jr. | Superior Networks LLC
 Contact: (937) 985-2480 | dhenderson@superiornetworks.biz
@@ -46,6 +46,9 @@ Change Log:
   2026-10-06 v3.18.2 - Progress updates every second (hashing a big share looked frozen); shows the file being
                       hashed when it is 50 MB+. Hashing uses .NET MD5 (faster, works on long paths in PS 5.0);
                       hash failures and FIPS mode are reported instead of silently skipped (Dwain Henderson Jr)
+  2026-10-06 v3.18.3 - Report location shown everywhere: "REPORT SAVED" block in the console, folder and zip in
+                      the Scan complete box, "Report saved to" bar (with Copy path) in report.html. Start-screen
+                      runs keep the window open until Enter (Dwain Henderson Jr)
 #>
 
 <#
@@ -79,7 +82,7 @@ $ErrorActionPreference = 'Continue'
 $ToolName = 'Project Planner'
 # Version comes from the Version: line in this file's header (toolkit version); the value here is
 # only a fallback if the header can't be read.
-$ToolVersion = '3.18.2'
+$ToolVersion = '3.18.3'
 try {
     foreach ($hdrLine in (Get-Content -LiteralPath $PSCommandPath -TotalCount 10 -ErrorAction Stop)) {
         if ($hdrLine -match '^Version:\s*(\d+\.\d+\.\d+)') { $ToolVersion = $matches[1]; break }
@@ -885,7 +888,14 @@ function Write-PPHtml($cap, $an, [string] $file) {
         [void]$sb.Append(',"unlinked":' + (ConvertTo-PPJson @($m.unlinked | Select-Object -First 5000)) + '}')
     } else { [void]$sb.Append(',"mrp":null') }
     [void]$sb.Append('}')
-    $html = $script:HtmlTemplate.Replace('__TITLE__', [Net.WebUtility]::HtmlEncode("$($cap.meta.client) - $ToolName")).Replace('__VERSION__', $ToolVersion).Replace('__LOGO__', $LogoBase64).Replace('__DATA__', $sb.ToString())
+    # Where this report lives (shown under the header so the reader knows where to find it)
+    $savedDir = Split-Path -Parent $file
+    $savedZip = if ($NoZip) { '(no zip created)' } else { "$savedDir.zip" }
+    $savedPc = if ($IsWin) { $env:COMPUTERNAME } else { [Environment]::MachineName }
+    $html = $script:HtmlTemplate.Replace('__TITLE__', [Net.WebUtility]::HtmlEncode("$($cap.meta.client) - $ToolName")).Replace('__VERSION__', $ToolVersion).Replace('__LOGO__', $LogoBase64)
+    $html = $html.Replace('__SAVEDFOLDER__', [Net.WebUtility]::HtmlEncode($savedDir)).Replace('__SAVEDZIP__', [Net.WebUtility]::HtmlEncode($savedZip)).Replace('__SAVEDPC__', [Net.WebUtility]::HtmlEncode($savedPc))
+    # Data last: the JSON may contain text that looks like a placeholder
+    $html = $html.Replace('__DATA__', $sb.ToString())
     [IO.File]::WriteAllText($file, $html, (New-Object System.Text.UTF8Encoding($false)))
 }
 
@@ -1105,12 +1115,15 @@ input[type=text],select{font:13px Arial;padding:6px 8px;border:1px solid var(--l
 .tree{font:12px/1.9 Consolas,Menlo,monospace}.tree .row{white-space:nowrap;cursor:default}.tree .tg{display:inline-block;width:16px;cursor:pointer;color:var(--muted)}
 .tree .m{color:var(--muted)}.tree .f{padding-left:16px}
 svg text{font:11px Arial;fill:var(--muted)}.bars rect{fill:var(--ink)}
+.saved{padding:10px 20px;background:var(--label);border-bottom:1px solid var(--line);font-size:13px;word-break:break-all}
+.saved code{font:13px Consolas,Menlo,monospace}.saved .btn{padding:3px 10px;font-size:12px;margin:0 0 0 8px}
 footer{background:var(--label);color:var(--muted);font-size:11px;padding:10px 20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
 .muted{color:var(--muted)}.small{font-size:12px}
 </style></head><body>
 <div class="wrap"><div class="card">
 <header><div class="brand"><img alt="Superior Networks" src="data:image/png;base64,__LOGO__"><div><h1>Project Planner</h1><div class="tag">File share discovery and migration readiness</div></div></div>
 <div class="who" id="who"></div></header>
+<div class="saved"><b>Report saved to:</b> <code id="savedPath">__SAVEDFOLDER__</code><button class="btn alt" onclick="var t=document.getElementById('savedPath').textContent;if(navigator.clipboard){navigator.clipboard.writeText(t);this.textContent='Copied'}">Copy path</button><br><span class="muted">Zip to send back: __SAVEDZIP__ &middot; on computer __SAVEDPC__</span></div>
 <nav id="nav"></nav>
 <main>
 <section id="t-summary"></section>
@@ -1287,12 +1300,18 @@ if (-not $NoZip) {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
         [IO.Compression.ZipFile]::CreateFromDirectory($outDir, $zip, [IO.Compression.CompressionLevel]::Optimal, $false)
-        Write-Host "Zip:     $zip" -ForegroundColor Green
     }
-    catch { Write-Host "Could not create the zip ($($_.Exception.Message)). Zip the folder by hand: $outDir" -ForegroundColor Yellow }
-}
-Write-Host "Report:  $report" -ForegroundColor Green
-Write-Host "Folder:  $outDir" -ForegroundColor Green
+    catch { $zip = ''; Write-Host "Could not create the zip ($($_.Exception.Message)). Zip the folder by hand: $outDir" -ForegroundColor Yellow }
+} else { $zip = '' }
+$line = '=' * 64
+Write-Host ''
+Write-Host $line -ForegroundColor Green
+Write-Host '  REPORT SAVED' -ForegroundColor Green
+Write-Host $line -ForegroundColor Green
+Write-Host "  Folder:  $outDir" -ForegroundColor White
+Write-Host "  Report:  $report" -ForegroundColor White
+if ($zip) { Write-Host "  Zip:     $zip" -ForegroundColor White; Write-Host '  Send the .zip file back to Superior Networks.' -ForegroundColor Gray }
+Write-Host $line -ForegroundColor Green
 
 $label = "$($cap.meta.client)" + $(if ($cap.meta.ticket) { " - #$($cap.meta.ticket)" } else { '' }) + " - $(([string]$cap.meta.scanStarted).Replace('T', ' ').Substring(0, 16))"
 if ($v.Action -eq 'scan') { $settings.last = @{ client = $v.Client; project = $v.Project; ticket = $v.Ticket; path = $v.Path; reportPath = $v.ReportPath; mrpLinks = $v.MrpLinks; blobBaseUrl = $v.BlobBaseUrl } }
@@ -1300,6 +1319,10 @@ Add-PPRecent $settings $label $report
 Save-PPSettings $settings
 
 if ($useGui) {
-    $ans = [System.Windows.Forms.MessageBox]::Show("Scan complete.`n`nOpen the report now?", $ToolName, 'YesNo', 'Question')
+    $msg = "Scan complete.`n`nReport saved to:`n$outDir" + $(if ($zip) { "`n`nZip to send back:`n$zip" } else { '' }) + "`n`nOpen the report now?"
+    $ans = [System.Windows.Forms.MessageBox]::Show($msg, $ToolName, 'YesNo', 'Question')
     if ($ans -eq 'Yes') { Open-PPFile $report }
+    # Keep the window open so the summary and report location stay on screen
+    Write-Host ''
+    try { Read-Host 'Press Enter to close this window' | Out-Null } catch {}
 } elseif ($OpenReport) { Open-PPFile $report }

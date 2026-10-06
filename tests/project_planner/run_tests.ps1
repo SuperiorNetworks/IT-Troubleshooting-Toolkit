@@ -1,6 +1,6 @@
 <#
 Name: run_tests.ps1
-Version: 3.18.1
+Version: 3.18.3
 Purpose: End-to-end test of project_planner.ps1 against a fake share (scan, capture, report, MRPeasy check, rebuild).
 Author: Dwain Henderson Jr. | Superior Networks LLC
 Contact: (937) 985-2480 | dhenderson@superiornetworks.biz
@@ -29,6 +29,7 @@ Change Log:
   2026-10-06 v3.18.0 - Moved into the toolkit repo under tests/project_planner; skip checks Windows
                       can't set up (case-only names, trailing dots, paths over 260) (Dwain Henderson Jr)
   2026-10-06 v3.18.1 - Check that the displayed version matches the script header (Dwain Henderson Jr)
+  2026-10-06 v3.18.3 - Check the report shows its saved folder and zip path (Dwain Henderson Jr)
 #>
 param([string] $Work = (Join-Path ([IO.Path]::GetTempPath()) 'pp-test'))
 
@@ -100,6 +101,9 @@ Check 'logo embedded' ($html -match 'data:image/png;base64,iVBOR') 'no PNG data'
 Check 'version in footer' ($html -match 'Project Planner v\d+\.\d+\.\d+') 'no version'
 $hdrVer = ''; foreach ($l in (Get-Content -LiteralPath $tool -TotalCount 10)) { if ($l -match '^Version:\s*(\d+\.\d+\.\d+)') { $hdrVer = $matches[1]; break } }
 Check 'footer version matches script header' ($html -match ('Project Planner v' + [regex]::Escape($hdrVer))) "header $hdrVer"
+Check 'report shows where it was saved' ($html.Contains('Report saved to:') -and $html.Contains([Net.WebUtility]::HtmlEncode($o))) 'saved-to bar missing or wrong folder'
+Check 'report shows the zip path' ($html.Contains([Net.WebUtility]::HtmlEncode("$o.zip"))) 'zip path missing'
+Check 'no unreplaced saved-to placeholders' (-not ($html -match '__SAVED[A-Z]+__')) 'placeholder left'
 $m = [regex]::Match($html, '<script id="pp-data" type="application/json">(.*?)</script>', 'Singleline')
 $data = $null; try { $data = $m.Groups[1].Value | ConvertFrom-Json } catch {}
 Check 'embedded report data is valid JSON' ($null -ne $data -and $data.files.Count -eq $expectFiles) "parse failed or wrong count"
