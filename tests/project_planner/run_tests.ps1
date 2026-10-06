@@ -1,6 +1,6 @@
 <#
 Name: run_tests.ps1
-Version: 3.18.3
+Version: 3.19.0
 Purpose: End-to-end test of project_planner.ps1 against a fake share (scan, capture, report, MRPeasy check, rebuild).
 Author: Dwain Henderson Jr. | Superior Networks LLC
 Contact: (937) 985-2480 | dhenderson@superiornetworks.biz
@@ -31,6 +31,7 @@ Change Log:
   2026-10-06 v3.18.1 - Check that the displayed version matches the script header (Dwain Henderson Jr)
   2026-10-06 v3.18.3 - Check the report shows its saved folder and zip path, and the Open folder,
                       Outlook and Gmail links (Dwain Henderson Jr)
+  2026-10-06 v3.19.0 - Check duplicate sets, savings, total and duplicates.csv (Dwain Henderson Jr)
 #>
 param([string] $Work = (Join-Path ([IO.Path]::GetTempPath()) 'pp-test'))
 
@@ -118,6 +119,18 @@ Check 'no unreplaced placeholders' (-not ($html -match '__(DATA|LOGO|VERSION|TIT
 $sum2 = Get-Content -LiteralPath (Join-Path $o 'summary.json') -Raw | ConvertFrom-Json
 Check 'rebuild from capture: same totals' ($sum2.summary.TotalFiles -eq $expectFiles -and $sum2.summary.TotalSizeBytes -eq $s.TotalSizeBytes) "$($sum2.summary.TotalFiles)"
 Check 'rebuild from capture: report written' ((Get-Item -LiteralPath (Join-Path $o 'report.html')).Length -gt 10000) 'small'
+
+# Duplicate sets and savings
+$dupCsv = Join-Path $o 'duplicates.csv'
+Check 'duplicates.csv written' (Test-Path -LiteralPath $dupCsv) 'missing'
+$dr = @(Import-Csv -LiteralPath $dupCsv | Where-Object { $_.Check -eq 'LIKELY_DUPLICATE' -and $_.Name -eq '12372.pdf' })
+Check 'likely duplicate set lists both copies' ($dr.Count -eq 2 -and (@($dr.Path) -contains 'Boxes/12372/12372.pdf') -and (@($dr.Path) -contains 'Archive/12372/12372.pdf')) (@($dr.Path) -join ' ; ')
+Check 'set shows space it could save' ($dr.Count -ge 1 -and $dr[0].SetCouldSave -ne '') $dr[0].SetCouldSave
+Check 'summary: likely savings at least one copy of 12372.pdf' ($s.Dup_Likely_SavableBytes -ge 1500) $s.Dup_Likely_SavableBytes
+Check 'summary: total uses proven figure when hashed' ($s.Dup_Total_SavableBytes -eq $s.Dup_Proven_SavableBytes -and $s.Dup_Total_Basis -like 'proven*') "$($s.Dup_Total_SavableBytes) / $($s.Dup_Total_Basis)"
+Check 'summary: size after cleanup = total - savings' ($s.SizeAfterCleanupBytes -eq ($s.TotalSizeBytes - $s.Dup_Total_SavableBytes)) $s.SizeAfterCleanupBytes
+Check 'report data: duplicate sets with locations' ($null -ne $data -and @($data.dups.LIKELY_DUPLICATE.list | Where-Object { $_[0] -eq '12372.pdf' -and @($_[4]).Count -eq 2 }).Count -eq 1) 'set missing from report data'
+Check 'report shows the duplicates total' ($html.Contains('Total a cleanup could save')) 'missing'
 
 # Windows PowerShell 5.1 compatibility (no PS7-only syntax)
 $tokens = $null; $errs = $null

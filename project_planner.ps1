@@ -1,6 +1,6 @@
 <#
 Name: project_planner.ps1
-Version: 3.18.3
+Version: 3.19.0
 Purpose: Scan a file share or folder and produce a complete, offline planning report for a migration project.
 Author: Dwain Henderson Jr. | Superior Networks LLC
 Contact: (937) 985-2480 | dhenderson@superiornetworks.biz
@@ -52,6 +52,10 @@ Change Log:
                       hint) and "Save report to" instead of Parent path / Report path. New Scan complete window
                       (Open report, Open folder, Email via Outlook with the zip attached or Gmail); report.html
                       gets Open folder and Outlook/Gmail email buttons (Dwain Henderson Jr)
+  2026-10-06 v3.19.0 - Duplicates grouped into sets with every copy's location ("Where the copies are"),
+                      space a cleanup could save (likely and proven) in the summary, console, summary.json
+                      and new duplicates.csv, with a total (proven when hashed, otherwise likely), % of the share and size
+                      after cleanup. Start screen explains when to use Hash and Permissions (Dwain Henderson Jr)
 #>
 
 <#
@@ -85,7 +89,7 @@ $ErrorActionPreference = 'Continue'
 $ToolName = 'Project Planner'
 # Version comes from the Version: line in this file's header (toolkit version); the value here is
 # only a fallback if the header can't be read.
-$ToolVersion = '3.18.3'
+$ToolVersion = '3.19.0'
 try {
     foreach ($hdrLine in (Get-Content -LiteralPath $PSCommandPath -TotalCount 10 -ErrorAction Stop)) {
         if ($hdrLine -match '^Version:\s*(\d+\.\d+\.\d+)') { $ToolVersion = $matches[1]; break }
@@ -619,8 +623,8 @@ $IssueDefs = [ordered]@{
     DUP_NAME            = @('Medium', 'The same file name exists in more than one folder. Matching by file name alone is ambiguous.', 'Match on folder + name, or rename.')
     BAD_DATE            = @('Medium', 'Modified date is before 1980 or in the future.', 'Ignore for date stats; check the file if it matters.')
     REPARSE_POINT       = @('Medium', 'Junction or symbolic link. Not followed by the scan.', 'Decide if its target needs migrating separately.')
-    LIKELY_DUPLICATE    = @('Low', 'Same name and size as a file in another folder (probably a copy).', 'Review before migrating to save space.')
-    DUP_CONTENT         = @('Low', 'Same content (MD5) as another file.', 'Review before migrating to save space.')
+    LIKELY_DUPLICATE    = @('Low', 'Same name and size as a file in another folder (probably a copy). Program folders have many of these because apps ship their own copies of runtime files.', 'Click to see each set and where the copies are. Keep one copy of each before migrating.')
+    DUP_CONTENT         = @('Low', 'Same content (MD5) as another file, even if the name is different. A proven copy.', 'Click to see each set. Keep one copy of each before migrating.')
     SPACE               = @('Info', 'Name contains spaces. Fine when encoded (%20), but hand-typed links break.', 'No action needed if links are generated.')
     JUNK                = @('Info', 'System or temporary file (Thumbs.db, desktop.ini, ~$ lock files, .tmp, .DS_Store).', 'Exclude from the migration.')
     ZERO_BYTE           = @('Info', 'File is empty (0 bytes).', 'Review; often safe to skip.')
@@ -637,6 +641,35 @@ function Get-NameIssues([string] $name) {
     if ($name.StartsWith(' ')) { $l.Add('LEADING_SPACE') }
     if ($name.Contains(' ')) { $l.Add('SPACE') }
     return ,$l
+}
+
+# Groups the duplicate issues into sets and works out the space a cleanup could save:
+# size x (copies - 1) for each set, i.e. keep one copy of each. DUP_NAME sets differ in size, so no savings.
+function Get-PPDupGroups($files) {
+    $out = [ordered]@{}
+    foreach ($code in 'LIKELY_DUPLICATE', 'DUP_CONTENT', 'DUP_NAME') {
+        $map = @{}
+        foreach ($f in $files) {
+            if (-not $f.Issues) { continue }
+            if ((',' + $f.Issues + ',').IndexOf(',' + $code + ',') -lt 0) { continue }
+            $k = if ($code -eq 'DUP_NAME') { $f.Name.ToLowerInvariant() } elseif ($code -eq 'LIKELY_DUPLICATE') { $f.Name.ToLowerInvariant() + '|' + $f.Size } else { [string]$f.Hash }
+            $l = $map[$k]
+            if ($null -eq $l) { $l = New-Object System.Collections.Generic.List[object]; $map[$k] = $l }
+            $l.Add($f)
+        }
+        $groups = New-Object System.Collections.Generic.List[object]
+        $saveTotal = [long]0; $extra = 0
+        foreach ($k in $map.Keys) {
+            $l = $map[$k]
+            $max = [long]0; foreach ($x in $l) { if ($x.Size -gt $max) { $max = $x.Size } }
+            $save = if ($code -eq 'DUP_NAME') { [long]0 } else { [long]$l[0].Size * ($l.Count - 1) }
+            $saveTotal += $save; $extra += ($l.Count - 1)
+            $groups.Add([pscustomobject]@{ Name = $l[0].Name; Size = $(if ($code -eq 'DUP_NAME') { $max } else { [long]$l[0].Size }); Copies = $l.Count; Savable = $save; Files = $l })
+        }
+        $sorted = @($groups | Sort-Object -Property @{ Expression = 'Savable'; Descending = $true }, @{ Expression = 'Copies'; Descending = $true }, @{ Expression = 'Name'; Descending = $false })
+        $out[$code] = @{ groups = $sorted; sets = $sorted.Count; extraCopies = $extra; savable = $saveTotal }
+    }
+    return $out
 }
 
 function Get-PPAnalysis($cap, [string] $mrpCsv, [string] $blobBase) {
@@ -806,6 +839,9 @@ function Get-PPAnalysis($cap, [string] $mrpCsv, [string] $blobBase) {
 
     $mrp = $null
     if ($mrpCsv) { $mrp = Get-PPMrp $mrpCsv $files $folders $blobBase }
+    $dups = Get-PPDupGroups $files
+    $dL = $dups['LIKELY_DUPLICATE']; $dC = $dups['DUP_CONTENT']
+    if ($hashCount.Count) { $dupTotal = [long]$dC.savable; $dupBasis = 'proven (same content)' } else { $dupTotal = [long]$dL.savable; $dupBasis = 'likely (same name and size)' }
 
     $summary = [ordered]@{
         Client = $meta.client; Project = $meta.project; Ticket = $meta.ticket
@@ -827,6 +863,12 @@ function Get-PPAnalysis($cap, [string] $mrpCsv, [string] $blobBase) {
         Folders_HasOnePdf = $draw.HasPdf; Folders_MultiplePdfs = $draw.MultiplePdfs; Folders_ArdOnly = $draw.ArdOnly; Folders_NoPdfNoArd = $draw.NoPdfNoArd
         SinglePdfNameMatchesFolder = $draw.SinglePdfNameMatchesFolder; SinglePdfNameDiffers = $draw.SinglePdfNameDiffers
         HashedFiles = $hashCount.Count
+        Dup_Likely_Sets = $dL.sets; Dup_Likely_ExtraCopies = $dL.extraCopies; Dup_Likely_SavableBytes = $dL.savable; Dup_Likely_Savable = (Format-Bytes $dL.savable)
+        Dup_Proven_Sets = $dC.sets; Dup_Proven_ExtraCopies = $dC.extraCopies; Dup_Proven_SavableBytes = $dC.savable; Dup_Proven_Savable = (Format-Bytes $dC.savable)
+        # Total: proven when files were hashed, otherwise likely (the two overlap, so they are never added)
+        Dup_Total_SavableBytes = $dupTotal; Dup_Total_Savable = (Format-Bytes $dupTotal); Dup_Total_Basis = $dupBasis
+        Dup_Total_Percent = $(if ($totBytes) { [math]::Round(100 * $dupTotal / $totBytes, 1) } else { 0 })
+        SizeAfterCleanupBytes = ($totBytes - $dupTotal); SizeAfterCleanup = (Format-Bytes ($totBytes - $dupTotal))
     }
     if ($mrp) { foreach ($k in $mrp.summary.Keys) { $summary['Mrp_' + $k] = $mrp.summary[$k] } }
 
@@ -834,7 +876,7 @@ function Get-PPAnalysis($cap, [string] $mrpCsv, [string] $blobBase) {
         summary = $summary; issueCounts = $issueCounts; rates = $rates; ext = $ext; years = $years; months = $months
         weekday = $weekday; hours = $hours; buckets = $buckets; depthHist = $depthHist
         filePatterns = (& $toRows $fileShapes); folderPatterns = (& $toRows $folderShapes)
-        topLevel = $topLevel; rootFiles = $rootFilesCount; mrp = $mrp; blobBase = $blobBase
+        topLevel = $topLevel; rootFiles = $rootFilesCount; mrp = $mrp; blobBase = $blobBase; dups = $dups
     }
 }
 
@@ -973,6 +1015,18 @@ function Write-PPOutputs($cap, $an, [string] $outDir) {
     foreach ($fo in $folders) { if ($fo.Issues) { foreach ($c in $fo.Issues.Split(',')) { if ($IssueDefs[$c][0] -ne 'Info' -or $c -eq 'EMPTY_FOLDER') { $issueRows.Add([pscustomobject]@{ Severity = $IssueDefs[$c][0]; Code = $c; Type = 'Folder'; Path = $(if ($fo.Rel) { $fo.Rel } else { '(root)' }) }) } } } }
     foreach ($f in $files) { if ($f.Issues) { foreach ($c in $f.Issues.Split(',')) { if ($c -ne 'SPACE' -and $c -ne 'CLOUD_ONLY') { $issueRows.Add([pscustomobject]@{ Severity = $IssueDefs[$c][0]; Code = $c; Type = 'File'; Path = $f.Rel }) } } } }
     Out-PPCsv $issueRows $outDir 'issues.csv'
+    $dupRows = New-Object System.Collections.Generic.List[object]
+    foreach ($code in $an.dups.Keys) {
+        $set = 0
+        foreach ($g in $an.dups[$code].groups) {
+            $set++
+            foreach ($x in $g.Files) {
+                $dupRows.Add([pscustomobject]@{ Check = $code; Set = $set; Name = $g.Name; Copies = $g.Copies; Size = (Format-Bytes $x.Size); Bytes = $x.Size
+                    SetCouldSave = $(if ($code -eq 'DUP_NAME') { '' } else { Format-Bytes $g.Savable }); Path = $x.Rel })
+            }
+        }
+    }
+    Out-PPCsv $dupRows $outDir 'duplicates.csv'
     if (@($cap.acl).Count) { Out-PPCsv $cap.acl $outDir 'permissions-top2.csv' }
     if ($an.mrp) {
         Out-PPCsv $an.mrp.review $outDir 'mrp-link-review.csv'
@@ -993,6 +1047,23 @@ function Write-PPHtml($cap, $an, [string] $file) {
     [void]$sb.Append(',"rates":' + (ConvertTo-PPJson $an.rates))
     $defs = [ordered]@{}; foreach ($k in $IssueDefs.Keys) { $defs[$k] = @($IssueDefs[$k]) }
     [void]$sb.Append(',"issueDefs":' + (ConvertTo-PPJson $defs))
+    # duplicate sets: largest savings first; 1,000 sets and 50 locations per set in the page (all in duplicates.csv)
+    [void]$sb.Append(',"dups":{')
+    $firstD = $true
+    foreach ($code in $an.dups.Keys) {
+        $d = $an.dups[$code]
+        if (-not $firstD) { [void]$sb.Append(',') }; $firstD = $false
+        [void]$sb.Append((Get-JStr $code) + ':{"sets":' + $d.sets + ',"extra":' + $d.extraCopies + ',"savable":' + $d.savable + ',"list":[')
+        $gi = 0
+        foreach ($g in $d.groups) {
+            if ($gi -ge 1000) { break }
+            if ($gi) { [void]$sb.Append(',') }; $gi++
+            $paths = @($g.Files | Select-Object -First 50 | ForEach-Object { Get-JStr $_.Rel }) -join ','
+            [void]$sb.Append('[' + (Get-JStr $g.Name) + ',' + $g.Size + ',' + $g.Copies + ',' + $g.Savable + ',[' + $paths + ']]')
+        }
+        [void]$sb.Append(']}')
+    }
+    [void]$sb.Append('}')
     [void]$sb.Append(',"issueCounts":' + (ConvertTo-PPJson $an.issueCounts))
     [void]$sb.Append(',"ext":' + (ConvertTo-PPJson @($an.ext.GetEnumerator() | Sort-Object { $_.Value[0] } -Descending | ForEach-Object { , @($_.Key, $_.Value[0], $_.Value[1]) })))
     [void]$sb.Append(',"years":' + (ConvertTo-PPJson @($an.years.GetEnumerator() | Sort-Object Key | ForEach-Object { , @([string]$_.Key, $_.Value) })))
@@ -1081,6 +1152,12 @@ function Write-PPConsole($an) {
     Write-PPRow 'Longest full path' "$($s.LongestPathChars) chars"; Write-PPRow 'Longest file name' "$($s.LongestNameChars) chars"
     Write-PPRow 'Paths over 240 / 260 chars' "$($s.PathsOver240)  /  $($s.PathsOver260)"
     Write-PPRow 'Longest planned web link' "$($s.LongestPlannedUrlChars) chars"
+    Write-PPHead 'Duplicates (space a cleanup could save by keeping one copy of each)'
+    Write-PPRow 'TOTAL a cleanup could save' ('{0} of {1} ({2}%), {3}' -f $s.Dup_Total_Savable, $s.TotalSize, $s.Dup_Total_Percent, $s.Dup_Total_Basis)
+    Write-PPRow 'Size after cleanup' $s.SizeAfterCleanup
+    Write-PPRow 'Likely copies (same name + size)' ('{0}  ({1:N0} extra copies in {2:N0} sets)' -f $s.Dup_Likely_Savable, $s.Dup_Likely_ExtraCopies, $s.Dup_Likely_Sets)
+    if ($s.HashedFiles) { Write-PPRow 'Proven copies (same content)' ('{0}  ({1:N0} extra copies in {2:N0} sets)' -f $s.Dup_Proven_Savable, $s.Dup_Proven_ExtraCopies, $s.Dup_Proven_Sets) }
+    else { Write-PPRow 'Proven copies (same content)' 'not checked (turn on Hash local files)' }
     Write-PPHead 'Migration readiness (issues found)'
     foreach ($k in $an.issueCounts.Keys) {
         $n = $an.issueCounts[$k]; if (-not $n) { continue }
@@ -1174,7 +1251,7 @@ function Show-PPStartForm($settings) {
 
     $chkOpt = New-Object System.Windows.Forms.CheckBox; $chkOpt.Text = 'Show optional checks (MRPeasy links, Blob URL, hashes, permissions)'; $chkOpt.Location = New-Object System.Drawing.Point(16, $script:ppY); $chkOpt.AutoSize = $true; $form.Controls.Add($chkOpt)
     $script:ppY += 28
-    $grp = New-Object System.Windows.Forms.Panel; $grp.Location = New-Object System.Drawing.Point(0, $script:ppY); $grp.Size = New-Object System.Drawing.Size(600, 120); $grp.Visible = $false; $form.Controls.Add($grp)
+    $grp = New-Object System.Windows.Forms.Panel; $grp.Location = New-Object System.Drawing.Point(0, $script:ppY); $grp.Size = New-Object System.Drawing.Size(600, 172); $grp.Visible = $false; $form.Controls.Add($grp)
     $optTop = $script:ppY
     $mk = {
         param($ctl, $x, $y, $w, $h) $ctl.Location = New-Object System.Drawing.Point($x, $y); $ctl.Size = New-Object System.Drawing.Size($w, $h); $grp.Controls.Add($ctl); $ctl
@@ -1186,7 +1263,11 @@ function Show-PPStartForm($settings) {
     $l2 = New-Object System.Windows.Forms.Label; $l2.Text = 'Blob base URL'; [void](& $mk $l2 16 38 150 20)
     $tbBlob = New-Object System.Windows.Forms.TextBox; $tbBlob.Text = [string]$last.blobBaseUrl; [void](& $mk $tbBlob 170 34 410 24)
     $chkHash = New-Object System.Windows.Forms.CheckBox; $chkHash.Text = 'Hash local files (MD5, finds true duplicates, slower)'; [void](& $mk $chkHash 170 66 410 22)
-    $chkAcl = New-Object System.Windows.Forms.CheckBox; $chkAcl.Text = 'Permissions for the top two folder levels'; [void](& $mk $chkAcl 170 90 410 22)
+    $hHash = New-Object System.Windows.Forms.Label; $hHash.ForeColor = $muted; $hHash.Font = New-Object System.Drawing.Font('Arial', 8)
+    $hHash.Text = 'Proves which files are identical and how much space a cleanup saves. Use before a duplicate cleanup. Slow: reads every file.'; [void](& $mk $hHash 188 88 400 28)
+    $chkAcl = New-Object System.Windows.Forms.CheckBox; $chkAcl.Text = 'Permissions for the top two folder levels'; [void](& $mk $chkAcl 170 118 410 22)
+    $hAcl = New-Object System.Windows.Forms.Label; $hAcl.ForeColor = $muted; $hAcl.Font = New-Object System.Drawing.Font('Arial', 8)
+    $hAcl.Text = 'Lists who can open the top folders. Use for SharePoint or Teams moves. Not needed for Azure Blob.'; [void](& $mk $hAcl 188 140 400 28)
 
     $low = New-Object System.Windows.Forms.Panel; $low.Location = New-Object System.Drawing.Point(0, $optTop); $low.Size = New-Object System.Drawing.Size(600, 260); $form.Controls.Add($low)
     $err = New-Object System.Windows.Forms.Label; $err.ForeColor = [System.Drawing.Color]::FromArgb(163, 45, 45); $err.Location = New-Object System.Drawing.Point(16, 0); $err.Size = New-Object System.Drawing.Size(564, 36); $low.Controls.Add($err)
@@ -1201,7 +1282,7 @@ function Show-PPStartForm($settings) {
     $ft.Font = New-Object System.Drawing.Font('Arial', 8); $ft.TextAlign = 'MiddleLeft'; $ft.Location = New-Object System.Drawing.Point(0, 214); $ft.Size = New-Object System.Drawing.Size(600, 30); $low.Controls.Add($ft)
 
     $layout = {
-        if ($chkOpt.Checked) { $grp.Visible = $true; $low.Top = $optTop + 124 } else { $grp.Visible = $false; $low.Top = $optTop }
+        if ($chkOpt.Checked) { $grp.Visible = $true; $low.Top = $optTop + 176 } else { $grp.Visible = $false; $low.Top = $optTop }
         $form.ClientSize = New-Object System.Drawing.Size(600, ($low.Top + 244))
     }
     $chkOpt.Add_CheckedChanged($layout)
@@ -1326,6 +1407,7 @@ R.summary=function(){
  let h='<h2>Scan</h2>'+T(['Item','Value'],[['Client',esc(M.client)],['Project',esc(M.project)],['Ticket',esc(M.ticket||'')],['Folder scanned',esc(M.root)],['Synced from',esc(M.library||'(not a synced library)')],['Scanned',esc((M.scanStarted||'').replace('T',' '))+' on '+esc(M.computer)+', '+esc(M.scanMinutes)+' min']].map(r=>['<span class="muted">'+r[0]+'</span>',r[1]]));
  if(D.truncated)h+='<div class="note">This share has more than 200,000 files, so only files with issues are embedded in this report. The full list is in capture.json.</div>';
  h+='<h2>Totals</h2><div class="grid">'+stat('Total size',esc(S.TotalSize))+stat('Files',n(S.TotalFiles))+stat('Folders',n(S.TotalFolders),n(S.EmptyFolders)+' empty, '+S.MaxDepth+' levels deep')+stat('Oldest / newest',esc(S.OldestModified)+'<br>'+esc(S.NewestModified),'modified dates')+stat('Files per day, last 90 days',esc(S.FilesPerDay_Last90),esc(S.FilesPerWeek_Last90)+' / week, '+esc(S.FilesPerMonth_Last90)+' / month')+stat('Files per year, all time',n(S.FilesPerYear_AllTime),esc(S.FilesPerMonth_AllTime)+' / month, '+esc(S.FilesPerDay_AllTime)+' / day')+stat('Cloud-only files',n(S.CloudOnlyFiles),'not downloaded on the scan PC')+stat('Problems to fix',n(sev.High)+' high','plus '+n(sev.Medium)+' medium, '+n(sev.Low)+' low')+'</div>';
+ if(D.dups){h+='<h2>Duplicates: space a cleanup could save</h2><div class="grid">'+stat('Total a cleanup could save','<b>'+B(S.Dup_Total_SavableBytes)+'</b>',S.Dup_Total_Percent+'% of '+esc(S.TotalSize)+'; size after cleanup '+B(S.SizeAfterCleanupBytes)+'<br>'+esc(S.Dup_Total_Basis))+stat('Likely copies',B(S.Dup_Likely_SavableBytes),n(S.Dup_Likely_ExtraCopies)+' extra copies in '+n(S.Dup_Likely_Sets)+' sets (same name and size)')+stat('Proven copies',S.HashedFiles?B(S.Dup_Proven_SavableBytes):'not checked',S.HashedFiles?n(S.Dup_Proven_ExtraCopies)+' extra copies in '+n(S.Dup_Proven_Sets)+' sets (same content)':'turn on Hash local files to prove it')+'</div><p class="muted small">Savings = size &times; (copies &minus; 1), keeping one copy of each set. Program folders inflate this (apps ship their own copies of runtime files); it matters most on document shares. Issues &gt; LIKELY_DUPLICATE / DUP_CONTENT lists every set and where the copies are.</p>'}
  const ms=D.months.slice(-36);h+='<h2>Files modified per month (last 36 months)</h2>'+bars(ms.map(m=>[m[0].slice(2),m[1]]));
  h+='<h2>Files per year</h2>'+bars(D.years.map(y=>[y[0],y[1]]),90);
  const wd=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];h+='<h2>When files change (last 365 days)</h2><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"><div>'+bars(D.weekday.map((v,i)=>[wd[i],v]),80)+'</div><div>'+bars(D.hours.map((v,i)=>[String(i),v]),80)+'</div></div>';
@@ -1364,7 +1446,12 @@ R.files=function(){const el=document.getElementById('t-files');const exts=D.ext.
 R.issues=function(){const el=document.getElementById('t-issues');const ks=Object.keys(D.issueCounts).filter(k=>D.issueCounts[k]>0).sort((a,b)=>sevOrder[D.issueDefs[a][0]]-sevOrder[D.issueDefs[b][0]]||D.issueCounts[b]-D.issueCounts[a]);
  let h='<h2>Migration readiness</h2>'+T(['Severity','Issue','Count','What it means','What to do'],ks.map(k=>{const d=D.issueDefs[k];return ['<span class="sev-'+d[0]+'">'+d[0]+'</span>','<a href="#" data-k="'+k+'">'+k+'</a>',n(D.issueCounts[k]),esc(d[1]),esc(d[2])]}),[2]);
  if(!ks.length)h+='<p>No issues found.</p>';h+='<h2 id="ih">Pick an issue above to list the affected items</h2><div id="il"></div>';el.innerHTML=h;
- el.addEventListener('click',e=>{const a=e.target.closest('a[data-k]');if(!a)return;e.preventDefault();const k=a.dataset.k;const rows=[];
+ el.addEventListener('click',e=>{const a=e.target.closest('a[data-k]');if(!a)return;e.preventDefault();const k=a.dataset.k;
+  if(D.dups&&D.dups[k]){const d=D.dups[k];const sv=k!=='DUP_NAME';
+   document.getElementById('ih').textContent=k+': '+n(D.issueCounts[k])+' files in '+n(d.sets)+' sets'+(sv?', about '+B(d.savable)+' could be saved by keeping one copy of each':'')+(d.sets>1000?' (largest 1,000 sets shown; all in duplicates.csv)':'');
+   document.getElementById('il').innerHTML=T(sv?['File name','Size','Copies','Could save','Where the copies are']:['File name','Largest','Copies','Where the copies are'],d.list.map(g=>{const loc='<span class="small">'+g[4].map(p=>esc(p)).join('<br>')+(g[2]>g[4].length?'<br><span class="muted">and '+n(g[2]-g[4].length)+' more in duplicates.csv</span>':'')+'</span>';return sv?[esc(g[0]),B(g[1]),n(g[2]),B(g[3]),loc]:[esc(g[0]),B(g[1]),n(g[2]),loc]}),sv?[1,2,3]:[1,2]);
+   document.getElementById('ih').scrollIntoView();return}
+  const rows=[];
   D.folders.forEach(f=>{if(f[8]&&f[8].split(',').includes(k)&&rows.length<3000)rows.push(['Folder',esc(f[0]||'(root)')])});
   D.files.forEach(f=>{if(f[4]&&f[4].split(',').includes(k)&&rows.length<3000)rows.push(['File',esc((fpath(f[0])?fpath(f[0])+'/':'')+f[1])])});
   document.getElementById('ih').textContent=k+': '+n(D.issueCounts[k])+' item(s)'+(D.issueCounts[k]>3000?' (showing 3,000; full list in issues.csv)':'');document.getElementById('il').innerHTML=T(['Type','Path'],rows);document.getElementById('ih').scrollIntoView()});};
@@ -1391,7 +1478,8 @@ R.help=function(){document.getElementById('t-help').innerHTML='<h2>Help Guide</h
  '<h2>Tabs</h2><ul><li><b>Summary:</b> totals, file types, dates and growth, sizes, top-level and largest folders, path lengths, name patterns, and details of the PC that ran the scan.</li><li><b>Folders:</b> the full folder tree. Click + to open a folder and see its files.</li><li><b>Files:</b> search every file by name or path, filter by type.</li><li><b>Issues:</b> everything that could break a migration or a web link, by severity. Click an issue to list the items.</li><li><b>MRPeasy links:</b> if an MRPeasy link export was included, how each existing link maps to a file and the draft old/new link file.</li></ul>'+
  '<h2>Severity</h2><ul><li><span class="sev-High">High</span>: will fail or break links. Fix before migrating.</li><li><span class="sev-Medium">Medium</span>: likely to cause problems. Review.</li><li><span class="sev-Low">Low</span>: worth a look (duplicates).</li><li><span class="sev-Info">Info</span>: for awareness.</li></ul>'+
  '<h2>Growth numbers</h2><p>"Files per day" uses modified dates. Last-90-days figures show the current pace; all-time figures average over the span from the oldest to the newest file. Files "copied in with older dates" were created on this share after their last change, so their modified date is older than their arrival.</p>'+
- '<h2>Files in the report folder</h2><ul><li><b>capture.json:</b> every folder and file with all details, for offline work. Open previous report &gt; capture.json rebuilds this report without rescanning.</li><li><b>summary.json, CSVs:</b> the same numbers for Excel.</li><li><b>issues.csv:</b> every flagged item.</li><li><b>mrp-link-update-DRAFT.csv:</b> only when an MRPeasy export was included. Review and pilot before uploading.</li></ul>'+
+ '<h2>Duplicates and the optional checks</h2><p><b>LIKELY_DUPLICATE</b> means another file has the same name and size: probably a copy, not proven. <b>DUP_CONTENT</b> (only with <i>Hash local files</i>) means the contents are identical, even under different names. Click either issue to see each set and every folder its copies are in. "Could save" is size &times; (copies &minus; 1). <b>Hash local files</b>: use it before a duplicate cleanup or to quote reliable savings; it reads every file, so it is slow on big shares. <b>Permissions</b>: use it for SharePoint/Teams moves, where access must be rebuilt; Azure Blob does not use folder permissions.</p>'+
+ '<h2>Files in the report folder</h2><ul><li><b>capture.json:</b> every folder and file with all details, for offline work. Open previous report &gt; capture.json rebuilds this report without rescanning.</li><li><b>summary.json, CSVs:</b> the same numbers for Excel.</li><li><b>issues.csv:</b> every flagged item.</li><li><b>duplicates.csv:</b> every duplicate set with each copy's path and the space it could save.</li><li><b>mrp-link-update-DRAFT.csv:</b> only when an MRPeasy export was included. Review and pilot before uploading.</li></ul>'+
  '<h2>Privacy</h2><p>The report holds file and folder names, sizes and dates. It holds no file contents. Treat it as confidential client information.</p>'+
  '<h2>Questions</h2><p>Superior Networks LLC &middot; Dwain Henderson Jr. &middot; (937) 985-2480 &middot; dhenderson@superiornetworks.biz</p>';};
 let start='summary';try{const s=localStorage.getItem('pp-tab');if(s&&R[s])start=s}catch(e){}

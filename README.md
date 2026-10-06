@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.18.4
+**Version:** 3.19.0
 **Copyright:** 2025-2026  
 **Developed by:** Superior Networks LLC
 
@@ -104,7 +104,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.18.4
+IT Troubleshooting Toolkit - v3.19.0
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -133,7 +133,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.18.4
+macOS Troubleshooter Terminal - Toolkit v3.19.0
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -151,7 +151,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.18.4
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.19.0
 ```
 
 ### Help Guide (Option H)
@@ -200,7 +200,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.18.4
+ConnectWise RMM Troubleshooter - Toolkit v3.19.0
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -245,6 +245,10 @@ It reads names, sizes, dates and attributes only. It never opens, changes, moves
 
 **Output:** reports go to `C:\ITTools\Reports` by default (created if missing; outside `Scripts`, so toolkit updates never touch them). Each scan writes `<Save report to>\<client>-<ticket>-<yyyyMMdd-HHmm>\` with `report.html` (tabs: Summary, Folders, Files, Issues, MRPeasy links, Help Guide), `capture.json`, `summary.json`, CSVs and `device-info.txt`, plus a `.zip` of the same name to send back.
 
+**Duplicates and space savings:** `LIKELY_DUPLICATE` (same name and size) and, with *Hash local files*, `DUP_CONTENT` (identical contents, even under different names) are grouped into sets. Clicking either issue on the report lists each set with every folder its copies are in and the space it could save. The Summary tab, the console and `summary.json` show the **total a cleanup could save** (proven when files were hashed, otherwise likely), its share of the scan, and the size after cleanup. `duplicates.csv` lists every copy. Program folders inflate these numbers, because apps ship their own copies of runtime files; they matter most on document shares.
+
+**Optional checks, when to use them:** *Hash local files* proves which files are identical and how much space a cleanup saves. Use it before a duplicate cleanup; it reads every file, so it is slow on big shares. *Permissions* lists who can open the top two folder levels. Use it for SharePoint or Teams moves; it isn't needed for Azure Blob.
+
 **When the scan finishes** a *Scan complete* window shows where the report was saved, with **Open report**, **Open folder** (File Explorer with the zip selected) and **Email** buttons. **Outlook** opens a new email to Superior Networks with the zip already attached (desktop Outlook). **Gmail** opens a filled-in Gmail message in the browser and the folder next to it, so the zip can be dragged in (browsers can't attach files by themselves). The same Open folder, Outlook and Gmail buttons are on the report page. Zips over 20 MB get a warning to share a OneDrive or Google Drive link instead.
 
 **Standalone use** (PC without the full toolkit): copy `project_planner.ps1` and `run_project_planner.cmd` into one folder and double-click the `.cmd`. Unattended:
@@ -263,7 +267,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.18.4
+HP M404dn Printer Troubleshooter - Toolkit v3.19.0
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -313,7 +317,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.18.4
+StorageCraft Troubleshooter - Toolkit v3.19.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -1024,6 +1028,13 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.19.0 (2026-10-06) - PROJECT PLANNER DUPLICATE SETS AND SAVINGS
+- **Duplicate Sets**: Clicking `LIKELY_DUPLICATE`, `DUP_CONTENT` or `DUP_NAME` on the Issues tab now lists each set of copies with every folder they are in ("Where the copies are"), largest savings first. Before, each copy was listed alone, so it was not clear what it duplicated.
+- **Space Savings**: Each set shows how much keeping one copy would save (size x (copies - 1)). The Summary tab, console and `summary.json` show likely savings, proven savings (with *Hash local files*), and a **total**: the proven figure when files were hashed, otherwise the likely figure (they overlap, so they are not added), with its percentage of the scan and the size after cleanup.
+- **duplicates.csv**: New file listing every duplicate set and each copy's path, for Excel.
+- **Option Hints**: The start screen explains when to use *Hash local files* (duplicate cleanup, reliable savings; slow) and *Permissions* (SharePoint/Teams moves; not needed for Azure Blob). The Help Guide covers the same.
+- **Files Updated**: `project_planner.ps1`, `tests/project_planner/run_tests.ps1`, `launch_menu.ps1`, `README.md`.
 
 ### Version 3.18.4 (2026-10-06) - INSTALL COMMAND NO LONGER FLAGGED BY DEFENDER
 - **New Install Commands**: The one-command installs now download `bootstrap.ps1` (or `bootstrap_ps4.ps1`) to `C:\ITTools`, allow scripts for that PowerShell window only, and run the file. The old commands ran the download straight from memory (`PowerShell.exe -ExecutionPolicy Bypass -Command "irm ... | iex"`), which Microsoft Defender cloud protection flagged as `Trojan:Win32/Commando.A!ml` and blocked.
