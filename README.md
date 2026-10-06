@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.17.1
+**Version:** 3.18.0
 **Copyright:** 2025-2026  
 **Developed by:** Superior Networks LLC
 
@@ -22,6 +22,7 @@ The **IT Troubleshooting Toolkit** is a comprehensive PowerShell-based solution 
 - **ImageManager Integration** - Query replication queue and manage backup jobs
 - **Service Management** - Control ImageManager service (start/stop/restart/status)
 - **StorageCraft Log Browsing** - Built-in log library and pager for StorageCraft SPX and ImageManager logs
+- **Project Planner** - Scans a file share and builds an offline migration planning report (sizes, problem names, folder tree, optional MRPeasy link check)
 - **Automated Deployment** - One-command installation and auto-update system
 - **Comprehensive Logging** - Track all operations with detailed audit trails
 
@@ -99,7 +100,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.17.1
+IT Troubleshooting Toolkit - v3.18.0
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -109,6 +110,9 @@ Troubleshooting Tools:
   3. StorageCraft Troubleshooter
   4. ConnectWise RMM Troubleshooter
   6. HP M404dn Printer Troubleshooter
+
+Project Tools:
+  7. Project Planner (share scan and migration report)
 
 Windows/Office Activation:
   5. Run MassGrave Activation Scripts (MAS)
@@ -125,7 +129,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.17.1
+macOS Troubleshooter Terminal - Toolkit v3.18.0
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -143,7 +147,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.17.1
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.18.0
 ```
 
 ### Help Guide (Option H)
@@ -192,7 +196,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.17.1
+ConnectWise RMM Troubleshooter - Toolkit v3.18.0
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -223,13 +227,37 @@ When an endpoint shows **"ScreenConnect Installation Pending"** or the agent is 
 
 ---
 
+## Project Planner
+
+**Project Planner** (option #7, `project_planner.ps1`) scans a folder or file share and builds a complete, offline planning report for a migration project, for example a file server moving to SharePoint or Azure Blob.
+
+It reads names, sizes, dates and attributes only. It never opens, changes, moves or deletes files, and OneDrive cloud-only files stay in the cloud. No admin rights needed. Requires Windows PowerShell 5.1 or later (the menu option checks this).
+
+**Start screen:** client name, project description, ticket #, parent path (the folder to scan), report path (where to save; not inside the parent path), optional MRPeasy links CSV and Azure Blob base URL, optional hashing of local files and permissions for the top two folder levels. **Open previous report** opens a `report.html`, or rebuilds a report from a `capture.json` without rescanning (for example to add the MRPeasy check later). Recent reports are listed for double-click.
+
+**Problem checks:** characters that break web links (`#`, `%`, `?`), paths over 260 characters, trailing dots and spaces, names that differ only by case, duplicate names and copies, junk and zero-byte files, bad dates, and Azure Blob name and URL length limits.
+
+**MRPeasy check (optional):** matches each link from the MRPeasy *Settings > Database Maintenance > Export file links* CSV to a real file, flags case mismatches, and drafts `mrp-link-update-DRAFT.csv` (old link, new Blob link).
+
+**Output:** `<Report path>\<client>-<ticket>-<yyyyMMdd-HHmm>\` with `report.html` (tabs: Summary, Folders, Files, Issues, MRPeasy links, Help Guide), `capture.json`, `summary.json`, CSVs and `device-info.txt`, plus a `.zip` of the same name to send back.
+
+**Standalone use** (PC without the full toolkit): copy `project_planner.ps1` and `run_project_planner.cmd` into one folder and double-click the `.cmd`. Unattended:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\project_planner.ps1 -NoGui -Client "Acme" -Project "File server to Azure" -Ticket 12345 -Path "D:\Shares\Design" -ReportPath "C:\Temp"
+```
+
+Tests (fake share, end-to-end checks) live in the repo under `tests/project_planner/` and are not installed on client machines.
+
+---
+
 ## HP M404dn Printer Troubleshooter
 
 The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided workflow for diagnosing and repairing common HP LaserJet Pro M404dn printing failures, including loss of network or USB connectivity, stuck print jobs, and corrupted printer drivers.
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.17.1
+HP M404dn Printer Troubleshooter - Toolkit v3.18.0
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -279,7 +307,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.17.1
+StorageCraft Troubleshooter - Toolkit v3.18.0
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -691,6 +719,8 @@ C:\ITTools\
 │   ├── assets\superior-networks-logo.png
 │   ├── storagecraft_troubleshooter.ps1
 │   ├── storagecraft_log_viewer.ps1
+│   ├── project_planner.ps1
+│   ├── run_project_planner.cmd
 │   ├── ftp_troubleshooter_tool.ps1
 │   ├── ftp_sync_tool.ps1
 │   ├── ftp_sync_imagemanager.ps1
@@ -988,6 +1018,14 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.18.0 (2026-10-06) - PROJECT PLANNER
+- **New Tool**: Added option 7, **Project Planner** (`project_planner.ps1`), under a new *Project Tools* menu section. It scans a folder or share and builds an offline migration planning report: totals, file types, dates and growth, path lengths, problem names, an expandable folder tree, and a severity-ranked issues list.
+- **MRPeasy Link Check**: Optionally matches an MRPeasy file-links export to the scan and drafts an old/new link update CSV for Azure Blob.
+- **Read-Only**: Reads metadata only; OneDrive cloud-only files are not downloaded. Requires PowerShell 5.1+, checked before launch. Runs in its own PowerShell window.
+- **Installer**: `project_planner.ps1` added to the required-file check; the repo `tests` folder is no longer copied to client machines (bootstraps and the launcher update option).
+- **Files Added**: `project_planner.ps1`, `run_project_planner.cmd`, `tests/project_planner/`.
+- **Files Updated**: `launch_menu.ps1`, `bootstrap.ps1`, `bootstrap_ps4.ps1`, `README.md`.
 
 ### Version 3.17.1 (2026-10-06) - BRANCH TESTING ON WINDOWS
 - **Branch Override**: `bootstrap.ps1` and `bootstrap_ps4.ps1` now accept the `SUPERIOR_NETWORKS_BRANCH` environment variable, matching `bootstrap_macos.sh`. When it is not set they install `master` exactly as before.

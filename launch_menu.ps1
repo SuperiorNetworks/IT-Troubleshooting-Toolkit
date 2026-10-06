@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.17.1
+Version: 3.18.0
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -97,6 +97,8 @@ Change Log:
                     date, name, and size, and opens them in a built-in pager with search.
 2026-10-06 v3.17.1 - Windows bootstraps accept SUPERIOR_NETWORKS_BRANCH to install a test branch
                     (default master); removed stale sync_versions.py and update_readme.py.
+2026-10-06 v3.18.0 - Added option 7, Project Planner (project_planner.ps1): scans a share and builds an
+                    offline migration planning report. Installers no longer copy the repo tests folder.
 .RELEASE_NOTES
 v2.5.0:
 - Added comprehensive master audit logging system for troubleshooting
@@ -214,7 +216,7 @@ function Show-Menu {
     Clear-Host
     
     # Get version dynamically from script header
-    $scriptVersion = "3.17.1"
+    $scriptVersion = "3.18.0"
     $scriptPath = $PSCommandPath
     if (Test-Path $scriptPath) {
         $content = Get-Content $scriptPath -Raw
@@ -238,6 +240,9 @@ function Show-Menu {
     Write-Host "    3. StorageCraft Troubleshooter" -ForegroundColor Cyan
     Write-Host "    4. ConnectWise RMM Troubleshooter" -ForegroundColor Cyan
     Write-Host "    6. HP M404dn Printer Troubleshooter" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  Project Tools:" -ForegroundColor White
+    Write-Host "    7. Project Planner (share scan and migration report)" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Windows/Office Activation:" -ForegroundColor White
     Write-Host "    5. Run MassGrave Activation Scripts (MAS)" -ForegroundColor Magenta
@@ -399,6 +404,8 @@ function Download-And-Install {
             
             # Copy files to staging
             Copy-Item -Path "$sourceFolder\*" -Destination $stagingPath -Recurse -Force
+            # Repo tests are not installed on client machines
+            Remove-Item -Path (Join-Path $stagingPath "tests") -Recurse -Force -ErrorAction SilentlyContinue
             
             # Create update batch file
             $batchFile = Join-Path $tempDir "update.bat"
@@ -460,8 +467,8 @@ del "%~f0"
                 Copy-Item -Path $_.FullName -Destination $installPath -Force
             }
             
-            # Copy directories recursively with force
-            Get-ChildItem -Path $sourceFolder -Directory | ForEach-Object {
+            # Copy directories recursively with force (repo tests are not installed)
+            Get-ChildItem -Path $sourceFolder -Directory | Where-Object { $_.Name -ne "tests" } | ForEach-Object {
                 $destDir = Join-Path $installPath $_.Name
                 if (Test-Path $destDir) {
                     Remove-Item -Path $destDir -Recurse -Force
@@ -653,6 +660,58 @@ function Run-HPM404dnTroubleshooter {
     }
 }
 
+function Run-ProjectPlanner {
+    Write-Host "`n=== Launching Project Planner ===" -ForegroundColor Cyan
+
+    $ppScriptName = "project_planner.ps1"
+    $scriptPath = Join-Path $installPath $ppScriptName
+
+    if (-not (Test-Path $scriptPath)) {
+        Write-Host "`nError: Project Planner not found!" -ForegroundColor Red
+        Write-Host "Expected location: $scriptPath" -ForegroundColor Yellow
+        Write-Host "`nPlease use Option 1 to download and install first." -ForegroundColor Yellow
+
+        Write-AuditLog -action "Project Planner" -level "ERROR" -errorMessage "Script not found: $scriptPath"
+
+        Write-Host "`nPress any key to return to menu..."
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        return
+    }
+
+    if ($PSVersionTable.PSVersion.Major -lt 5) {
+        Write-Host "`nProject Planner needs Windows PowerShell 5.1 or later." -ForegroundColor Red
+        Write-Host "This computer has PowerShell $($PSVersionTable.PSVersion). Install WMF 5.1 or run it from another PC that can see the share." -ForegroundColor Yellow
+
+        Write-AuditLog -action "Project Planner" -level "WARN" -details "Not started: PowerShell $($PSVersionTable.PSVersion) is below 5.1"
+
+        Write-Host "`nPress any key to return to menu..."
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        return
+    }
+
+    Write-Host "Opening the Project Planner start screen..." -ForegroundColor Green
+    Write-Host "Scan progress shows in a new window. This menu returns when Project Planner closes." -ForegroundColor Gray
+    Write-Host ""
+
+    Write-AuditLog -action "Project Planner" -details "Launched $ppScriptName in a new PowerShell window"
+
+    # Separate process: the start screen needs STA, and the script defines PowerShell classes
+    # that can't be redefined if it runs twice in the same session.
+    $ppArgs = "-NoProfile -ExecutionPolicy Bypass -STA -File `"$scriptPath`""
+    $ppProcess = Start-Process -FilePath "powershell.exe" -ArgumentList $ppArgs -Wait -PassThru
+
+    if ($ppProcess.ExitCode -ne 0) {
+        Write-Host "Project Planner exited with code $($ppProcess.ExitCode)." -ForegroundColor Yellow
+        Write-AuditLog -action "Project Planner" -level "WARN" -details "Exited with code $($ppProcess.ExitCode)"
+    }
+    else {
+        Write-AuditLog -action "Project Planner" -details "Closed normally"
+    }
+
+    Write-Host "`nPress any key to return to menu..."
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}
+
 function Show-ToolkitLogs {
     do {
         Clear-Host
@@ -805,12 +864,12 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.17.1"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.18.0"
 
 # Main menu loop
 do {
     Show-Menu
-    Write-Host "  Select an option (1-6 or Q): " -NoNewline -ForegroundColor White
+    Write-Host "  Select an option (1-7 or Q): " -NoNewline -ForegroundColor White
     $choice = Read-Host
     
     switch ($choice.ToUpper()) {
@@ -859,6 +918,15 @@ do {
                 throw
             }
         }
+        '7' {
+            Write-AuditLog -action "Menu Selection" -details "Option 7: Project Planner"
+            try {
+                Run-ProjectPlanner
+            } catch {
+                Write-AuditLog -action "Project Planner" -level "ERROR" -errorMessage $_.Exception.Message
+                throw
+            }
+        }
         '5' {
             Write-AuditLog -action "Menu Selection" -details "Option 5: Run MassGrave Activation Scripts"
             try {
@@ -884,7 +952,7 @@ do {
         }
         default {
             Write-AuditLog -action "Invalid Menu Selection" -level "WARN" -details "User entered: $choice"
-            Write-Host "`nInvalid selection. Please choose 1-6 or Q." -ForegroundColor Red
+            Write-Host "`nInvalid selection. Please choose 1-7 or Q." -ForegroundColor Red
             Start-Sleep -Seconds 2
         }
     }

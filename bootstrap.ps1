@@ -14,7 +14,7 @@ PowerShell.exe -ExecutionPolicy Bypass -File bootstrap.ps1
 
 .COPYRIGHT
 Name: bootstrap.ps1
-Version: 3.17.1
+Version: 3.18.0
 Purpose: Installs or updates the IT Troubleshooting Toolkit from GitHub and launches it.
          PowerShell 5.0+ (Windows 10/11, Server 2016+); uses Expand-Archive.
 Author: Dwain Henderson Jr. | Superior Networks LLC
@@ -44,6 +44,7 @@ Dependencies:
 Change Log:
 2026-10-06 v3.17.1 - Added SUPERIOR_NETWORKS_BRANCH override for testing branches; source
                      folder is now found in the ZIP instead of hardcoded; standard header (Dwain Henderson Jr)
+2026-10-06 v3.18.0 - Require project_planner.ps1; skip the repo tests folder when installing (Dwain Henderson Jr)
 #>
 
 # Configuration
@@ -63,6 +64,7 @@ $requiredToolkitFiles = @(
     "launch_menu.ps1",
     "storagecraft_troubleshooter.ps1",
     "storagecraft_log_viewer.ps1",
+    "project_planner.ps1",
     "hp_m404dn_troubleshooter.ps1",
     "hp_m404dn_connectivity_test.ps1",
     "hp_m404dn_spooler_repair.ps1",
@@ -159,8 +161,8 @@ function Install-Toolkit {
             }
         }
 
-        # Copy directories
-        Get-ChildItem -Path $sourceFolder -Directory | ForEach-Object {
+        # Copy directories (repo tests are not installed on client machines)
+        Get-ChildItem -Path $sourceFolder | Where-Object { $_.PSIsContainer -and $_.Name -ne "tests" } | ForEach-Object {
             $destDir = Join-Path $installPath $_.Name
             if (Test-Path $destDir) {
                 Remove-Item -Path $destDir -Recurse -Force
