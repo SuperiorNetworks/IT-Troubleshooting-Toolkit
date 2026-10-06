@@ -31,7 +31,7 @@ so use a test box, not a production client server. The bootstraps read `SUPERIOR
 (default `master`); a non-master branch shows a yellow TEST BRANCH line and always reinstalls.
 
 ```powershell
-$env:SUPERIOR_NETWORKS_BRANCH='dev';[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/dev/bootstrap_ps4.ps1|iex
+$env:SUPERIOR_NETWORKS_BRANCH='dev'; $ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; New-Item -ItemType Directory C:\ITTools -Force | Out-Null; Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/dev/bootstrap_ps4.ps1 -OutFile C:\ITTools\bootstrap_ps4.ps1; Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; & C:\ITTools\bootstrap_ps4.ps1
 ```
 
 Use `$env:` (lasts only for that window), never `setx`. Close the window when done.

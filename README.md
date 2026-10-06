@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.18.3
+**Version:** 3.18.4
 **Copyright:** 2025-2026  
 **Developed by:** Superior Networks LLC
 
@@ -37,7 +37,7 @@ The **IT Troubleshooting Toolkit** is a comprehensive PowerShell-based solution 
 Run this command in PowerShell (as Administrator):
 
 ```powershell
-PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
+$ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; New-Item -ItemType Directory C:\ITTools -Force | Out-Null; Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 -OutFile C:\ITTools\bootstrap.ps1; Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; & C:\ITTools\bootstrap.ps1
 ```
 
 #### For Windows Server 2012 R2 / Windows 7/8 (PowerShell 4.0)
@@ -45,7 +45,7 @@ PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::Secu
 Run this command in PowerShell (as Administrator):
 
 ```powershell
-[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_ps4.ps1|iex
+$ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; New-Item -ItemType Directory C:\ITTools -Force | Out-Null; Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_ps4.ps1 -OutFile C:\ITTools\bootstrap_ps4.ps1; Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; & C:\ITTools\bootstrap_ps4.ps1
 ```
 
 **What this does:**
@@ -55,12 +55,16 @@ Run this command in PowerShell (as Administrator):
 - Can be run from anywhere - handles everything automatically
 - Works on all Windows versions (Server 2012 R2 through Server 2025)
 
+**Why it downloads the file first:** older instructions ran the download straight from memory (`PowerShell.exe -ExecutionPolicy Bypass -Command "irm ... | iex"`). Microsoft Defender's cloud protection flags that pattern as `Trojan:Win32/Commando.A!ml` and blocks it. This command saves `bootstrap.ps1` to `C:\ITTools`, allows scripts for this PowerShell window only, and runs the file. Paste it into a **PowerShell** window (not Command Prompt or the Run box).
+
+For client PCs you manage, deploying through ConnectWise RMM avoids pasting commands at all.
+
 #### Testing a branch (test boxes only)
 
 Both Windows bootstraps install `master` unless the `SUPERIOR_NETWORKS_BRANCH` environment variable is set. To install another branch (for example `dev`) on a **test box**, run in PowerShell as Administrator:
 
 ```powershell
-$env:SUPERIOR_NETWORKS_BRANCH='dev';[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/dev/bootstrap_ps4.ps1|iex
+$env:SUPERIOR_NETWORKS_BRANCH='dev'; $ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; New-Item -ItemType Directory C:\ITTools -Force | Out-Null; Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/dev/bootstrap_ps4.ps1 -OutFile C:\ITTools\bootstrap_ps4.ps1; Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; & C:\ITTools\bootstrap_ps4.ps1
 ```
 
 The bootstrap shows a yellow `TEST BRANCH` line and always reinstalls the branch. `$env:` only lasts for that PowerShell window, so close it when done. The launcher's update option still reinstalls from `master`.
@@ -100,7 +104,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.18.3
+IT Troubleshooting Toolkit - v3.18.4
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -129,7 +133,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.18.3
+macOS Troubleshooter Terminal - Toolkit v3.18.4
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -147,7 +151,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.18.3
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.18.4
 ```
 
 ### Help Guide (Option H)
@@ -196,7 +200,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.18.3
+ConnectWise RMM Troubleshooter - Toolkit v3.18.4
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -259,7 +263,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.18.3
+HP M404dn Printer Troubleshooter - Toolkit v3.18.4
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -309,7 +313,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.18.3
+StorageCraft Troubleshooter - Toolkit v3.18.4
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -1020,6 +1024,13 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.18.4 (2026-10-06) - INSTALL COMMAND NO LONGER FLAGGED BY DEFENDER
+- **New Install Commands**: The one-command installs now download `bootstrap.ps1` (or `bootstrap_ps4.ps1`) to `C:\ITTools`, allow scripts for that PowerShell window only, and run the file. The old commands ran the download straight from memory (`PowerShell.exe -ExecutionPolicy Bypass -Command "irm ... | iex"`), which Microsoft Defender cloud protection flagged as `Trojan:Win32/Commando.A!ml` and blocked.
+- **Tested**: On a Windows test PC with Defender cloud protection on, the old command was detected and blocked; the new command installed and opened the menu with no detection, under both the RemoteSigned and the default Windows 10/11 Restricted policy.
+- **Progress Off**: The command turns off the download progress bar, which fails without a real console (for example through RMM) and slows downloads in Windows PowerShell 5.1.
+- **Paste Into PowerShell**: The new command must be pasted into a PowerShell window (it no longer starts with `PowerShell.exe`, so it does not work from Command Prompt or the Run box).
+- **Files Updated**: `README.md`, `BOOTSTRAP_GUIDE.md`, `bootstrap.ps1`, `bootstrap_ps4.ps1` (usage notes), `launch_menu.ps1`.
 
 ### Version 3.18.3 (2026-10-06) - PROJECT PLANNER SHOWS WHERE THE REPORT IS
 - **Console**: The scan ends with a "REPORT SAVED" block showing the report folder, `report.html` and the `.zip` to send back. When started from the start screen (menu option 7 or `run_project_planner.cmd`), the window now stays open until Enter is pressed; before, it closed as soon as the scan finished.

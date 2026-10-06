@@ -37,7 +37,7 @@ The **Major** number is your PowerShell version (e.g., 5 = PowerShell 5.x).
 
 **Command:**
 ```powershell
-PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
+$ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; New-Item -ItemType Directory C:\ITTools -Force | Out-Null; Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 -OutFile C:\ITTools\bootstrap.ps1; Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; & C:\ITTools\bootstrap.ps1
 ```
 
 ---
@@ -53,10 +53,12 @@ PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::Secu
 
 **Command:**
 ```powershell
-PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_ps4.ps1 | iex"
+$ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; New-Item -ItemType Directory C:\ITTools -Force | Out-Null; Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_ps4.ps1 -OutFile C:\ITTools\bootstrap_ps4.ps1; Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; & C:\ITTools\bootstrap_ps4.ps1
 ```
 
 **Note:** The TLS 1.2 setting is included in the command because older systems default to TLS 1.0, which GitHub doesn't support.
+
+**Why it downloads the file first:** older instructions ran the download straight from memory (`PowerShell.exe -ExecutionPolicy Bypass -Command "irm ... | iex"`). Microsoft Defender's cloud protection flags that pattern as `Trojan:Win32/Commando.A!ml` and blocks it. This command saves `bootstrap.ps1` to `C:\ITTools`, allows scripts for this PowerShell window only, and runs the file. Paste it into a **PowerShell** window (not Command Prompt or the Run box).
 
 ---
 
@@ -79,17 +81,17 @@ PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::Secu
 
 **For PowerShell 5.0+:**
 ```powershell
-PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
+$ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; New-Item -ItemType Directory C:\ITTools -Force | Out-Null; Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 -OutFile C:\ITTools\bootstrap.ps1; Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; & C:\ITTools\bootstrap.ps1
 ```
 
 **For PowerShell 4.0-4.5:**
 ```powershell
-PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_ps4.ps1 | iex"
+$ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; New-Item -ItemType Directory C:\ITTools -Force | Out-Null; Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_ps4.ps1 -OutFile C:\ITTools\bootstrap_ps4.ps1; Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; & C:\ITTools\bootstrap_ps4.ps1
 ```
 
 **Testing a branch (test boxes only):** set `SUPERIOR_NETWORKS_BRANCH` first to install that branch instead of `master`. Either bootstrap works:
 ```powershell
-$env:SUPERIOR_NETWORKS_BRANCH='dev';[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/dev/bootstrap_ps4.ps1|iex
+$env:SUPERIOR_NETWORKS_BRANCH='dev'; $ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; New-Item -ItemType Directory C:\ITTools -Force | Out-Null; Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/dev/bootstrap_ps4.ps1 -OutFile C:\ITTools\bootstrap_ps4.ps1; Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; & C:\ITTools\bootstrap_ps4.ps1
 ```
 It shows a yellow `TEST BRANCH` line and always reinstalls. The setting lasts only for that PowerShell window.
 
@@ -160,10 +162,10 @@ cd C:\ITTools\Scripts
 
 **Cause:** System is using TLS 1.0, but GitHub requires TLS 1.2.
 
-**Solution:** Add TLS 1.2 to the command:
+**Solution:** Use the current install command, which sets TLS 1.2 first:
 
 ```powershell
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_ps4.ps1 | iex
+$ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; New-Item -ItemType Directory C:\ITTools -Force | Out-Null; Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_ps4.ps1 -OutFile C:\ITTools\bootstrap_ps4.ps1; Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; & C:\ITTools\bootstrap_ps4.ps1
 ```
 
 ---

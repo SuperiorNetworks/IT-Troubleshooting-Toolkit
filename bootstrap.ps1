@@ -7,14 +7,15 @@ Smart launcher that automatically installs or updates the toolkit and runs it.
 Can be run from anywhere - handles everything automatically.
 
 .USAGE
-PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
+In a PowerShell window as Administrator:
+$ProgressPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; New-Item -ItemType Directory C:\ITTools -Force | Out-Null; Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 -OutFile C:\ITTools\bootstrap.ps1; Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; & C:\ITTools\bootstrap.ps1
 
 Or save this file and run:
 PowerShell.exe -ExecutionPolicy Bypass -File bootstrap.ps1
 
 .COPYRIGHT
 Name: bootstrap.ps1
-Version: 3.18.0
+Version: 3.18.4
 Purpose: Installs or updates the IT Troubleshooting Toolkit from GitHub and launches it.
          PowerShell 5.0+ (Windows 10/11, Server 2016+); uses Expand-Archive.
 Author: Dwain Henderson Jr. | Superior Networks LLC
@@ -48,6 +49,8 @@ Change Log:
 2026-10-06 v3.18.0 - Require project_planner.ps1; skip the repo tests folder when installing; allow scripts
                      for this window only (Process scope) so the menu opens on PCs with the Restricted
                      execution policy (Dwain Henderson Jr)
+2026-10-06 v3.18.4 - Usage: install command saves this file to C:\ITTools and runs it (no irm | iex,
+                     which Defender flags as Trojan:Win32/Commando.A!ml) (Dwain Henderson Jr)
 #>
 
 # Enable TLS 1.2 for GitHub downloads (older .NET defaults to TLS 1.0, which GitHub refuses)
