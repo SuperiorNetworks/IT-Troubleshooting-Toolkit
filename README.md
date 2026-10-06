@@ -1025,6 +1025,7 @@ For support, feature requests, or bug reports:
 - **Read-Only**: Reads metadata only; OneDrive cloud-only files are not downloaded. Requires PowerShell 5.1+, checked before launch. Runs in its own PowerShell window.
 - **Tested on Windows PowerShell 5.1**: Full scan of `C:\Program Files` (61,401 files) matched an independent file count. Works without a real console (SSH, RMM): progress-bar errors no longer mark folders as unreadable, and the zip uses .NET ZipFile (no 2 GB per-file limit).
 - **Installer**: `project_planner.ps1` added to the required-file check; the repo `tests` folder is no longer copied to client machines (bootstraps and the launcher update option).
+- **Execution Policy Fix**: Both bootstraps now allow scripts for their own PowerShell window only (Process scope) before opening the menu. On Windows 10/11 desktops with the default *Restricted* policy, the bootstrap installed the toolkit but could not open the menu ("running scripts is disabled on this system"). The machine's policy is not changed. If the menu still can't start (for example, the policy is set by Group Policy), the bootstrap points to `launcher.bat`.
 - **Files Added**: `project_planner.ps1`, `run_project_planner.cmd`, `tests/project_planner/`.
 - **Files Updated**: `launch_menu.ps1`, `bootstrap.ps1`, `bootstrap_ps4.ps1`, `README.md`.
 

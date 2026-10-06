@@ -54,7 +54,9 @@ Dependencies:
 Change Log:
 2026-10-06 v3.17.1 - Added SUPERIOR_NETWORKS_BRANCH override for testing branches; source
                      folder is now found in the ZIP instead of hardcoded; standard header (Dwain Henderson Jr)
-2026-10-06 v3.18.0 - Require project_planner.ps1; skip the repo tests folder when installing (Dwain Henderson Jr)
+2026-10-06 v3.18.0 - Require project_planner.ps1; skip the repo tests folder when installing; allow scripts
+                     for this window only (Process scope) so the menu opens on PCs with the Restricted
+                     execution policy (Dwain Henderson Jr)
 #>
 
 # Enable TLS 1.2 for GitHub downloads
@@ -356,8 +358,20 @@ Write-Host "Launching toolkit..." -ForegroundColor Cyan
 Write-Host ""
 Start-Sleep -Seconds 1
 
+# Allow scripts in this PowerShell window only (Process scope). Windows 10/11 desktops default to
+# the Restricted policy, which blocks launch_menu.ps1 when this bootstrap runs via irm | iex.
+# The machine's own execution policy is not changed.
+try { Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction Stop } catch {}
+
 if (Test-Path $launcherScript) {
-    & $launcherScript
+    try {
+        & $launcherScript
+    }
+    catch {
+        Write-Host ""
+        Write-Host "The toolkit menu stopped: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "To start it again: C:\ITTools\Scripts\launcher.bat" -ForegroundColor Yellow
+    }
 }
 else {
     Write-Host "Error: Launcher not found at $launcherScript" -ForegroundColor Red
