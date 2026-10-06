@@ -31,7 +31,8 @@ Change Log:
   2026-10-06 v3.18.1 - Check that the displayed version matches the script header (Dwain Henderson Jr)
   2026-10-06 v3.18.3 - Check the report shows its saved folder and zip path, and the Open folder,
                       Outlook and Gmail links (Dwain Henderson Jr)
-  2026-10-06 v3.19.0 - Check duplicate sets, savings, total and duplicates.csv (Dwain Henderson Jr)
+  2026-10-06 v3.19.0 - Check duplicate sets, savings, total and duplicates.csv; syntax-check the report
+                      page script with Node.js when available (a JS error makes the report blank) (Dwain Henderson Jr)
 #>
 param([string] $Work = (Join-Path ([IO.Path]::GetTempPath()) 'pp-test'))
 
@@ -131,6 +132,16 @@ Check 'summary: total uses proven figure when hashed' ($s.Dup_Total_SavableBytes
 Check 'summary: size after cleanup = total - savings' ($s.SizeAfterCleanupBytes -eq ($s.TotalSizeBytes - $s.Dup_Total_SavableBytes)) $s.SizeAfterCleanupBytes
 Check 'report data: duplicate sets with locations' ($null -ne $data -and @($data.dups.LIKELY_DUPLICATE.list | Where-Object { $_[0] -eq '12372.pdf' -and @($_[4]).Count -eq 2 }).Count -eq 1) 'set missing from report data'
 Check 'report shows the duplicates total' ($html.Contains('Total a cleanup could save')) 'missing'
+
+# Page script must parse, or the report opens blank (checked with Node.js when it is installed)
+$node = Get-Command node -ErrorAction SilentlyContinue
+if ($node) {
+    $js = ([regex]::Matches($html, '<script(?![^>]*application/json)[^>]*>(.*?)</script>', 'Singleline') | ForEach-Object { $_.Groups[1].Value }) -join "`n"
+    $jsFile = Join-Path $Work 'report-script.js'
+    [IO.File]::WriteAllText($jsFile, $js)
+    $jsOut = & $node.Source --check $jsFile 2>&1 | Out-String
+    Check 'report page script has no syntax errors' ($LASTEXITCODE -eq 0) ($jsOut.Trim())
+} else { Write-Host 'SKIP  report page script syntax (Node.js not installed)' -ForegroundColor Yellow }
 
 # Windows PowerShell 5.1 compatibility (no PS7-only syntax)
 $tokens = $null; $errs = $null
