@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.17.0
+Version: 3.17.1
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -95,6 +95,8 @@ Change Log:
 2026-09-24 v3.17.0 - Added StorageCraft Logs to the StorageCraft Troubleshooter submenu; new
                     storagecraft_log_viewer.ps1 lists SPX, SPX GUI, and ImageManager logs with
                     date, name, and size, and opens them in a built-in pager with search.
+2026-10-06 v3.17.1 - Windows bootstraps accept SUPERIOR_NETWORKS_BRANCH to install a test branch
+                    (default master); removed stale sync_versions.py and update_readme.py.
 .RELEASE_NOTES
 v2.5.0:
 - Added comprehensive master audit logging system for troubleshooting
@@ -212,7 +214,7 @@ function Show-Menu {
     Clear-Host
     
     # Get version dynamically from script header
-    $scriptVersion = "3.17.0"
+    $scriptVersion = "3.17.1"
     $scriptPath = $PSCommandPath
     if (Test-Path $scriptPath) {
         $content = Get-Content $scriptPath -Raw
@@ -803,7 +805,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.17.0"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.17.1"
 
 # Main menu loop
 do {

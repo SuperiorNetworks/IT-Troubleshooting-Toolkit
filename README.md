@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.17.0
+**Version:** 3.17.1
 **Copyright:** 2025-2026  
 **Developed by:** Superior Networks LLC
 
@@ -54,6 +54,16 @@ Run this command in PowerShell (as Administrator):
 - Can be run from anywhere - handles everything automatically
 - Works on all Windows versions (Server 2012 R2 through Server 2025)
 
+#### Testing a branch (test boxes only)
+
+Both Windows bootstraps install `master` unless the `SUPERIOR_NETWORKS_BRANCH` environment variable is set. To install another branch (for example `dev`) on a **test box**, run in PowerShell as Administrator:
+
+```powershell
+$env:SUPERIOR_NETWORKS_BRANCH='dev';[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/dev/bootstrap_ps4.ps1|iex
+```
+
+The bootstrap shows a yellow `TEST BRANCH` line and always reinstalls the branch. `$env:` only lasts for that PowerShell window, so close it when done. The launcher's update option still reinstalls from `master`.
+
 ### macOS OneDrive Repair
 
 The macOS tools run in native **Terminal** with Bash and Git; **PowerShell is not required**. Run the following command as the signed-in macOS user, not with `sudo`:
@@ -89,7 +99,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.17.0
+IT Troubleshooting Toolkit - v3.17.1
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -115,7 +125,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.17.0
+macOS Troubleshooter Terminal - Toolkit v3.17.1
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -133,7 +143,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.17.0
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.17.1
 ```
 
 ### Help Guide (Option H)
@@ -182,7 +192,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.17.0
+ConnectWise RMM Troubleshooter - Toolkit v3.17.1
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -219,7 +229,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.17.0
+HP M404dn Printer Troubleshooter - Toolkit v3.17.1
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -269,7 +279,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.17.0
+StorageCraft Troubleshooter - Toolkit v3.17.1
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -978,6 +988,14 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.17.1 (2026-10-06) - BRANCH TESTING ON WINDOWS
+- **Branch Override**: `bootstrap.ps1` and `bootstrap_ps4.ps1` now accept the `SUPERIOR_NETWORKS_BRANCH` environment variable, matching `bootstrap_macos.sh`. When it is not set they install `master` exactly as before.
+- **Test Branch Behavior**: A non-master branch shows a yellow `TEST BRANCH` line and always reinstalls, since a test branch often has the same version number as the installed copy.
+- **Extract Folder Detection**: The bootstraps find the toolkit folder inside the downloaded ZIP instead of assuming `IT-Troubleshooting-Toolkit-master`, so branch names containing `/` also work.
+- **Cleanup**: Removed the stale one-off scripts `sync_versions.py` and `update_readme.py` (hardcoded 3.7.x versions).
+- **Headers**: Both Windows bootstraps now use the standard Superior Networks script header.
+- **Files Updated**: `bootstrap.ps1`, `bootstrap_ps4.ps1`, `launch_menu.ps1`, `README.md`, `BOOTSTRAP_GUIDE.md`.
 
 ### Version 3.17.0 (2026-09-24) - STORAGECRAFT LOG VIEWER
 - **StorageCraft Logs Section**: Added option 9, `StorageCraft Logs (SPX & ImageManager)`, to the StorageCraft Troubleshooter submenu.

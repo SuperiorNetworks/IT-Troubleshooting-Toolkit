@@ -87,6 +87,12 @@ PowerShell.exe -ExecutionPolicy Bypass -Command "irm https://raw.githubuserconte
 PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap_ps4.ps1 | iex"
 ```
 
+**Testing a branch (test boxes only):** set `SUPERIOR_NETWORKS_BRANCH` first to install that branch instead of `master`. Either bootstrap works:
+```powershell
+$env:SUPERIOR_NETWORKS_BRANCH='dev';[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/dev/bootstrap_ps4.ps1|iex
+```
+It shows a yellow `TEST BRANCH` line and always reinstalls. The setting lasts only for that PowerShell window.
+
 ---
 
 ### Option 2: Download and Run Bootstrap

@@ -27,11 +27,14 @@ Rules:
 ### Testing a branch on a Windows test box
 
 Run in PowerShell as admin on the test machine. It overwrites `C:\ITTools\Scripts` with the branch,
-so use a test box, not a production client server. Needs PowerShell 5+ (`Expand-Archive`).
+so use a test box, not a production client server. The bootstraps read `SUPERIOR_NETWORKS_BRANCH`
+(default `master`); a non-master branch shows a yellow TEST BRANCH line and always reinstalls.
 
 ```powershell
-$b='dev'; $z="$env:TEMP\itt-$b.zip"; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; irm "https://github.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/archive/refs/heads/$b.zip" -OutFile $z; Expand-Archive $z "$env:TEMP\itt-$b" -Force; Copy-Item "$env:TEMP\itt-$b\IT-Troubleshooting-Toolkit-$b\*" C:\ITTools\Scripts -Recurse -Force; & C:\ITTools\Scripts\launch_menu.ps1
+$env:SUPERIOR_NETWORKS_BRANCH='dev';[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12;irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/dev/bootstrap_ps4.ps1|iex
 ```
+
+Use `$env:` (lasts only for that window), never `setx`. Close the window when done.
 
 Don't choose the launcher's "update" option during a branch test; it reinstalls from `master`.
 
@@ -58,8 +61,6 @@ On each bump, update all of these:
 
 Check for leftovers with `grep -rn "<old version>" --exclude-dir=.git .`
 
-`sync_versions.py` and `update_readme.py` are one-off scripts with hardcoded old versions
-(3.7.x). Don't run them as-is.
 
 ## Script header standard
 
