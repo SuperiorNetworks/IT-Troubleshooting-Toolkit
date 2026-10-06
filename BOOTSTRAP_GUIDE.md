@@ -37,7 +37,7 @@ The **Major** number is your PowerShell version (e.g., 5 = PowerShell 5.x).
 
 **Command:**
 ```powershell
-PowerShell.exe -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
+PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
 ```
 
 ---
@@ -79,7 +79,7 @@ PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::Secu
 
 **For PowerShell 5.0+:**
 ```powershell
-PowerShell.exe -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
+PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
 ```
 
 **For PowerShell 4.0-4.5:**

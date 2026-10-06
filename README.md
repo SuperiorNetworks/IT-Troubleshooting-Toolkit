@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.17.1
+**Version:** 3.17.2
 **Copyright:** 2025-2026  
 **Developed by:** Superior Networks LLC
 
@@ -36,7 +36,7 @@ The **IT Troubleshooting Toolkit** is a comprehensive PowerShell-based solution 
 Run this command in PowerShell (as Administrator):
 
 ```powershell
-PowerShell.exe -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
+PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
 ```
 
 #### For Windows Server 2012 R2 / Windows 7/8 (PowerShell 4.0)
@@ -99,7 +99,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.17.1
+IT Troubleshooting Toolkit - v3.17.2
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -125,7 +125,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.17.1
+macOS Troubleshooter Terminal - Toolkit v3.17.2
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -143,7 +143,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.17.1
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.17.2
 ```
 
 ### Help Guide (Option H)
@@ -192,7 +192,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.17.1
+ConnectWise RMM Troubleshooter - Toolkit v3.17.2
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -229,7 +229,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.17.1
+HP M404dn Printer Troubleshooter - Toolkit v3.17.2
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -279,7 +279,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.17.1
+StorageCraft Troubleshooter - Toolkit v3.17.2
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -988,6 +988,11 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.17.2 (2026-10-06) - TLS 1.2 FOR WINDOWS 10/11 INSTALL
+- **Install Command Fix**: The Windows 10/11 / Server 2016+ one-command install now turns on TLS 1.2 before downloading, like the PowerShell 4.0 command already did. On PCs whose .NET still defaults to TLS 1.0, GitHub refused the download and the install failed.
+- **Bootstrap and Launcher**: `bootstrap.ps1` and `launch_menu.ps1` now enable TLS 1.2 at startup, so the bootstrap's own downloads and the launcher's *Download and Install Latest Version* option work on those PCs too.
+- **Files Updated**: `bootstrap.ps1`, `launch_menu.ps1`, `README.md`, `BOOTSTRAP_GUIDE.md`.
 
 ### Version 3.17.1 (2026-10-06) - BRANCH TESTING ON WINDOWS
 - **Branch Override**: `bootstrap.ps1` and `bootstrap_ps4.ps1` now accept the `SUPERIOR_NETWORKS_BRANCH` environment variable, matching `bootstrap_macos.sh`. When it is not set they install `master` exactly as before.
