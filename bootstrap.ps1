@@ -7,7 +7,7 @@ Smart launcher that automatically installs or updates the toolkit and runs it.
 Can be run from anywhere - handles everything automatically.
 
 .USAGE
-PowerShell.exe -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
+PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
 
 Or save this file and run:
 PowerShell.exe -ExecutionPolicy Bypass -File bootstrap.ps1
@@ -44,8 +44,12 @@ Dependencies:
 Change Log:
 2026-10-06 v3.17.1 - Added SUPERIOR_NETWORKS_BRANCH override for testing branches; source
                      folder is now found in the ZIP instead of hardcoded; standard header (Dwain Henderson Jr)
+2026-10-06 v3.17.2 - Enable TLS 1.2 before downloading; install command in .USAGE sets TLS 1.2 first (Dwain Henderson Jr)
 2026-10-06 v3.18.0 - Require project_planner.ps1; skip the repo tests folder when installing (Dwain Henderson Jr)
 #>
+
+# Enable TLS 1.2 for GitHub downloads (older .NET defaults to TLS 1.0, which GitHub refuses)
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # Configuration
 $installPath = "C:\ITTools\Scripts"

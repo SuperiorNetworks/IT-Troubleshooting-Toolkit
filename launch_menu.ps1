@@ -97,6 +97,8 @@ Change Log:
                     date, name, and size, and opens them in a built-in pager with search.
 2026-10-06 v3.17.1 - Windows bootstraps accept SUPERIOR_NETWORKS_BRANCH to install a test branch
                     (default master); removed stale sync_versions.py and update_readme.py.
+2026-10-06 v3.17.2 - Enable TLS 1.2 at startup so the update option works on PCs with older .NET defaults;
+                    Windows 10/11 install command now sets TLS 1.2 before downloading.
 2026-10-06 v3.18.0 - Added option 7, Project Planner (project_planner.ps1): scans a share and builds an
                     offline migration planning report. Installers no longer copy the repo tests folder.
 .RELEASE_NOTES
@@ -128,6 +130,9 @@ v2.0.0:
 This launcher provides centralized access to multiple IT troubleshooting tools and utilities.
 Designed for IT professionals and MSPs to streamline common troubleshooting tasks.
 #>
+
+# Enable TLS 1.2 for GitHub downloads (older .NET defaults to TLS 1.0, which GitHub refuses)
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # Configuration
 $repoOwner = "SuperiorNetworks"

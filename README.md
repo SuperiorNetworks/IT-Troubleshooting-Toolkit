@@ -37,7 +37,7 @@ The **IT Troubleshooting Toolkit** is a comprehensive PowerShell-based solution 
 Run this command in PowerShell (as Administrator):
 
 ```powershell
-PowerShell.exe -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
+PowerShell.exe -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; irm https://raw.githubusercontent.com/SuperiorNetworks/IT-Troubleshooting-Toolkit/master/bootstrap.ps1 | iex"
 ```
 
 #### For Windows Server 2012 R2 / Windows 7/8 (PowerShell 4.0)
@@ -1027,6 +1027,11 @@ For support, feature requests, or bug reports:
 - **Installer**: `project_planner.ps1` added to the required-file check; the repo `tests` folder is no longer copied to client machines (bootstraps and the launcher update option).
 - **Files Added**: `project_planner.ps1`, `run_project_planner.cmd`, `tests/project_planner/`.
 - **Files Updated**: `launch_menu.ps1`, `bootstrap.ps1`, `bootstrap_ps4.ps1`, `README.md`.
+
+### Version 3.17.2 (2026-10-06) - TLS 1.2 FOR WINDOWS 10/11 INSTALL
+- **Install Command Fix**: The Windows 10/11 / Server 2016+ one-command install now turns on TLS 1.2 before downloading, like the PowerShell 4.0 command already did. On PCs whose .NET still defaults to TLS 1.0, GitHub refused the download and the install failed.
+- **Bootstrap and Launcher**: `bootstrap.ps1` and `launch_menu.ps1` now enable TLS 1.2 at startup, so the bootstrap's own downloads and the launcher's *Download and Install Latest Version* option work on those PCs too.
+- **Files Updated**: `bootstrap.ps1`, `launch_menu.ps1`, `README.md`, `BOOTSTRAP_GUIDE.md`.
 
 ### Version 3.17.1 (2026-10-06) - BRANCH TESTING ON WINDOWS
 - **Branch Override**: `bootstrap.ps1` and `bootstrap_ps4.ps1` now accept the `SUPERIOR_NETWORKS_BRANCH` environment variable, matching `bootstrap_macos.sh`. When it is not set they install `master` exactly as before.
