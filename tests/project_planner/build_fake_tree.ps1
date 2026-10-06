@@ -57,7 +57,7 @@ New-F 'Trays/20003/old.pdf' 10 '1975-06-01'
 New-F 'Trays/20003/future.pdf' 10 '2030-01-01'
 New-F 'Archive/12372/12372.pdf' 1500 '2023-03-03'
 $deep = 'Archive/' + ((1..12 | ForEach-Object { 'a-very-long-folder-name-number-' + $_ }) -join '/') + '/deep-drawing.pdf'
-New-F $deep 50
+try { New-F $deep 50 } catch { Write-Host "Note: could not create the 260+ character test path here ($($_.Exception.Message))" -ForegroundColor Yellow }
 New-Item -ItemType Directory -Force -Path (Join-Path $d 'Empty') | Out-Null
 New-Item -ItemType SymbolicLink -Path (Join-Path $d 'LinkToBoxes') -Target (Join-Path $d 'Boxes') | Out-Null
 

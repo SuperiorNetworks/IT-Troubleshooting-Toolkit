@@ -1023,6 +1023,7 @@ For support, feature requests, or bug reports:
 - **New Tool**: Added option 7, **Project Planner** (`project_planner.ps1`), under a new *Project Tools* menu section. It scans a folder or share and builds an offline migration planning report: totals, file types, dates and growth, path lengths, problem names, an expandable folder tree, and a severity-ranked issues list.
 - **MRPeasy Link Check**: Optionally matches an MRPeasy file-links export to the scan and drafts an old/new link update CSV for Azure Blob.
 - **Read-Only**: Reads metadata only; OneDrive cloud-only files are not downloaded. Requires PowerShell 5.1+, checked before launch. Runs in its own PowerShell window.
+- **Tested on Windows PowerShell 5.1**: Full scan of `C:\Program Files` (61,401 files) matched an independent file count. Works without a real console (SSH, RMM): progress-bar errors no longer mark folders as unreadable, and the zip uses .NET ZipFile (no 2 GB per-file limit).
 - **Installer**: `project_planner.ps1` added to the required-file check; the repo `tests` folder is no longer copied to client machines (bootstraps and the launcher update option).
 - **Files Added**: `project_planner.ps1`, `run_project_planner.cmd`, `tests/project_planner/`.
 - **Files Updated**: `launch_menu.ps1`, `bootstrap.ps1`, `bootstrap_ps4.ps1`, `README.md`.

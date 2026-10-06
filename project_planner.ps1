@@ -34,10 +34,13 @@ Dependencies:
   - Windows PowerShell 5.1 (built in) or PowerShell 7; no modules, no admin rights
   - System.Windows.Forms / System.Drawing for the start screen (Windows only)
   - System.Web.Extensions (JavaScriptSerializer) to read capture.json in Windows PowerShell 5.1
+  - System.IO.Compression.FileSystem (.NET 4.5+) for the zip
 
 Change Log:
   2026-10-06 v1.0.0 - Initial release (Dwain Henderson Jr)
   2026-10-06 v3.18.0 - Added to IT Troubleshooting Toolkit (launcher option 7); version follows the toolkit (Dwain Henderson Jr)
+                      Fix: a progress-bar failure (no real console, e.g. SSH or RMM) no longer marks a folder
+                      as unreadable and skips its files. Zip uses .NET ZipFile instead of Compress-Archive.
 #>
 
 <#
@@ -298,7 +301,9 @@ function Invoke-PPScan([string] $root, [bool] $doHash) {
         try {
             foreach ($e in $di.EnumerateFileSystemInfos()) {
                 $count++
-                if ($count % 1000 -eq 0) { Write-Progress -Activity "$ToolName scan" -Status ("{0:N0} items, {1:N0} files" -f $count, $files.Count) -CurrentOperation $rel }
+                # Progress is display only. It can throw without a real console (SSH, RMM), and that
+                # must not be counted as a folder read error, so it gets its own try/catch.
+                if ($count % 1000 -eq 0) { try { Write-Progress -Activity "$ToolName scan" -Status ("{0:N0} items, {1:N0} files" -f $count, $files.Count) -CurrentOperation $rel } catch {} }
                 $attr = [int]$e.Attributes
                 if ($e -is [IO.DirectoryInfo]) {
                     $fo.SubDirs++
@@ -328,7 +333,7 @@ function Invoke-PPScan([string] $root, [bool] $doHash) {
         }
         for ($i = $subs.Count - 1; $i -ge 0; $i--) { $stack.Push($subs[$i]) }
     }
-    Write-Progress -Activity "$ToolName scan" -Completed
+    try { Write-Progress -Activity "$ToolName scan" -Completed } catch {}
     return @{ root = $rootFull; folders = $folders; files = $files; errors = $errors }
 }
 
@@ -1237,7 +1242,14 @@ Write-PPConsole $an
 $report = Join-Path $outDir 'report.html'
 $zip = "$outDir.zip"
 if (-not $NoZip) {
-    try { Compress-Archive -Path (Join-Path $outDir '*') -DestinationPath $zip -Force; Write-Host "Zip:     $zip" -ForegroundColor Green }
+    # .NET ZipFile instead of Compress-Archive: no progress bar (which fails without a real console,
+    # e.g. SSH or RMM), faster, and no 2 GB per-file limit in Windows PowerShell 5.1.
+    try {
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
+        [IO.Compression.ZipFile]::CreateFromDirectory($outDir, $zip, [IO.Compression.CompressionLevel]::Optimal, $false)
+        Write-Host "Zip:     $zip" -ForegroundColor Green
+    }
     catch { Write-Host "Could not create the zip ($($_.Exception.Message)). Zip the folder by hand: $outDir" -ForegroundColor Yellow }
 }
 Write-Host "Report:  $report" -ForegroundColor Green
