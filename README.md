@@ -241,6 +241,8 @@ It reads names, sizes, dates and attributes only. It never opens, changes, moves
 
 **Output:** reports go to `C:\ITTools\Reports` by default (created if missing; outside `Scripts`, so toolkit updates never touch them). Each scan writes `<Save report to>\<client>-<ticket>-<yyyyMMdd-HHmm>\` with `report.html` (tabs: Summary, Folders, Files, Issues, MRPeasy links, Help Guide), `capture.json`, `summary.json`, CSVs and `device-info.txt`, plus a `.zip` of the same name to send back.
 
+**When the scan finishes** a *Scan complete* window shows where the report was saved, with **Open report**, **Open folder** (File Explorer with the zip selected) and **Email** buttons. **Outlook** opens a new email to Superior Networks with the zip already attached (desktop Outlook). **Gmail** opens a filled-in Gmail message in the browser and the folder next to it, so the zip can be dragged in (browsers can't attach files by themselves). The same Open folder, Outlook and Gmail buttons are on the report page. Zips over 20 MB get a warning to share a OneDrive or Google Drive link instead.
+
 **Standalone use** (PC without the full toolkit): copy `project_planner.ps1` and `run_project_planner.cmd` into one folder and double-click the `.cmd`. Unattended:
 
 ```powershell
@@ -1023,6 +1025,8 @@ For support, feature requests, or bug reports:
 - **Console**: The scan ends with a "REPORT SAVED" block showing the report folder, `report.html` and the `.zip` to send back. When started from the start screen (menu option 7 or `run_project_planner.cmd`), the window now stays open until Enter is pressed; before, it closed as soon as the scan finished.
 - **Completion Box**: "Scan complete" now shows the report folder and zip path before asking to open the report.
 - **Report Page**: `report.html` has a "Report saved to" bar under the header with the folder path, a Copy path button, the zip name and the computer it was saved on.
+- **Scan Complete Window**: Replaces the "Open the report now?" box. Shows the report folder and zip size, with **Open report**, **Open folder** (Explorer with the zip selected), and **Email** to Superior Networks: **Outlook** opens a new email with the zip attached (desktop Outlook; falls back to a filled-in email plus Explorer for New Outlook), **Gmail** opens a filled-in Gmail message plus Explorer to drag the zip in. Warns when the zip is over 20 MB.
+- **Report Page Buttons**: The "Report saved to" bar adds **Open folder** and **Outlook** / **Gmail** email buttons (To, Subject and Body filled in; the zip must be attached by hand because browsers can't attach files).
 - **Plain Labels**: The start screen says **Folder to scan** (with the hint "Everything inside this folder is scanned. Files are only read, never changed.") and **Save report to**, instead of *Parent path* and *Report path*. Error messages and the report use the same wording.
 - **Files Updated**: `project_planner.ps1`, `launch_menu.ps1`, `README.md`.
 

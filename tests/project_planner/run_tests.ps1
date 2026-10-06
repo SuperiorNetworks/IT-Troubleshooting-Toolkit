@@ -29,7 +29,8 @@ Change Log:
   2026-10-06 v3.18.0 - Moved into the toolkit repo under tests/project_planner; skip checks Windows
                       can't set up (case-only names, trailing dots, paths over 260) (Dwain Henderson Jr)
   2026-10-06 v3.18.1 - Check that the displayed version matches the script header (Dwain Henderson Jr)
-  2026-10-06 v3.18.3 - Check the report shows its saved folder and zip path (Dwain Henderson Jr)
+  2026-10-06 v3.18.3 - Check the report shows its saved folder and zip path, and the Open folder,
+                      Outlook and Gmail links (Dwain Henderson Jr)
 #>
 param([string] $Work = (Join-Path ([IO.Path]::GetTempPath()) 'pp-test'))
 
@@ -103,7 +104,10 @@ $hdrVer = ''; foreach ($l in (Get-Content -LiteralPath $tool -TotalCount 10)) { 
 Check 'footer version matches script header' ($html -match ('Project Planner v' + [regex]::Escape($hdrVer))) "header $hdrVer"
 Check 'report shows where it was saved' ($html.Contains('Report saved to:') -and $html.Contains([Net.WebUtility]::HtmlEncode($o))) 'saved-to bar missing or wrong folder'
 Check 'report shows the zip path' ($html.Contains([Net.WebUtility]::HtmlEncode("$o.zip"))) 'zip path missing'
-Check 'no unreplaced saved-to placeholders' (-not ($html -match '__SAVED[A-Z]+__')) 'placeholder left'
+Check 'no unreplaced saved-to placeholders' (-not ($html -match '__(SAVED[A-Z]+|FOLDERURL|MAILTO|GMAIL)__')) 'placeholder left'
+Check 'Outlook button: mailto to Superior Networks with subject' ($html -match 'href="mailto:dhenderson@superiornetworks\.biz\?subject=Project%20Planner%20report%20-%20Test%20Client%20-%20Ticket%20%2312345&amp;body=') 'mailto link missing or wrong'
+Check 'Gmail button: compose link with to, subject and the zip path in the body' ($html -match 'href="https://mail\.google\.com/mail/\?view=cm&amp;fs=1&amp;to=dhenderson%40superiornetworks\.biz&amp;su=Project%20Planner' -and $html.Contains([Uri]::EscapeDataString("$o.zip"))) 'gmail link missing or wrong'
+Check 'Open folder link points at the reports folder' ($html -match 'href="file:///[^"]*reports/"') 'folder link missing'
 $m = [regex]::Match($html, '<script id="pp-data" type="application/json">(.*?)</script>', 'Singleline')
 $data = $null; try { $data = $m.Groups[1].Value | ConvertFrom-Json } catch {}
 Check 'embedded report data is valid JSON' ($null -ne $data -and $data.files.Count -eq $expectFiles) "parse failed or wrong count"
