@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.19.3
+**Version:** 3.19.4
 **Copyright:** 2025-2026  
 **Developed by:** Superior Networks LLC
 
@@ -104,7 +104,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.19.3
+IT Troubleshooting Toolkit - v3.19.4
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -133,7 +133,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.19.3
+macOS Troubleshooter Terminal - Toolkit v3.19.4
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -151,7 +151,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.19.3
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.19.4
 ```
 
 ### Help Guide (Option H)
@@ -200,7 +200,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.19.3
+ConnectWise RMM Troubleshooter - Toolkit v3.19.4
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -267,7 +267,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.19.3
+HP M404dn Printer Troubleshooter - Toolkit v3.19.4
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -318,7 +318,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.19.3
+StorageCraft Troubleshooter - Toolkit v3.19.4
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -1029,6 +1029,9 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.19.4 (2026-10-08) - HP M404DN SUBMENU WORKFLOW COVERS OPTION 3
+- **Recommended Workflow**: The HP M404dn submenu now says when to use option 3 (printer on USB, just moved to Ethernet, or duplicated; or still failing after options 1 and 2) and to have the printer's IP ready from its Configuration Report.
 
 ### Version 3.19.3 (2026-10-08) - HP M404DN: OFFER NETWORK INSTALL ON OPEN
 - **Guided Start**: Driver Reinstall now checks the PC when it opens. If the M404dn is missing, on USB/WSD/a local port, or installed more than once, it asks to install it as a network printer and asks for the IP, so the technician does not have to know which option to pick.

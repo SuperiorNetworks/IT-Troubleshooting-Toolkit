@@ -4,7 +4,7 @@ HP M404dn Printer Troubleshooter - Submenu for HP M404dn repair tools
 
 .DESCRIPTION
 Name: hp_m404dn_troubleshooter.ps1
-Version: 3.19.3
+Version: 3.19.4
 Purpose: Centralized submenu for HP LaserJet Pro M404dn printer troubleshooting and repair.
          Provides access to connectivity diagnostics, print spooler repair, and a clean
          driver reinstall workflow from the IT Troubleshooting Toolkit.
@@ -36,6 +36,7 @@ Dependencies:
 Change Log:
 2026-09-14 v3.9.0 - Added HP M404dn Printer Troubleshooter submenu (Dwain Henderson Jr)
 2026-10-08 v3.19.3 - Option 3 label now says it installs the printer as a network printer (Dwain Henderson Jr)
+2026-10-08 v3.19.4 - Recommended workflow now says when to use option 3 and to have the IP ready (Dwain Henderson Jr)
 #>
 
 $ErrorActionPreference = "SilentlyContinue"
@@ -113,8 +114,11 @@ function Show-HPM404dnMenu {
     Write-Host "  =================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Recommended repair workflow:" -ForegroundColor Gray
-    Write-Host "    1. Confirm connectivity, then repair the spooler if jobs are stuck." -ForegroundColor DarkGray
-    Write-Host "    2. Reinstall the driver only after connectivity and spooler checks." -ForegroundColor DarkGray
+    Write-Host "    - Printing fails or stalls: run 1 (connectivity), then 2 if jobs are stuck." -ForegroundColor DarkGray
+    Write-Host "    - Printer on USB, just moved to Ethernet, or showing duplicate copies:" -ForegroundColor DarkGray
+    Write-Host "      run 3. Have the printer's IP ready (Configuration Report from the" -ForegroundColor DarkGray
+    Write-Host "      printer's Reports menu). It replaces old copies with one network printer." -ForegroundColor DarkGray
+    Write-Host "    - Still failing after 1 and 2: run 3 to rebuild the printer by IP." -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "    1. Connectivity Test (network / USB diagnostics)" -ForegroundColor Cyan
     Write-Host "    2. Spooler Repair (stuck jobs / hung spooler)" -ForegroundColor Cyan
