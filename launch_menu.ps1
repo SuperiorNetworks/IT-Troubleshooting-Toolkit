@@ -4,7 +4,7 @@ IT Troubleshooting Toolkit - Interactive Launcher Menu
 
 .DESCRIPTION
 Name: launch_menu.ps1
-Version: 3.19.2
+Version: 3.19.3
 Purpose: Centralized launcher menu for IT troubleshooting tools and service management.
          Provides quick access to FTP file transfer tools and StorageCraft ImageManager service control.
 Path: /scripts/launch_menu.ps1
@@ -110,6 +110,8 @@ Change Log:
                     pick-list removal of duplicate copies, view option shows its tables again.
 2026-10-08 v3.19.2 - HP M404dn Driver Reinstall: clears the spool folder (with confirmation) when a stuck job blocks
                     removal; does not add a duplicate printer if an old copy will not delete.
+2026-10-08 v3.19.3 - HP M404dn Driver Reinstall: on open, offers to install the printer as a network printer and
+                    asks for the IP when it is missing, on USB/WSD, or duplicated.
 .RELEASE_NOTES
 v2.5.0:
 - Added comprehensive master audit logging system for troubleshooting
@@ -230,7 +232,7 @@ function Show-Menu {
     Clear-Host
     
     # Get version dynamically from script header
-    $scriptVersion = "3.19.2"
+    $scriptVersion = "3.19.3"
     $scriptPath = $PSCommandPath
     if (Test-Path $scriptPath) {
         $content = Get-Content $scriptPath -Raw
@@ -878,7 +880,7 @@ function Run-MassGraveActivation {
 }
 
 # Log script startup
-Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.19.2"
+Write-AuditLog -action "Script Started" -details "IT Troubleshooting Toolkit Launcher v3.19.3"
 
 # Main menu loop
 do {

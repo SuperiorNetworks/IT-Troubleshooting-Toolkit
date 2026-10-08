@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.19.2
+**Version:** 3.19.3
 **Copyright:** 2025-2026  
 **Developed by:** Superior Networks LLC
 
@@ -104,7 +104,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.19.2
+IT Troubleshooting Toolkit - v3.19.3
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -133,7 +133,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.19.2
+macOS Troubleshooter Terminal - Toolkit v3.19.3
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -151,7 +151,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.19.2
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.19.3
 ```
 
 ### Help Guide (Option H)
@@ -200,7 +200,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.19.2
+ConnectWise RMM Troubleshooter - Toolkit v3.19.3
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -267,11 +267,11 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.19.2
+HP M404dn Printer Troubleshooter - Toolkit v3.19.3
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
-  3. Driver Reinstall (clean remove & reinstall)
+  3. Install as Network Printer / Driver Reinstall
 
   B. Back to Main Menu
 ```
@@ -304,8 +304,9 @@ Start with **Connectivity Test** to identify whether the workstation can reach t
 
 #### Option 3 - Driver Reinstall
 
-- **View Current Install** lists every M404dn printer copy with its port (USB, WSD or IP), driver and queued jobs, and warns when there is more than one copy.
-- **Network Reinstall** checks before it changes anything: validates the IP, tests TCP 9100 on the printer, and finds a usable HP driver (keeps the one already installed; the HP M404 driver is not built into Windows, so it asks for the HP package `.inf` only when none is present). It then shows the plan and asks for confirmation, clears stuck jobs, removes the old copies and their TCP/IP ports, restarts the spooler (if a stuck job still blocks a copy, it offers to clear the spool folder and retry; if a copy still will not delete, it stops without adding a duplicate), creates one standard TCP/IP port and one printer, verifies it, and offers a test page. If any step fails it reports FAILED, and if it stops before the plan is confirmed nothing is changed.
+- **On open**, if the M404dn is not installed, is connected by USB, WSD or a local port, or is installed more than once, the tool asks "Install the HP M404dn as a network printer now?" and then asks for the printer's IP (with a tip on finding it; when existing copies all use one IP it is offered as the default, and when they use different IPs it lists them and the technician types the right one).
+- **View Current Install** lists every M404dn printer copy with its connection (USB cable, WSD, or network IP), driver and queued jobs, and warns when there is more than one copy.
+- **Install as Network Printer** (option 2, also offered on open) checks before it changes anything: validates the IP, tests TCP 9100 on the printer, and finds a usable HP driver (keeps the one already installed; the HP M404 driver is not built into Windows, so it asks for the HP package `.inf` only when none is present). It then shows the plan and asks for confirmation, clears stuck jobs, removes the old copies and their TCP/IP ports, restarts the spooler (if a stuck job still blocks a copy, it offers to clear the spool folder and retry; if a copy still will not delete, it stops without adding a duplicate), creates one standard TCP/IP port and one printer, verifies it, and offers a test page. If any step fails it reports FAILED, and if it stops before the plan is confirmed nothing is changed.
 - **Remove Selected Copies** removes only the copies picked from a numbered list (for example an old USB copy or a "(Copy 1)" duplicate), after confirmation.
 - The HP driver is never deleted. Set the default printer while logged in as the user; default printers are per user.
 
@@ -317,7 +318,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.19.2
+StorageCraft Troubleshooter - Toolkit v3.19.3
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -1028,6 +1029,11 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.19.3 (2026-10-08) - HP M404DN: OFFER NETWORK INSTALL ON OPEN
+- **Guided Start**: Driver Reinstall now checks the PC when it opens. If the M404dn is missing, on USB/WSD/a local port, or installed more than once, it asks to install it as a network printer and asks for the IP, so the technician does not have to know which option to pick.
+- **IP Prompt**: Explains how to find the printer's IP (Configuration Report from the printer's Reports menu, or the UniFi client list / DHCP reservation) and offers the existing IP as the default only when all network copies agree (different IPs are listed instead, since one is stale).
+- **Labels**: Option 2 is now "Install as Network Printer"; the HP submenu shows "Install as Network Printer / Driver Reinstall"; the view shows each copy's connection type.
 
 ### Version 3.19.2 (2026-10-08) - HP M404DN STUCK-JOB REMOVAL
 - **Stuck Jobs**: A copy whose stuck job is reloaded on every spooler restart (seen with the real HP V4 driver and a test page to an offline printer) stayed "pending deletion". The tool now offers to clear the spool folder and retry, after a confirmation that warns it deletes queued jobs for every printer.

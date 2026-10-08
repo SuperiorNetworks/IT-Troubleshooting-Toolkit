@@ -4,7 +4,7 @@ HP M404dn Printer Troubleshooter - Submenu for HP M404dn repair tools
 
 .DESCRIPTION
 Name: hp_m404dn_troubleshooter.ps1
-Version: 3.9.0
+Version: 3.19.3
 Purpose: Centralized submenu for HP LaserJet Pro M404dn printer troubleshooting and repair.
          Provides access to connectivity diagnostics, print spooler repair, and a clean
          driver reinstall workflow from the IT Troubleshooting Toolkit.
@@ -35,6 +35,7 @@ Dependencies:
 
 Change Log:
 2026-09-14 v3.9.0 - Added HP M404dn Printer Troubleshooter submenu (Dwain Henderson Jr)
+2026-10-08 v3.19.3 - Option 3 label now says it installs the printer as a network printer (Dwain Henderson Jr)
 #>
 
 $ErrorActionPreference = "SilentlyContinue"
@@ -117,7 +118,7 @@ function Show-HPM404dnMenu {
     Write-Host ""
     Write-Host "    1. Connectivity Test (network / USB diagnostics)" -ForegroundColor Cyan
     Write-Host "    2. Spooler Repair (stuck jobs / hung spooler)" -ForegroundColor Cyan
-    Write-Host "    3. Driver Reinstall (clean remove & reinstall)" -ForegroundColor Cyan
+    Write-Host "    3. Install as Network Printer / Driver Reinstall" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "    B. Back to Main Menu" -ForegroundColor Gray
     Write-Host ""

@@ -4,7 +4,7 @@ HP M404dn Driver Reinstall - Clean Removal and Reinstall Tool
 
 .DESCRIPTION
 Name: hp_m404dn_driver_reinstall.ps1
-Version: 3.19.2
+Version: 3.19.3
 Purpose: Cleans up duplicate or broken HP LaserJet Pro M404dn printer copies (USB, WSD, old
          TCP/IP) and reinstalls one clean network printer on a standard TCP/IP port. Checks
          the printer and the driver BEFORE removing anything, so a failed reinstall never
@@ -15,7 +15,9 @@ Copyright: 2026, Superior Networks LLC
 Path: C:\ITTools\Scripts\hp_m404dn_driver_reinstall.ps1
 
 What This Script Does:
-  - Shows every printer copy, port, driver and queued job matching the M404dn
+  - On open, if the printer is missing or not on a TCP/IP port (USB, WSD, local) or is
+    installed more than once, asks to install it as a network printer and asks for the IP
+  - Shows every printer copy, its connection (USB / WSD / network IP), driver and queued jobs
   - Removes only the copies the technician picks from a numbered list (with confirmation)
   - Network reinstall: validates the IP, tests TCP 9100 on the printer, picks a usable HP
     driver (keeps the one already installed; never deletes it), shows the plan and asks
@@ -51,6 +53,10 @@ Change Log:
 2026-10-08 v3.19.2 - A copy whose stuck job survives a spooler restart is now removed by clearing
                      the spool folder (after confirmation); if a copy still will not delete, the
                      new printer is not added (no duplicate) and the result is FAILED (Dwain Henderson Jr)
+2026-10-08 v3.19.3 - On open, offers to install the printer as a network printer when it is missing,
+                     on USB/WSD/local port, or duplicated; IP prompt explains how to find the IP and
+                     suggests the existing IP when all copies agree; option 2 renamed "Install as Network Printer";
+                     view shows each copy's connection (Dwain Henderson Jr)
 #>
 
 # ================== Configuration ==================
@@ -146,7 +152,7 @@ function Show-CurrentInstall {
     Write-Host ""
     Write-Log "Printer copies matching the M404dn: $($printers.Count)"
     if ($printers.Count -gt 0) {
-        $printers | Select-Object Name, PortName, DriverName, @{ Name = "Jobs"; Expression = { Get-JobCount $_.Name } } |
+        $printers | Select-Object Name, @{ Name = "Connection"; Expression = { Get-ConnectionLabel $_.PortName } }, DriverName, @{ Name = "Jobs"; Expression = { Get-JobCount $_.Name } } |
             Format-Table -AutoSize | Out-String -Width 200 | Write-Host
     }
 
@@ -396,7 +402,30 @@ function Get-UsableDriver {
 }
 
 function Invoke-NetworkReinstall {
-    $ip = (Read-Host "Enter the HP M404dn's IP address").Trim()
+    # Suggest the address existing network copies use (Enter accepts it), but only when they
+    # all agree; with several different IPs one of them is stale, so make the tech choose.
+    $knownIps = @()
+    foreach ($p in @(Get-M404Printers)) {
+        $port = Get-PrinterPort -Name $p.PortName -ErrorAction SilentlyContinue
+        if ($port -and $port.PrinterHostAddress -and ($knownIps -notcontains [string]$port.PrinterHostAddress)) {
+            $knownIps += [string]$port.PrinterHostAddress
+        }
+    }
+    $suggested = ""
+    if ($knownIps.Count -eq 1) { $suggested = $knownIps[0] }
+    Write-Host ""
+    Write-Host "Find the printer's IP address: print a Configuration Report from the printer's" -ForegroundColor Gray
+    Write-Host "control panel (Reports menu), or look it up in the UniFi client list / DHCP reservation." -ForegroundColor Gray
+    if ($knownIps.Count -gt 1) {
+        Write-Host "Existing copies point at different IPs ($($knownIps -join ', ')). Only one is the printer; confirm which." -ForegroundColor Yellow
+    }
+    if ($suggested) {
+        $ip = [string](Read-Host "Enter the printer's IP address (press Enter to use $suggested)")
+        if ([string]::IsNullOrWhiteSpace($ip)) { $ip = $suggested }
+    } else {
+        $ip = [string](Read-Host "Enter the printer's IP address")
+    }
+    $ip = $ip.Trim()
     $parsed = $null
     if (-not [System.Net.IPAddress]::TryParse($ip, [ref]$parsed) -or $ip -notmatch '^\d{1,3}(\.\d{1,3}){3}$') {
         Write-Log "'$ip' is not a valid IPv4 address. No changes made." "ERROR"
@@ -438,7 +467,7 @@ function Invoke-NetworkReinstall {
     if ($oldCopies.Count -gt 0) {
         if (-not (Remove-PrinterCopies -printers $oldCopies)) {
             # Adding the new printer now would create the duplicate this tool is meant to clean up.
-            Write-Log "Old copies are still present, so the new printer was NOT added. Reboot the PC, then run Network Reinstall again." "ERROR"
+            Write-Log "Old copies are still present, so the new printer was NOT added. Reboot the PC, then run Install as Network Printer (option 2) again." "ERROR"
             return $false
         }
     }
@@ -493,6 +522,68 @@ function Invoke-NetworkReinstall {
     return $true
 }
 
+function Test-IsNetworkCopy {
+    param ($printer)
+    $port = Get-PrinterPort -Name $printer.PortName -ErrorAction SilentlyContinue
+    return [bool]($port -and $port.PrinterHostAddress)
+}
+
+function Get-ConnectionLabel {
+    param ([string]$portName)
+    $port = Get-PrinterPort -Name $portName -ErrorAction SilentlyContinue
+    if ($port -and $port.PrinterHostAddress) { return "Network IP $($port.PrinterHostAddress)" }
+    if ($portName -like "USB*") { return "USB cable" }
+    if ($portName -like "WSD*") { return "WSD (auto-discovered)" }
+    return "Local port $portName"
+}
+
+function Start-NetworkInstall {
+    Write-Log "========== Install as Network Printer =========="
+    Show-CurrentInstall
+    if (Invoke-NetworkReinstall) {
+        Write-Log "========== Install as Network Printer Complete ==========" "SUCCESS"
+    } else {
+        Write-Log "========== Install as Network Printer FAILED or cancelled (see messages above) ==========" "ERROR"
+        Write-AuditLog -action "HP M404dn Driver Reinstall" -level "WARN" -details "Network install failed or cancelled"
+    }
+    Read-Host "Press Enter to continue" | Out-Null
+}
+
+function Invoke-StartupCheck {
+    # Offer the network install up front when the printer is missing or not on a TCP/IP port,
+    # so the technician does not have to know which menu option to pick.
+    $copies = @(Get-M404Printers)
+    $notNetwork = @($copies | Where-Object { -not (Test-IsNetworkCopy $_) })
+    $network = @($copies | Where-Object { Test-IsNetworkCopy $_ })
+
+    Write-Host ""
+    if ($copies.Count -eq 0) {
+        Write-Log "No HP M404dn printer is installed on this PC." "WARN"
+    } elseif ($notNetwork.Count -gt 0) {
+        Write-Log "The HP M404dn is not set up as a network printer on this PC:" "WARN"
+        foreach ($p in $notNetwork) { Write-Host "  - $($p.Name)  [$(Get-ConnectionLabel $p.PortName)]" -ForegroundColor Yellow }
+        if ($network.Count -gt 0) {
+            foreach ($p in $network) { Write-Host "  - $($p.Name)  [$(Get-ConnectionLabel $p.PortName)]" -ForegroundColor Gray }
+        }
+    } elseif ($network.Count -gt 1) {
+        Write-Log "The HP M404dn is installed $($network.Count) times as a network printer (duplicates):" "WARN"
+        foreach ($p in $network) { Write-Host "  - $($p.Name)  [$(Get-ConnectionLabel $p.PortName)]" -ForegroundColor Yellow }
+    } else {
+        Write-Log "The HP M404dn is installed as a network printer ($(Get-ConnectionLabel $network[0].PortName))." "SUCCESS"
+        Start-Sleep -Seconds 2
+        return
+    }
+
+    Write-Host ""
+    Write-Host "Recommended: install it as ONE network printer by IP address. Old copies are replaced." -ForegroundColor Cyan
+    if (Confirm-Action "Install the HP M404dn as a network printer now?") {
+        Write-AuditLog -action "HP M404dn Driver Reinstall" -details "Startup check: technician chose network install ($($copies.Count) existing copies, $($notNetwork.Count) not on TCP/IP)"
+        Start-NetworkInstall
+    } else {
+        Write-Log "Network install skipped. Opening the menu."
+    }
+}
+
 # ================== Main Menu ==================
 function Show-Menu {
     Clear-Host
@@ -515,7 +606,7 @@ function Show-Menu {
     Write-Host ""
 
     Write-Host "  1. View Current Install (copies / ports / drivers / queued jobs)"
-    Write-Host "  2. Network Reinstall (checks IP and driver first, then replaces old copies)"
+    Write-Host "  2. Install as Network Printer (asks for the IP, replaces old copies)"
     Write-Host "  3. Remove Selected Copies (pick duplicates or old USB/WSD copies)"
     Write-Host "  B. Back to HP M404dn Troubleshooter"
     Write-Host ""
@@ -528,22 +619,13 @@ if (-not (Test-Administrator)) {
 } else {
 
 Write-AuditLog -action "HP M404dn Driver Reinstall" -details "Tool opened"
+Invoke-StartupCheck
 do {
     Show-Menu
     $choice = Read-Host "Select an option"
     switch ($choice) {
         "1" { Show-CurrentInstall; Read-Host "Press Enter to continue" | Out-Null }
-        "2" {
-            Write-Log "========== Network Reinstall =========="
-            Show-CurrentInstall
-            if (Invoke-NetworkReinstall) {
-                Write-Log "========== Network Reinstall Complete ==========" "SUCCESS"
-            } else {
-                Write-Log "========== Network Reinstall FAILED or cancelled (see messages above) ==========" "ERROR"
-                Write-AuditLog -action "HP M404dn Driver Reinstall" -level "WARN" -details "Network reinstall failed or cancelled"
-            }
-            Read-Host "Press Enter to continue" | Out-Null
-        }
+        "2" { Start-NetworkInstall }
         "3" {
             Show-CurrentInstall
             Remove-SelectedCopies
