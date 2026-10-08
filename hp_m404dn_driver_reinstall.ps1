@@ -4,7 +4,7 @@ HP M404dn Driver Reinstall - Clean Removal and Reinstall Tool
 
 .DESCRIPTION
 Name: hp_m404dn_driver_reinstall.ps1
-Version: 3.19.1
+Version: 3.19.2
 Purpose: Cleans up duplicate or broken HP LaserJet Pro M404dn printer copies (USB, WSD, old
          TCP/IP) and reinstalls one clean network printer on a standard TCP/IP port. Checks
          the printer and the driver BEFORE removing anything, so a failed reinstall never
@@ -21,6 +21,7 @@ What This Script Does:
     driver (keeps the one already installed; never deletes it), shows the plan and asks
     for confirmation, clears stuck jobs, removes the old copies and ports, creates one
     TCP/IP port and one printer, verifies it and offers a test page
+  - If a stuck job keeps a copy from deleting, offers to clear the spool folder and retry
   - Reports FAILED (not "Complete") when any reinstall step does not finish
   - Logs every action to the tool log and the master audit log
 
@@ -47,6 +48,9 @@ Change Log:
                      driver names by wildcard; clear stuck jobs first; confirm before changes;
                      pick-list removal of duplicate copies; report FAILED on errors; no
                      default-printer change under the admin account (Dwain Henderson Jr)
+2026-10-08 v3.19.2 - A copy whose stuck job survives a spooler restart is now removed by clearing
+                     the spool folder (after confirmation); if a copy still will not delete, the
+                     new printer is not added (no duplicate) and the result is FAILED (Dwain Henderson Jr)
 #>
 
 # ================== Configuration ==================
@@ -178,7 +182,27 @@ function Clear-PrinterJobs {
             Write-Log "Could not delete job $($job.Id) on $printerName : $($_.Exception.Message)" "WARN"
         }
     }
-    if ($jobs.Count -gt 0) { Write-Log "Cleared $($jobs.Count) queued job(s) on $printerName." }
+    if ($jobs.Count -gt 0) { Write-Log "Deleting $($jobs.Count) queued job(s) on $printerName." }
+}
+
+function Clear-SpoolFolder {
+    # Stops the spooler and deletes the saved job files. A job stuck sending to a dead port
+    # is reloaded from these files every time the spooler starts, which keeps its printer
+    # in "pending deletion". Same cleanup as the Spooler Repair tool.
+    $spoolFolder = Join-Path $env:SystemRoot "System32\spool\PRINTERS"
+    try {
+        Stop-Service -Name Spooler -Force -ErrorAction Stop
+        Start-Sleep -Seconds 2
+        $files = @(Get-ChildItem -Path $spoolFolder -Include *.SHD, *.SPL -Recurse -Force -ErrorAction SilentlyContinue)
+        $files | Remove-Item -Force -ErrorAction Stop
+        Write-Log "Deleted $($files.Count) spool file(s) from $spoolFolder."
+        Write-AuditLog -action "HP M404dn Driver Reinstall" -details "Cleared spool folder ($($files.Count) files) to remove stuck jobs"
+    } catch {
+        Write-Log "Spool folder cleanup failed: $($_.Exception.Message)" "ERROR"
+    } finally {
+        Start-Service -Name Spooler -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 3
+    }
 }
 
 function Remove-PrinterCopies {
@@ -208,9 +232,28 @@ function Remove-PrinterCopies {
     } catch {
         Write-Log "Could not restart the spooler: $($_.Exception.Message)" "WARN"
     }
+    $stuck = @($printers | Where-Object { Get-Printer -Name $_.Name -ErrorAction SilentlyContinue })
+    if ($stuck.Count -gt 0) {
+        Write-Log "$($stuck.Count) copy(ies) still present: a print job is stuck in the spooler." "WARN"
+        Write-Host "Clearing it deletes the saved print jobs for EVERY printer on this PC." -ForegroundColor Yellow
+        if (Confirm-Action "Clear all queued print jobs and retry the removal?") {
+            Clear-SpoolFolder
+            foreach ($p in $stuck) {
+                if (Get-Printer -Name $p.Name -ErrorAction SilentlyContinue) {
+                    try { Remove-Printer -Name $p.Name -ErrorAction Stop } catch {
+                        Write-Log "Retry failed for $($p.Name): $($_.Exception.Message)" "WARN"
+                    }
+                }
+                $portNames += $p.PortName
+            }
+            Start-Sleep -Seconds 2
+        }
+    }
+
     foreach ($p in $printers) {
         if (Get-Printer -Name $p.Name -ErrorAction SilentlyContinue) {
             Write-Log "Still present after removal: $($p.Name). Reboot the PC and run this option again." "ERROR"
+            Write-AuditLog -action "HP M404dn Driver Reinstall" -level "ERROR" -errorMessage "Still present after removal: $($p.Name)"
             $allOk = $false
         } else {
             Write-Log "Removed printer copy: $($p.Name)" "SUCCESS"
@@ -394,7 +437,9 @@ function Invoke-NetworkReinstall {
 
     if ($oldCopies.Count -gt 0) {
         if (-not (Remove-PrinterCopies -printers $oldCopies)) {
-            Write-Log "Some old copies could not be removed. Continuing with the new install." "WARN"
+            # Adding the new printer now would create the duplicate this tool is meant to clean up.
+            Write-Log "Old copies are still present, so the new printer was NOT added. Reboot the PC, then run Network Reinstall again." "ERROR"
+            return $false
         }
     }
 

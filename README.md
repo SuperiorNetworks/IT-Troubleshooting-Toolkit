@@ -2,7 +2,7 @@
 
 ![Superior Networks Logo](logo.png)
 
-**Version:** 3.19.1
+**Version:** 3.19.2
 **Copyright:** 2025-2026  
 **Developed by:** Superior Networks LLC
 
@@ -104,7 +104,7 @@ The toolkit creates a launcher at: `C:\ITTools\Scripts\launcher.bat`
 
 ```
 SUPERIOR NETWORKS LLC
-IT Troubleshooting Toolkit - v3.19.1
+IT Troubleshooting Toolkit - v3.19.2
 
 Toolkit Management:
   1. Download and Install Latest Version
@@ -133,7 +133,7 @@ The **macOS Troubleshooter Terminal** provides a signed-in-user workflow for mac
 
 ```
 SUPERIOR NETWORKS LLC
-macOS Troubleshooter Terminal - Toolkit v3.19.1
+macOS Troubleshooter Terminal - Toolkit v3.19.2
 
 START HERE
   Choose a task below. Every repair explains its impact before it makes a change.
@@ -151,7 +151,7 @@ SUPPORT
          Workflow, safeguards, log locations, and operating limits.
   [ Q ]  Quit
 
-Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.19.1
+Footer: Help Guide: Select [ H ] in this terminal | Superior Networks macOS Toolkit v3.19.2
 ```
 
 ### Help Guide (Option H)
@@ -200,7 +200,7 @@ The **ConnectWise RMM Troubleshooter** submenu (option #4) provides automated re
 
 ```
 SUPERIOR NETWORKS LLC
-ConnectWise RMM Troubleshooter - Toolkit v3.19.1
+ConnectWise RMM Troubleshooter - Toolkit v3.19.2
 
 Step 1 - ScreenConnect Cleanup:
   1. Repair ScreenConnect (Uninstall/Cleanup)
@@ -267,7 +267,7 @@ The **HP M404dn Printer Troubleshooter** submenu (option #6) provides a guided w
 
 ```
 SUPERIOR NETWORKS LLC
-HP M404dn Printer Troubleshooter - Toolkit v3.19.1
+HP M404dn Printer Troubleshooter - Toolkit v3.19.2
 
   1. Connectivity Test (network / USB diagnostics)
   2. Spooler Repair (stuck jobs / hung spooler)
@@ -305,7 +305,7 @@ Start with **Connectivity Test** to identify whether the workstation can reach t
 #### Option 3 - Driver Reinstall
 
 - **View Current Install** lists every M404dn printer copy with its port (USB, WSD or IP), driver and queued jobs, and warns when there is more than one copy.
-- **Network Reinstall** checks before it changes anything: validates the IP, tests TCP 9100 on the printer, and finds a usable HP driver (keeps the one already installed; the HP M404 driver is not built into Windows, so it asks for the HP package `.inf` only when none is present). It then shows the plan and asks for confirmation, clears stuck jobs, removes the old copies and their TCP/IP ports, restarts the spooler, creates one standard TCP/IP port and one printer, verifies it, and offers a test page. If any step fails it reports FAILED, and if it stops before the plan is confirmed nothing is changed.
+- **Network Reinstall** checks before it changes anything: validates the IP, tests TCP 9100 on the printer, and finds a usable HP driver (keeps the one already installed; the HP M404 driver is not built into Windows, so it asks for the HP package `.inf` only when none is present). It then shows the plan and asks for confirmation, clears stuck jobs, removes the old copies and their TCP/IP ports, restarts the spooler (if a stuck job still blocks a copy, it offers to clear the spool folder and retry; if a copy still will not delete, it stops without adding a duplicate), creates one standard TCP/IP port and one printer, verifies it, and offers a test page. If any step fails it reports FAILED, and if it stops before the plan is confirmed nothing is changed.
 - **Remove Selected Copies** removes only the copies picked from a numbered list (for example an old USB copy or a "(Copy 1)" duplicate), after confirmation.
 - The HP driver is never deleted. Set the default printer while logged in as the user; default printers are per user.
 
@@ -317,7 +317,7 @@ The **StorageCraft Troubleshooter** submenu (option #3) provides comprehensive b
 
 ```
 SUPERIOR NETWORKS LLC
-StorageCraft Troubleshooter - Toolkit v3.19.1
+StorageCraft Troubleshooter - Toolkit v3.19.2
 
 Manual Tools:
   1. Upload Single File (PowerShell FTP)
@@ -1028,6 +1028,10 @@ For support, feature requests, or bug reports:
 ---
 
 ## Change Log
+
+### Version 3.19.2 (2026-10-08) - HP M404DN STUCK-JOB REMOVAL
+- **Stuck Jobs**: A copy whose stuck job is reloaded on every spooler restart (seen with the real HP V4 driver and a test page to an offline printer) stayed "pending deletion". The tool now offers to clear the spool folder and retry, after a confirmation that warns it deletes queued jobs for every printer.
+- **No Duplicates**: If an old copy still will not delete, Network Reinstall stops and reports FAILED instead of adding a second "(Network)" printer next to it.
 
 ### Version 3.19.1 (2026-10-07) - HP M404DN DRIVER REINSTALL SAFETY FIXES
 - **Checks First**: Network Reinstall now validates the IP, tests the printer on TCP 9100 and finds a usable driver before removing anything. Before, it removed every copy and the driver first, and could leave the PC with no printer while still reporting "Complete".
